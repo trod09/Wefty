@@ -9,23 +9,38 @@
 // SectionLabel numerada, hairlines, crosshairs en las esquinas y métricas en
 // serif con número que cuenta solo (useCountUp).
 import React, { useState } from 'react';
-import { Reveal, useCountUp } from '@/components/hooks';
+import { Reveal } from '@/components/hooks';
 import { SectionLabel, MonoLabel, Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
+import SalesDashboard from '@/components/SalesDashboard';
 
-// Número grande que cuenta desde 0 hasta el valor — como las métricas del Hero.
-function CountMetric({ value, label }) {
-  const v = useCountUp(value, { isIn: true, duration: 1100 });
-  return (
-    <div>
-      <div className="font-serif text-[56px] md:text-[72px] leading-none tracking-[-0.02em] tnum">
-        {v.toLocaleString()}
-      </div>
-      <div className="mt-3 font-mono text-[10px] tracking-[0.18em] uppercase text-ash-500">
-        {label}
-      </div>
-    </div>
-  );
+// Separa una línea de CSV en columnas, respetando las comillas dobles
+// (un dato "entre comillas" puede contener comas sin que cuenten como
+// separador, y dos comillas seguidas "" representan una comilla literal).
+function parseCsvLine(line) {
+  const cells = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') { cur += '"'; i++; } // comilla escapada
+        else inQuotes = false;
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      cells.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  cells.push(cur);
+  return cells.map((c) => c.trim());
 }
 
 export default function UploadPage() {
@@ -47,7 +62,10 @@ export default function UploadPage() {
       const lines = text.split(/\r\n|\r|\n/).filter((line) => line.trim() !== '');
       const totalLines = lines.length;
       const dataRows = Math.max(totalLines - 1, 0);
-      setResult({ name: file.name, dataRows, totalLines });
+      // La primera línea son las cabeceras; el resto, filas de datos.
+      const headers = lines.length ? parseCsvLine(lines[0]) : [];
+      const rows = lines.slice(1).map(parseCsvLine);
+      setResult({ name: file.name, dataRows, totalLines, headers, rows });
     } catch {
       setError('No se pudo leer el archivo. Inténtalo de nuevo.');
     }
@@ -139,21 +157,75 @@ export default function UploadPage() {
         {/* Result */}
         {result ? (
           <div className="mt-20 md:mt-28">
+            {/* Cabecera compacta del archivo */}
             <Hairline />
-            <div className="grid grid-cols-12 gap-6 pt-10">
-              <div className="col-span-12 md:col-span-4">
-                <MonoLabel>Archivo</MonoLabel>
-                <div className="mt-3 font-serif text-[22px] md:text-[28px] leading-tight tracking-[-0.01em] break-all">
+            <div className="flex flex-wrap items-baseline justify-between gap-4 pt-8">
+              <div>
+                <MonoLabel>Archivo analizado</MonoLabel>
+                <div className="mt-2 font-serif text-[24px] md:text-[32px] leading-tight tracking-[-0.01em] break-all">
                   {result.name}
                 </div>
               </div>
-              <div className="col-span-6 md:col-span-4 md:border-l md:border-ink/10 md:pl-8">
-                <CountMetric value={result.dataRows} label="Filas de datos" />
-              </div>
-              <div className="col-span-6 md:col-span-4 md:border-l md:border-ink/10 md:pl-8">
-                <CountMetric value={result.totalLines} label="Líneas totales · con encabezado" />
-              </div>
+              <MonoLabel>
+                {result.dataRows.toLocaleString('es-ES')} filas · {result.headers.length} columnas
+              </MonoLabel>
             </div>
+
+            {/* Dashboard de análisis */}
+            {result.headers.length > 0 ? (
+              <div className="mt-10 md:mt-12">
+                <SalesDashboard headers={result.headers} rows={result.rows} />
+              </div>
+            ) : null}
+
+            {/* Tabla de datos en bruto — plegable, al final */}
+            {result.headers.length > 0 ? (
+              <details className="mt-16 group">
+                <summary className="flex items-center gap-3 cursor-pointer select-none py-4 border-t border-ink/15">
+                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-ash-500 group-hover:text-ink transition-colors">
+                    Ver datos en bruto · tabla
+                  </span>
+                  <span className="font-mono text-[11px] text-ash-400 transition-transform group-open:rotate-90">›</span>
+                </summary>
+                <div className="mt-4 acc-body">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse text-left">
+                      <thead>
+                        <tr>
+                          {result.headers.map((h, i) => (
+                            <th
+                              key={i}
+                              className="font-mono text-[10px] tracking-[0.18em] uppercase text-ash-500 font-normal py-3 pr-8 border-b border-ink/15 whitespace-nowrap align-bottom"
+                            >
+                              {h || `Columna ${i + 1}`}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.rows.slice(0, 20).map((row, r) => (
+                          <tr key={r} className="border-b border-ink/10">
+                            {result.headers.map((_, c) => (
+                              <td
+                                key={c}
+                                className="text-[14px] text-ash-700 py-3 pr-8 align-top whitespace-nowrap"
+                              >
+                                {row[c] ?? ''}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {result.dataRows > 20 ? (
+                    <p className="mt-5 font-mono text-[11px] tracking-[0.08em] uppercase text-ash-500">
+                      Mostrando 20 de {result.dataRows.toLocaleString('es-ES')} filas
+                    </p>
+                  ) : null}
+                </div>
+              </details>
+            ) : null}
           </div>
         ) : null}
 

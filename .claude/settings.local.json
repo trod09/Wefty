@@ -6,7 +6,9 @@
       "Bash(curl -s http://localhost:3000/upload)",
       "Bash(curl -s -o /dev/null -w \"Código HTTP de /upload: %{http_code}\\\\n\" http://localhost:3000/upload)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(node *)",
+      "Bash(npm audit *)"
     ]
   }
 }
