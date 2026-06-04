@@ -1,18 +1,20 @@
 'use client';
 
 // Página /upload — Loop, primera funcionalidad.
-// El usuario elige un archivo CSV; leemos su contenido en el navegador
-// (no se envía a ningún servidor, no se guarda nada todavía) y mostramos
-// el nombre del archivo y cuántas filas de datos tiene.
+// El usuario elige un archivo CSV; lo leemos en el navegador (nada se envía a
+// ningún servidor) y mostramos un dashboard de análisis + tabla de datos.
 //
-// El diseño reutiliza el lenguaje visual de la landing: fondo bone + grid-noise,
-// SectionLabel numerada, hairlines, crosshairs en las esquinas y métricas en
-// serif con número que cuenta solo (useCountUp).
+// Estética "dark editorial premium": fondo casi-negro con gradiente, textura de
+// rejilla oscura, superficies con gradiente sutil y acento eléctrico.
 import React, { useState } from 'react';
 import { Reveal } from '@/components/hooks';
-import { SectionLabel, MonoLabel, Hairline, UnderlineLink } from '@/components/primitives';
+import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import SalesDashboard from '@/components/SalesDashboard';
+
+// Clases de etiqueta mono reutilizadas
+const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
+const SURFACE_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
 
 // Separa una línea de CSV en columnas, respetando las comillas dobles
 // (un dato "entre comillas" puede contener comas sin que cuenten como
@@ -72,27 +74,33 @@ export default function UploadPage() {
   }
 
   return (
-    <main className="relative min-h-screen bg-bone text-ink overflow-hidden">
-      <div className="absolute inset-0 grid-noise opacity-60 pointer-events-none" />
+    <main
+      className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
+      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+    >
+      <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
       <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-24 md:pt-32 pb-24">
         {/* Top bar */}
         <div className="flex items-baseline justify-between">
-          <UnderlineLink href="/" className="font-serif text-[22px] tracking-[-0.02em]">
+          <UnderlineLink href="/" dark className="font-serif text-[22px] tracking-[-0.02em]">
             Weft
           </UnderlineLink>
-          <MonoLabel>Loop · subir datos</MonoLabel>
+          <span className={MONO} style={{ color: '#8A8A8F' }}>Loop · subir datos</span>
         </div>
 
-        <Hairline className="mt-6" />
+        <Hairline dark className="mt-6" />
 
         {/* Section label row */}
         <div className="grid grid-cols-12 gap-6 mt-16 md:mt-20">
-          <div className="col-span-12 md:col-span-7">
-            <SectionLabel index="00" title="Upload — Tus datos de ventas." />
+          <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
+            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>[00]</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+              Upload — Tus datos de ventas.
+            </span>
           </div>
           <div className="col-span-12 md:col-span-5 md:text-right">
-            <MonoLabel>Paso 01 · sin guardar todavía</MonoLabel>
+            <span className={MONO} style={{ color: '#8A8A8F' }}>Paso 01 · sin guardar todavía</span>
           </div>
         </div>
 
@@ -105,25 +113,31 @@ export default function UploadPage() {
         <div className="grid grid-cols-12 gap-6 mt-12 md:mt-16">
           <div className="col-span-12 md:col-span-5">
             <Reveal>
-              <p className="text-[18px] md:text-[20px] leading-[1.45] text-ash-600 max-w-[34ch]">
-                Elige un archivo CSV con tus datos de ventas. De momento solo te
-                mostramos el nombre del archivo y cuántas filas contiene. Nada se
-                guarda ni viaja a ningún servidor<Fn n={1} /> — todo pasa dentro de
-                tu navegador.
+              <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: '#8A8A8F' }}>
+                Elige un archivo CSV con tus datos de ventas. Lo analizamos al
+                instante y nada se guarda ni viaja a ningún servidor<Fn n={1} /> —
+                todo pasa dentro de tu navegador.
               </p>
             </Reveal>
           </div>
 
           <div className="col-span-12 md:col-span-6 md:col-start-7">
             <Reveal delay={150}>
-              <div className="relative border border-ink/12 bg-cream/40 p-8 md:p-10">
-                <CornerCrosshairs size={12} inset={10} />
-                <MonoLabel>Archivo CSV</MonoLabel>
+              <div
+                className="relative rounded-xl border border-[#232428] p-8 md:p-10 transition-all duration-300 hover:border-[#3a3c42]"
+                style={{ background: SURFACE_BG }}
+              >
+                <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
+                <span className={MONO} style={{ color: '#8A8A8F' }}>Archivo CSV</span>
 
                 <div className="mt-6">
                   <label
                     htmlFor="csv-input"
-                    className="relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] bg-ink text-bone hover:bg-electric transition-colors cursor-pointer select-none"
+                    className="relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] text-white rounded-lg cursor-pointer select-none transition-all duration-300 hover:brightness-110"
+                    style={{
+                      background: 'linear-gradient(135deg, #3F7BEC 0%, #2D6BE4 100%)',
+                      boxShadow: '0 0 40px -12px rgba(45,107,228,0.85)',
+                    }}
                   >
                     <span className="relative z-10">Seleccionar archivo CSV</span>
                     <span className="relative z-10 w-3 h-3 flex items-center justify-center">
@@ -141,13 +155,13 @@ export default function UploadPage() {
                   />
                 </div>
 
-                <p className="mt-6 text-[13px] leading-relaxed text-ash-500">
+                <p className="mt-6 text-[13px] leading-relaxed" style={{ color: '#6f7075' }}>
                   Exporta tu CSV desde Shopify o una hoja de cálculo. La primera
                   fila debe ser el encabezado con los nombres de las columnas.
                 </p>
 
                 {error ? (
-                  <p className="mt-6 font-mono text-[12px] tracking-[0.04em] text-ember">{error}</p>
+                  <p className="mt-6 font-mono text-[12px] tracking-[0.04em]" style={{ color: '#E07A5F' }}>{error}</p>
                 ) : null}
               </div>
             </Reveal>
@@ -158,17 +172,17 @@ export default function UploadPage() {
         {result ? (
           <div className="mt-20 md:mt-28">
             {/* Cabecera compacta del archivo */}
-            <Hairline />
+            <Hairline dark />
             <div className="flex flex-wrap items-baseline justify-between gap-4 pt-8">
               <div>
-                <MonoLabel>Archivo analizado</MonoLabel>
+                <span className={MONO} style={{ color: '#8A8A8F' }}>Archivo analizado</span>
                 <div className="mt-2 font-serif text-[24px] md:text-[32px] leading-tight tracking-[-0.01em] break-all">
                   {result.name}
                 </div>
               </div>
-              <MonoLabel>
+              <span className={MONO} style={{ color: '#8A8A8F' }}>
                 {result.dataRows.toLocaleString('es-ES')} filas · {result.headers.length} columnas
-              </MonoLabel>
+              </span>
             </div>
 
             {/* Dashboard de análisis */}
@@ -181,11 +195,11 @@ export default function UploadPage() {
             {/* Tabla de datos en bruto — plegable, al final */}
             {result.headers.length > 0 ? (
               <details className="mt-16 group">
-                <summary className="flex items-center gap-3 cursor-pointer select-none py-4 border-t border-ink/15">
-                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-ash-500 group-hover:text-ink transition-colors">
+                <summary className="flex items-center gap-3 cursor-pointer select-none py-4 border-t border-white/10">
+                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
                     Ver datos en bruto · tabla
                   </span>
-                  <span className="font-mono text-[11px] text-ash-400 transition-transform group-open:rotate-90">›</span>
+                  <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: '#5d5e63' }}>›</span>
                 </summary>
                 <div className="mt-4 acc-body">
                   <div className="overflow-x-auto">
@@ -195,7 +209,8 @@ export default function UploadPage() {
                           {result.headers.map((h, i) => (
                             <th
                               key={i}
-                              className="font-mono text-[10px] tracking-[0.18em] uppercase text-ash-500 font-normal py-3 pr-8 border-b border-ink/15 whitespace-nowrap align-bottom"
+                              className="font-mono text-[10px] tracking-[0.18em] uppercase font-normal py-3 pr-8 border-b border-white/10 whitespace-nowrap align-bottom"
+                              style={{ color: '#8A8A8F' }}
                             >
                               {h || `Columna ${i + 1}`}
                             </th>
@@ -204,11 +219,12 @@ export default function UploadPage() {
                       </thead>
                       <tbody>
                         {result.rows.slice(0, 20).map((row, r) => (
-                          <tr key={r} className="border-b border-ink/10">
+                          <tr key={r} className="border-b border-white/[0.06]">
                             {result.headers.map((_, c) => (
                               <td
                                 key={c}
-                                className="text-[14px] text-ash-700 py-3 pr-8 align-top whitespace-nowrap"
+                                className="text-[14px] py-3 pr-8 align-top whitespace-nowrap"
+                                style={{ color: '#b9b9be' }}
                               >
                                 {row[c] ?? ''}
                               </td>
@@ -219,7 +235,7 @@ export default function UploadPage() {
                     </table>
                   </div>
                   {result.dataRows > 20 ? (
-                    <p className="mt-5 font-mono text-[11px] tracking-[0.08em] uppercase text-ash-500">
+                    <p className="mt-5 font-mono text-[11px] tracking-[0.08em] uppercase" style={{ color: '#8A8A8F' }}>
                       Mostrando 20 de {result.dataRows.toLocaleString('es-ES')} filas
                     </p>
                   ) : null}
@@ -231,8 +247,8 @@ export default function UploadPage() {
 
         {/* Footnote */}
         <div className="mt-24 md:mt-32">
-          <Hairline />
-          <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase text-ash-500">
+          <Hairline dark />
+          <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
             <Fn n={1} /> Lectura local · nada sale de tu dispositivo
           </p>
         </div>

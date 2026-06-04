@@ -8,7 +8,9 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(node *)",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(npm run *)"
     ]
   }
 }
