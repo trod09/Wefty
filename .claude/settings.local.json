@@ -10,7 +10,8 @@
       "Bash(node *)",
       "Bash(npm audit *)",
       "Bash(pkill -f \"next dev\")",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(curl *)"
     ]
   }
 }

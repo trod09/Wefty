@@ -11,6 +11,41 @@ import { Reveal } from '@/components/hooks';
 import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import SalesDashboard from '@/components/SalesDashboard';
+import { supabase } from '@/lib/supabase';
+
+// Columnas de la tabla "ventas" en Supabase y cómo convertir cada valor.
+// 'int'  → número entero, 'num' → número decimal, 'text' → texto tal cual.
+const VENTAS_COLUMNS = {
+  fecha: 'text',
+  producto: 'text',
+  categoria: 'text',
+  talla: 'text',
+  color: 'text',
+  unidades_vendidas: 'int',
+  precio_unitario: 'num',
+  ingresos: 'num',
+};
+
+// Normaliza un encabezado para emparejarlo con las columnas de la tabla:
+// minúsculas, sin espacios sobrantes y sin acentos (categoría → categoria).
+function normalizeHeader(h) {
+  return (h || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+}
+
+// Convierte el texto de una celda al tipo que espera la columna.
+// Si el número no es válido, devuelve null (Supabase lo guarda vacío).
+function castValue(raw, kind) {
+  const value = (raw ?? '').trim();
+  if (kind === 'text') return value;
+  if (value === '') return null;
+  const cleaned = value.replace(/[^0-9.,-]/g, '').replace(',', '.');
+  const n = kind === 'int' ? parseInt(cleaned, 10) : parseFloat(cleaned);
+  return Number.isNaN(n) ? null : n;
+}
 
 // Clases de etiqueta mono reutilizadas
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
@@ -48,6 +83,9 @@ function parseCsvLine(line) {
 export default function UploadPage() {
   const [result, setResult] = useState(null); // { name, dataRows, totalLines }
   const [error, setError] = useState('');
+  // Estado del guardado en Supabase: 'idle' | 'saving' | 'done' | 'error'
+  const [saveState, setSaveState] = useState('idle');
+  const [saveMessage, setSaveMessage] = useState('');
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
@@ -55,6 +93,9 @@ export default function UploadPage() {
 
     setError('');
     setResult(null);
+    // Al cargar un archivo nuevo, reseteamos cualquier mensaje de guardado previo.
+    setSaveState('idle');
+    setSaveMessage('');
 
     try {
       const text = await file.text();
@@ -70,6 +111,55 @@ export default function UploadPage() {
       setResult({ name: file.name, dataRows, totalLines, headers, rows });
     } catch {
       setError('No se pudo leer el archivo. Inténtalo de nuevo.');
+    }
+  }
+
+  // Guarda las filas del CSV en la tabla "ventas" de Supabase.
+  async function handleSave() {
+    if (!result || saveState === 'saving') return;
+
+    setSaveState('saving');
+    setSaveMessage('');
+
+    // Emparejamos cada encabezado del CSV con su columna en la tabla.
+    // Solo guardamos las columnas que reconocemos (las de VENTAS_COLUMNS).
+    const columnByIndex = result.headers.map((h) => {
+      const key = normalizeHeader(h);
+      return VENTAS_COLUMNS[key] ? key : null;
+    });
+
+    if (!columnByIndex.some(Boolean)) {
+      setSaveState('error');
+      setSaveMessage(
+        'No reconocimos ninguna columna. Las cabeceras deben llamarse: ' +
+          Object.keys(VENTAS_COLUMNS).join(', ') + '.'
+      );
+      return;
+    }
+
+    // Convertimos cada fila del CSV en un objeto { columna: valor } listo para Supabase.
+    const payload = result.rows.map((row) => {
+      const record = {};
+      columnByIndex.forEach((col, i) => {
+        if (col) record[col] = castValue(row[i], VENTAS_COLUMNS[col]);
+      });
+      return record;
+    });
+
+    try {
+      const { error: dbError } = await supabase.from('ventas').insert(payload);
+      if (dbError) {
+        setSaveState('error');
+        setSaveMessage('No se pudo guardar: ' + dbError.message);
+        return;
+      }
+      setSaveState('done');
+      setSaveMessage(
+        payload.length.toLocaleString('es-ES') + ' filas guardadas en la base de datos.'
+      );
+    } catch (err) {
+      setSaveState('error');
+      setSaveMessage('No se pudo guardar: ' + (err?.message || 'error desconocido') + '.');
     }
   }
 
@@ -184,6 +274,35 @@ export default function UploadPage() {
                 {result.dataRows.toLocaleString('es-ES')} filas · {result.headers.length} columnas
               </span>
             </div>
+
+            {/* Guardar en Supabase — el usuario decide cuándo */}
+            {result.headers.length > 0 ? (
+              <div className="mt-8 flex flex-wrap items-center gap-5">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saveState === 'saving'}
+                  className="relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] text-white rounded-lg cursor-pointer select-none transition-all duration-300 hover:brightness-110 disabled:opacity-60 disabled:cursor-default"
+                  style={{
+                    background: 'linear-gradient(135deg, #3F7BEC 0%, #2D6BE4 100%)',
+                    boxShadow: '0 0 40px -12px rgba(45,107,228,0.85)',
+                  }}
+                >
+                  <span className="relative z-10">
+                    {saveState === 'saving' ? 'Guardando…' : 'Guardar en la base de datos'}
+                  </span>
+                </button>
+
+                {saveMessage ? (
+                  <span
+                    className="font-mono text-[12px] tracking-[0.04em]"
+                    style={{ color: saveState === 'error' ? '#E07A5F' : '#6BCB9A' }}
+                  >
+                    {saveMessage}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Dashboard de análisis */}
             {result.headers.length > 0 ? (
