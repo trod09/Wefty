@@ -11,6 +11,7 @@ import { Reveal } from '@/components/hooks';
 import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import SalesDashboard from '@/components/SalesDashboard';
+import SessionBadge from '@/components/SessionBadge';
 import { supabase } from '@/lib/supabase';
 
 // Columnas de la tabla "ventas" en Supabase y cómo convertir cada valor.
@@ -169,6 +170,8 @@ export default function UploadPage() {
       style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
+
+      <SessionBadge />
 
       <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-24 md:pt-32 pb-24">
         {/* Top bar */}
