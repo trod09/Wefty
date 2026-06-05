@@ -90,6 +90,8 @@ export default function UploadPage() {
   const [saveMessage, setSaveMessage] = useState('');
   // Guardián de acceso: 'checking' | 'authed' | 'guest'
   const [auth, setAuth] = useState('checking');
+  // ¿Estamos leyendo las ventas guardadas del usuario?
+  const [loadingSaved, setLoadingSaved] = useState(false);
   const router = useRouter();
 
   // Protege la página: solo se ve con sesión iniciada. Si no hay sesión,
@@ -122,6 +124,44 @@ export default function UploadPage() {
     };
   }, [router]);
 
+  // Al confirmar la sesión, leemos las ventas guardadas de ESTE usuario y, si
+  // hay, mostramos el dashboard con ellas. El RLS de Supabase garantiza que
+  // cada usuario solo recibe sus propias filas.
+  useEffect(() => {
+    if (auth !== 'authed') return;
+    let mounted = true;
+    setLoadingSaved(true);
+
+    const cols = Object.keys(VENTAS_COLUMNS); // orden fijo de columnas
+    supabase
+      .from('ventas')
+      .select(cols.join(','))
+      .order('fecha', { ascending: true })
+      .then(({ data, error }) => {
+        if (!mounted) return;
+        setLoadingSaved(false);
+        if (error || !data || data.length === 0) return;
+
+        // Pasamos las filas (objetos) al formato { headers, rows } del dashboard.
+        const rows = data.map((r) => cols.map((c) => (r[c] == null ? '' : String(r[c]))));
+        // Solo rellenamos si el usuario no ha subido ya un CSV en esta visita.
+        setResult((prev) =>
+          prev ?? {
+            name: 'Tus ventas guardadas',
+            source: 'db',
+            dataRows: rows.length,
+            totalLines: rows.length + 1,
+            headers: cols,
+            rows,
+          }
+        );
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [auth]);
+
   async function handleFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -143,7 +183,7 @@ export default function UploadPage() {
       // La primera línea son las cabeceras; el resto, filas de datos.
       const headers = lines.length ? parseCsvLine(lines[0]) : [];
       const rows = lines.slice(1).map(parseCsvLine);
-      setResult({ name: file.name, dataRows, totalLines, headers, rows });
+      setResult({ name: file.name, source: 'csv', dataRows, totalLines, headers, rows });
     } catch {
       setError('No se pudo leer el archivo. Inténtalo de nuevo.');
     }
@@ -322,6 +362,13 @@ export default function UploadPage() {
           </div>
         </div>
 
+        {/* Cargando datos guardados (solo si aún no hay nada que mostrar) */}
+        {loadingSaved && !result ? (
+          <p className="mt-16 font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+            Cargando tus ventas guardadas…
+          </p>
+        ) : null}
+
         {/* Result */}
         {result ? (
           <div className="mt-20 md:mt-28">
@@ -329,7 +376,9 @@ export default function UploadPage() {
             <Hairline dark />
             <div className="flex flex-wrap items-baseline justify-between gap-4 pt-8">
               <div>
-                <span className={MONO} style={{ color: '#8A8A8F' }}>Archivo analizado</span>
+                <span className={MONO} style={{ color: '#8A8A8F' }}>
+                  {result.source === 'db' ? 'Datos guardados' : 'Archivo analizado'}
+                </span>
                 <div className="mt-2 font-serif text-[24px] md:text-[32px] leading-tight tracking-[-0.01em] break-all">
                   {result.name}
                 </div>
@@ -339,8 +388,9 @@ export default function UploadPage() {
               </span>
             </div>
 
-            {/* Guardar en Supabase — el usuario decide cuándo */}
-            {result.headers.length > 0 ? (
+            {/* Guardar en Supabase — solo para un CSV recién subido. Los datos
+                que vienen de la base de datos ya están guardados. */}
+            {result.headers.length > 0 && result.source === 'csv' ? (
               <div className="mt-8 flex flex-wrap items-center gap-5">
                 <button
                   type="button"
@@ -366,6 +416,10 @@ export default function UploadPage() {
                   </span>
                 ) : null}
               </div>
+            ) : result.source === 'db' ? (
+              <p className="mt-8 font-mono text-[12px] tracking-[0.04em]" style={{ color: '#6BCB9A' }}>
+                Cargado desde tus datos guardados. Sube un CSV nuevo para añadir más.
+              </p>
             ) : null}
 
             {/* Dashboard de análisis */}
