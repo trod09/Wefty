@@ -4,6 +4,7 @@
 // El usuario escribe email y contraseña, y puede crear cuenta o iniciar sesión.
 // Estilo "dark editorial premium" de Loop, igual que /upload.
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/hooks';
 import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs } from '@/components/decor';
@@ -22,6 +23,7 @@ export default function LoginPage() {
   const [messageType, setMessageType] = useState('info'); // 'info' | 'ok' | 'error'
   // Email del usuario con sesión iniciada (si lo hay)
   const [sessionEmail, setSessionEmail] = useState(null);
+  const router = useRouter();
 
   // Comprobamos la sesión al cargar y nos suscribimos a sus cambios.
   useEffect(() => {
@@ -58,7 +60,8 @@ export default function LoginPage() {
         showMessage('No se pudo crear la cuenta: ' + error.message, 'error');
       } else if (data.session) {
         // Hay sesión directa: el proyecto no exige confirmar el email.
-        showMessage('Cuenta creada. Ya tienes la sesión iniciada.', 'ok');
+        showMessage('Cuenta creada. Entrando…', 'ok');
+        router.replace('/upload');
       } else {
         // Sin sesión: Supabase pide confirmar el email antes de entrar.
         showMessage('Cuenta creada. Revisa tu correo para confirmar el email y luego inicia sesión.', 'ok');
@@ -84,7 +87,8 @@ export default function LoginPage() {
       if (error) {
         showMessage('No se pudo iniciar sesión: ' + error.message, 'error');
       } else {
-        showMessage('Sesión iniciada.', 'ok');
+        showMessage('Sesión iniciada. Entrando…', 'ok');
+        router.replace('/upload');
       }
     } catch (err) {
       showMessage('No se pudo iniciar sesión: ' + (err?.message || 'error desconocido'), 'error');
