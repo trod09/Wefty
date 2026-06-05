@@ -172,9 +172,20 @@ export default function UploadPage() {
       return;
     }
 
-    // Convertimos cada fila del CSV en un objeto { columna: valor } listo para Supabase.
+    // Averiguamos qué usuario tiene la sesión: marcaremos cada fila con su
+    // user_id. Las políticas RLS de Supabase exigen que ese id coincida con
+    // la sesión, así que cada quien solo guarda (y ve) sus propios datos.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setSaveState('error');
+      setSaveMessage('Tu sesión ha caducado. Inicia sesión de nuevo para guardar.');
+      return;
+    }
+
+    // Convertimos cada fila del CSV en un objeto { columna: valor } listo para
+    // Supabase, añadiendo el user_id del usuario que está guardando.
     const payload = result.rows.map((row) => {
-      const record = {};
+      const record = { user_id: user.id };
       columnByIndex.forEach((col, i) => {
         if (col) record[col] = castValue(row[i], VENTAS_COLUMNS[col]);
       });
