@@ -6,7 +6,8 @@
 //
 // Estética "dark editorial premium": fondo casi-negro con gradiente, textura de
 // rejilla oscura, superficies con gradiente sutil y acento eléctrico.
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/hooks';
 import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
@@ -87,6 +88,39 @@ export default function UploadPage() {
   // Estado del guardado en Supabase: 'idle' | 'saving' | 'done' | 'error'
   const [saveState, setSaveState] = useState('idle');
   const [saveMessage, setSaveMessage] = useState('');
+  // Guardián de acceso: 'checking' | 'authed' | 'guest'
+  const [auth, setAuth] = useState('checking');
+  const router = useRouter();
+
+  // Protege la página: solo se ve con sesión iniciada. Si no hay sesión,
+  // redirige a /login. También redirige si el usuario cierra sesión aquí.
+  useEffect(() => {
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      if (data.session) {
+        setAuth('authed');
+      } else {
+        setAuth('guest');
+        router.replace('/login');
+      }
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setAuth('authed');
+      } else {
+        setAuth('guest');
+        router.replace('/login');
+      }
+    });
+
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [router]);
 
   async function handleFile(e) {
     const file = e.target.files?.[0];
@@ -162,6 +196,22 @@ export default function UploadPage() {
       setSaveState('error');
       setSaveMessage('No se pudo guardar: ' + (err?.message || 'error desconocido') + '.');
     }
+  }
+
+  // Mientras comprobamos la sesión (o si no hay y estamos redirigiendo),
+  // mostramos una pantalla mínima en vez del contenido de la página.
+  if (auth !== 'authed') {
+    return (
+      <main
+        className="relative min-h-screen flex items-center justify-center text-[#F5F5F7]"
+        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+      >
+        <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
+        <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+          Comprobando acceso…
+        </span>
+      </main>
+    );
   }
 
   return (
