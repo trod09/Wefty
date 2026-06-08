@@ -226,6 +226,69 @@ export default function SalesDashboard({ headers, rows }) {
       .sort((a, b) => b[1] - a[1])
       .map(([categoria, unidades], i) => ({ categoria, unidades, fill: PIE_PALETTE[i % PIE_PALETTE.length] }));
 
+    // ---- Insights accionables (sobre los datos reales) ------------------
+    // 1) Color que no rota: el color con menos unidades y su % del total.
+    const coloresReales = colorData.filter((d) => d.color);
+    let insightColor = null;
+    if (coloresReales.length >= 2 && totalUnidades > 0) {
+      const peor = coloresReales[coloresReales.length - 1]; // colorData viene ordenado desc
+      insightColor = { color: peor.color, pct: Math.round((peor.unidades / totalUnidades) * 100) };
+    }
+
+    // 2) Producto estrella: el que más factura y su % sobre los ingresos.
+    const prodPorIngresos = [...groupSum(records, (r) => r.producto, (r) => r.ingresos).entries()]
+      .filter(([p]) => p)
+      .sort((a, b) => b[1] - a[1]);
+    let insightEstrella = null;
+    if (prodPorIngresos.length > 0 && totalIngresos > 0) {
+      const [prod, ing] = prodPorIngresos[0];
+      insightEstrella = { producto: prod, pct: Math.round((ing / totalIngresos) * 100) };
+    }
+
+    // 3) Concentración de catálogo: mínimo de productos que suman el 80% de ingresos.
+    let insightConcentracion = null;
+    if (prodPorIngresos.length >= 2 && totalIngresos > 0) {
+      let acumulado = 0;
+      let n = 0;
+      for (const [, ing] of prodPorIngresos) {
+        acumulado += ing;
+        n += 1;
+        if (acumulado >= totalIngresos * 0.8) break;
+      }
+      insightConcentracion = {
+        pct: Math.round((acumulado / totalIngresos) * 100),
+        n,
+        total: prodPorIngresos.length,
+      };
+    }
+
+    // 4) y 5) Variantes (talla+color): la ganadora y las que apenas venden.
+    const varAgg = groupSum(
+      records.filter((r) => r.talla && r.color),
+      (r) => `${r.talla}|||${r.color}`,
+      (r) => r.unidades
+    );
+    const varEntries = [...varAgg.entries()];
+    let insightVariante = null;
+    let insightMuertas = null;
+    if (varEntries.length > 0) {
+      const ordenadas = [...varEntries].sort((a, b) => b[1] - a[1]);
+      const [topKey, topU] = ordenadas[0];
+      const [tTalla, tColor] = topKey.split('|||');
+      insightVariante = {
+        talla: tTalla,
+        color: tColor,
+        pct: totalUnidades ? Math.round((topU / totalUnidades) * 100) : 0,
+      };
+      // "Muertas": venden menos del 25% de la media de ventas por variante.
+      const mediaVar = varEntries.reduce((a, e) => a + e[1], 0) / varEntries.length;
+      const umbral = mediaVar * 0.25;
+      const muertas = varEntries.filter(([, u]) => u < umbral).length;
+      if (muertas >= 1 && varEntries.length >= 3) {
+        insightMuertas = { n: muertas, total: varEntries.length };
+      }
+    }
+
     // Evolución de ingresos por mes
     const monthMap = new Map();
     records.forEach((r) => {
@@ -252,13 +315,41 @@ export default function SalesDashboard({ headers, rows }) {
       ],
       totalUnidades, totalIngresos,
       insight, avgTalla, tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
+      insightColor, insightEstrella, insightConcentracion, insightVariante, insightMuertas,
     };
   }, [headers, rows]);
 
   const {
     kpis, totalUnidades, totalIngresos, insight, avgTalla,
     tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
+    insightColor, insightEstrella, insightConcentracion, insightVariante, insightMuertas,
   } = data;
+
+  // Lista de insights de apoyo: dato real + qué implica para el inventario.
+  // Cada uno solo aparece si hay datos suficientes para calcularlo.
+  const em = (txt, color) => <span className="font-medium" style={{ color }}>{txt}</span>;
+  const insightsApoyo = [
+    insightColor && {
+      key: 'color', label: 'Color que no rota', accent: EMBER,
+      body: <>El color {em(insightColor.color, EMBER)} solo representa el {em(`${insightColor.pct}%`, EMBER)} de tus ventas — posible exceso de inventario.</>,
+    },
+    insightEstrella && {
+      key: 'estrella', label: 'Producto estrella', accent: ELECTRIC,
+      body: <>{em(insightEstrella.producto, ELECTRIC)} concentra el {em(`${insightEstrella.pct}%`, ELECTRIC)} de tus ingresos — protégelo en stock y campañas.</>,
+    },
+    insightConcentracion && {
+      key: 'concentracion', label: 'Concentración de catálogo', accent: ELECTRIC,
+      body: <>El {em(`${insightConcentracion.pct}%`, ELECTRIC)} de tus ventas viene de solo {em(insightConcentracion.n, ELECTRIC)} de tus {insightConcentracion.total} productos — el resto pesa poco.</>,
+    },
+    insightVariante && {
+      key: 'variante', label: 'Variante ganadora', accent: ELECTRIC,
+      body: <>Tu variante estrella es {em(`${insightVariante.talla}/${insightVariante.color}`, ELECTRIC)} ({em(`${insightVariante.pct}%`, ELECTRIC)}) — asegura su stock.</>,
+    },
+    insightMuertas && {
+      key: 'muertas', label: 'Variantes muertas', accent: EMBER,
+      body: <>Tienes {em(insightMuertas.n, EMBER)} {insightMuertas.n === 1 ? 'variante' : 'variantes'} con ventas mínimas — {insightMuertas.n === 1 ? 'candidata' : 'candidatas'} a revisar o descatalogar.</>,
+    },
+  ].filter(Boolean);
 
   // --- Tooltips ricos (cierran sobre las medias/totales) ---
   const TallaTip = ({ active, payload }) => {
@@ -335,6 +426,30 @@ export default function SalesDashboard({ headers, rows }) {
             La <span style={{ color: EMBER }}>{insight.minTalla}</span> apenas rota
             (<span style={{ color: EMBER }}>{insight.minPct}%</span>).
           </p>
+        </div>
+      ) : null}
+
+      {/* 1b · INSIGHTS DE APOYO — accionables, en rejilla, sin saturar */}
+      {insightsApoyo.length ? (
+        <div>
+          <div className={LABEL} style={{ color: TXT2 }}>Insights accionables</div>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            {insightsApoyo.map((it) => (
+              <div
+                key={it.key}
+                className="rounded-xl border border-[#1b1c20] p-5 md:p-6"
+                style={{ background: 'linear-gradient(150deg, #101114 0%, #0c0d10 100%)' }}
+              >
+                <div className={`${LABEL} flex items-center gap-2`} style={{ color: it.accent }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: it.accent }} />
+                  {it.label}
+                </div>
+                <p className="mt-3 text-[15px] md:text-[16px] leading-[1.5]" style={{ color: TXT }}>
+                  {it.body}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 
