@@ -195,30 +195,35 @@ export default function SalesDashboard({ headers, rows }) {
 
     // Opciones para los filtros: valores distintos, sin vacíos, ordenados.
     const categorias = [...new Set(records.map((r) => r.categoria).filter(Boolean))].sort();
+    const productos = [...new Set(records.map((r) => r.producto).filter(Boolean))].sort();
 
-    return { records, categorias };
+    return { records, categorias, productos };
   }, [headers, rows]);
 
   // 2) Estado de los filtros. Valor vacío significa "todos / sin filtrar".
   const [fCategoria, setFCategoria] = useState('');
+  const [fProducto, setFProducto] = useState('');
 
   // Si cambian los datos cargados (otro CSV o el histórico), limpiamos filtros
   // para no esconder datos por un filtro que ya no aplica.
   useEffect(() => {
     setFCategoria('');
+    setFProducto('');
   }, [headers, rows]);
 
   // 3) Aplicamos los filtros activos sobre los records.
   const filtered = useMemo(() => {
     return parsed.records.filter((r) => {
       if (fCategoria && r.categoria !== fCategoria) return false;
+      if (fProducto && r.producto !== fProducto) return false;
       return true;
     });
-  }, [parsed.records, fCategoria]);
+  }, [parsed.records, fCategoria, fProducto]);
 
-  const hayFiltros = Boolean(fCategoria);
+  const hayFiltros = Boolean(fCategoria || fProducto);
   const limpiarFiltros = () => {
     setFCategoria('');
+    setFProducto('');
   };
 
   // 4) Todo el análisis (métricas, insights, gráficos) se calcula sobre los
@@ -463,6 +468,10 @@ export default function SalesDashboard({ headers, rows }) {
         <FilterSelect
           label="Categoría" value={fCategoria} onChange={setFCategoria}
           options={parsed.categorias} allLabel="Todas"
+        />
+        <FilterSelect
+          label="Producto" value={fProducto} onChange={setFProducto}
+          options={parsed.productos} allLabel="Todos"
         />
         {hayFiltros ? (
           <button

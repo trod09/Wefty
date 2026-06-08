@@ -116,7 +116,7 @@ export default function LoginPage() {
         {/* Top bar */}
         <div className="flex items-baseline justify-between">
           <UnderlineLink href="/" dark className="font-serif text-[22px] tracking-[-0.02em]">
-            Weft
+            Wefty
           </UnderlineLink>
           <span className={MONO} style={{ color: '#8A8A8F' }}>Loop · acceso</span>
         </div>

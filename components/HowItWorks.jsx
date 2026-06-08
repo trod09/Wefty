@@ -43,7 +43,7 @@ export default function HowItWorks() {
           <Step
             n="03"
             title="Forecasts flow back."
-            body="Drop a new SKU into Weft, get a size-by-color forecast trained on hundreds of comparable releases — yours and everyone else's."
+            body="Drop a new SKU into Wefty, get a size-by-color forecast trained on hundreds of comparable releases — yours and everyone else's."
             kicker="Step three"
             art={<StepArtForecast />}
           />
@@ -115,13 +115,13 @@ function StepArtConnect() {
             <span className="w-2.5 h-2.5 rounded-full bg-ink/15" />
             <span className="w-2.5 h-2.5 rounded-full bg-ink/15" />
           </div>
-          <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-ash-400">connect.weft.co</span>
+          <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-ash-400">connect.wefty.co</span>
           <span className="w-12" />
         </div>
         <div className="flex-1 flex items-center justify-center p-10">
           <div className="w-full max-w-[360px]">
             <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-ash-500">Connect store</div>
-            <div className="mt-3 font-serif text-[28px] leading-[1.1] tracking-[-0.015em]">Authorize Weft to read your Shopify orders &amp; products.</div>
+            <div className="mt-3 font-serif text-[28px] leading-[1.1] tracking-[-0.015em]">Authorize Wefty to read your Shopify orders &amp; products.</div>
             <div className="mt-8 border border-ink/15">
               <div className="flex items-center justify-between px-4 h-12 border-b border-ink/10">
                 <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-ash-500">Store</span>
@@ -213,7 +213,7 @@ function StepArtPool() {
           transition: `opacity 600ms ${EASE} ${ringCount * 40 + 700}ms`,
         }}
       >
-        <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-bone">Weft pool</div>
+        <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-bone">Wefty pool</div>
         <div className="font-serif text-[20px] text-bone tnum">
           <PoolBrandsCount isIn={isIn} delay={ringCount * 40 + 700} />
         </div>

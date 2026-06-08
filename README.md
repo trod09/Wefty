@@ -1,6 +1,6 @@
-# Weft — Next.js
+# Wefty — Next.js
 
-Landing page de **Weft** (the data co-op for DTC fashion), migrada de un single-file HTML
+Landing page de **Wefty** (the data co-op for DTC fashion), migrada de un single-file HTML
 (React + Babel en el navegador + Tailwind por CDN) a un proyecto **Next.js 14 (App Router)**.
 
 ## Requisitos

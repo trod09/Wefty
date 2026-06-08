@@ -22,7 +22,7 @@ export default function Nav() {
     >
       <div className="max-w-[1440px] mx-auto px-8 md:px-12 h-16 flex items-center justify-between">
         <a href="#" className="flex items-baseline gap-2">
-          <span className="font-serif text-[22px] tracking-[-0.03em] leading-none">Weft</span>
+          <span className="font-serif text-[22px] tracking-[-0.03em] leading-none">Wefty</span>
           <span className="font-mono text-[10px] tracking-[0.16em] uppercase text-ash-400 mt-px">/ DTC data co-op</span>
         </a>
         <nav className="hidden md:flex items-center gap-9 font-mono text-[11px] tracking-[0.18em] uppercase">
@@ -32,7 +32,7 @@ export default function Nav() {
           <UnderlineLink href="#pricing">Pricing</UnderlineLink>
         </nav>
         <div className="flex items-center gap-5">
-          <a href="#" className="hidden md:inline-block font-mono text-[11px] tracking-[0.18em] uppercase ul-anim">Sign in</a>
+          <a href="/login" className="hidden md:inline-block font-mono text-[11px] tracking-[0.18em] uppercase ul-anim">Iniciar sesión</a>
           <MagneticButton as="a" href="#join" className="h-10 px-5 text-[13px]">Join the pool</MagneticButton>
         </div>
       </div>

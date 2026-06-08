@@ -22,9 +22,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: 'Weft — The data co-op for DTC fashion.',
+  title: 'Wefty — The data co-op for DTC fashion.',
   description:
-    'Weft is a data co-op for DTC fashion. Connect your Shopify; every brand that joins makes the forecasts sharper — for all of us.',
+    'Wefty is a data co-op for DTC fashion. Connect your Shopify; every brand that joins makes the forecasts sharper — for all of us.',
 };
 
 export default function RootLayout({ children }) {

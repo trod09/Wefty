@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Reveal } from './hooks';
+import EnterAppButton from './EnterAppButton';
 
 export default function Footer() {
   const [email, setEmail] = React.useState('');
@@ -22,6 +23,9 @@ export default function Footer() {
               <p className="mt-8 text-[18px] md:text-[20px] leading-[1.5] text-ash-200 max-w-[42ch]">
                 Bring your Shopify, leave with a forecast. Founders read every application.
               </p>
+            </Reveal>
+            <Reveal delay={250} className="mt-8 flex">
+              <EnterAppButton tone="bone">Probar Wefty</EnterAppButton>
             </Reveal>
           </div>
           <div className="col-span-12 md:col-span-5 md:flex md:items-end">
@@ -61,7 +65,7 @@ export default function Footer() {
                 letterSpacing: '-0.06em',
               }}
             >
-              Weft.
+              Wefty.
             </div>
           </Reveal>
         </div>
@@ -90,7 +94,7 @@ export default function Footer() {
 
         <div className="border-t border-bone/15 pt-8 flex flex-wrap items-end justify-between gap-6 font-mono text-[10px] tracking-[0.18em] uppercase text-ash-300">
           <div className="flex flex-wrap items-center gap-6">
-            <span>© 2026 Weft Cooperative S.L.</span>
+            <span>© 2026 Wefty Cooperative S.L.</span>
             <span>·</span>
             <span>Madrid · Lisbon</span>
             <span>·</span>

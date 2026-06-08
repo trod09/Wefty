@@ -54,7 +54,7 @@ const FAQS = [
   },
   {
     q: 'How is this different from a Shopify analytics app?',
-    a: 'Analytics apps show you your own data more prettily. Weft shows you the patterns across hundreds of comparable brands — what is selling that you don’t carry yet, what color is rising in your category, what fit your peers are walking away from.',
+    a: 'Analytics apps show you your own data more prettily. Wefty shows you the patterns across hundreds of comparable brands — what is selling that you don’t carry yet, what color is rising in your category, what fit your peers are walking away from.',
   },
   {
     q: 'Who can join the co-op?',

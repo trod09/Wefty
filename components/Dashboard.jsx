@@ -73,7 +73,7 @@ function DashboardMock({ isIn }) {
             <span className="w-2.5 h-2.5 rounded-full bg-ink/15" />
             <span className="w-2.5 h-2.5 rounded-full bg-ink/15" />
           </div>
-          <span className="font-mono text-[11px] tracking-[0.16em] uppercase text-ash-500 ml-3">weft.app / forecasts / new drop</span>
+          <span className="font-mono text-[11px] tracking-[0.16em] uppercase text-ash-500 ml-3">wefty.app / forecasts / new drop</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-1.5 h-1.5 rounded-full bg-electric live-dot" />

@@ -314,7 +314,7 @@ function NetworkCanvas({ inView }) {
         <span className="font-mono text-[10px] tracking-[0.18em] uppercase text-electric">Live · pool simulation</span>
       </div>
       <div className="absolute top-5 right-5 font-mono text-[10px] tracking-[0.18em] uppercase text-ash-300">
-        weft.network · view 03
+        wefty.network · view 03
       </div>
       <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
         <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-ash-300">

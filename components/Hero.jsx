@@ -4,6 +4,7 @@ import React from 'react';
 import { EASE, useReveal, useCountUp, Reveal } from './hooks';
 import { SectionLabel, MonoLabel, MagneticButton, Hairline } from './primitives';
 import { Fn } from './decor';
+import EnterAppButton from './EnterAppButton';
 
 // HeroBackground: a soft, slow network of nodes that breathe.
 // Uses canvas + simple spring physics for the "soft spring" feel.
@@ -164,14 +165,15 @@ export default function Hero() {
           <div className="col-span-12 md:col-span-5">
             <Reveal delay={700}>
               <p className="text-[18px] md:text-[20px] leading-[1.45] text-ash-600 max-w-[28ch]">
-                Weft is a data co-op for DTC fashion. Connect your Shopify; every brand that joins makes the forecasts sharper<Fn n={1} /> — for all of us.
+                Wefty is a data co-op for DTC fashion. Connect your Shopify; every brand that joins makes the forecasts sharper<Fn n={1} /> — for all of us.
               </p>
             </Reveal>
           </div>
 
           <div className="col-span-12 md:col-span-7 md:flex md:justify-end md:items-end">
             <Reveal delay={900} className="flex flex-wrap items-center gap-3">
-              <MagneticButton as="a" href="#join">Join the pool</MagneticButton>
+              <EnterAppButton>Probar Wefty</EnterAppButton>
+              <MagneticButton as="a" href="#join" variant="ghost">Join the pool</MagneticButton>
               <MagneticButton as="a" href="#how" variant="ghost">How it works</MagneticButton>
             </Reveal>
           </div>

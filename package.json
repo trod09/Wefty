@@ -2,7 +2,7 @@
   "name": "weft",
   "version": "1.0.0",
   "private": true,
-  "description": "Weft — the data co-op for DTC fashion. Next.js (App Router).",
+  "description": "Wefty — the data co-op for DTC fashion. Next.js (App Router).",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
