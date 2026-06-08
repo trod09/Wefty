@@ -6,7 +6,7 @@
 // (tallas), gráficos de apoyo (color, producto, categoría) y evolución temporal.
 // Estética "dark editorial premium": superficie casi-negra, gradientes sutiles,
 // color solo en los datos. Todo se calcula en el navegador.
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Cell, PieChart, Pie, AreaChart, Area, LabelList, ReferenceLine,
@@ -147,9 +147,29 @@ function Kpi({ label, value, principal = false }) {
 
 const tickMono = { fontSize: 11, fill: TXT2, fontFamily: 'var(--font-jetbrains), monospace' };
 
+// Desplegable de filtro con estilo oscuro de Loop. value vacío = "todos".
+function FilterSelect({ label, value, onChange, options, allLabel }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className={LABEL} style={{ color: TXT2 }}>{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-10 min-w-[170px] rounded-lg border border-[#232428] px-3 text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC] cursor-pointer"
+        style={{ background: '#0E0F12', colorScheme: 'dark' }}
+      >
+        <option value="">{allLabel}</option>
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+}
+
 // ---- Componente principal ----------------------------------------------
 export default function SalesDashboard({ headers, rows }) {
-  const data = useMemo(() => {
+  // 1) Leemos las filas una sola vez (no depende de los filtros). De aquí salen
+  //    los "records" ya parseados y las opciones para los desplegables.
+  const parsed = useMemo(() => {
     const iFecha = findCol(headers, 'fecha', 'date');
     const iProd = findCol(headers, 'producto', 'product');
     const iCat = findCol(headers, 'categoria', 'category');
@@ -172,6 +192,39 @@ export default function SalesDashboard({ headers, rows }) {
         unidades, precio, ingresos,
       };
     });
+
+    // Opciones para los filtros: valores distintos, sin vacíos, ordenados.
+    const categorias = [...new Set(records.map((r) => r.categoria).filter(Boolean))].sort();
+
+    return { records, categorias };
+  }, [headers, rows]);
+
+  // 2) Estado de los filtros. Valor vacío significa "todos / sin filtrar".
+  const [fCategoria, setFCategoria] = useState('');
+
+  // Si cambian los datos cargados (otro CSV o el histórico), limpiamos filtros
+  // para no esconder datos por un filtro que ya no aplica.
+  useEffect(() => {
+    setFCategoria('');
+  }, [headers, rows]);
+
+  // 3) Aplicamos los filtros activos sobre los records.
+  const filtered = useMemo(() => {
+    return parsed.records.filter((r) => {
+      if (fCategoria && r.categoria !== fCategoria) return false;
+      return true;
+    });
+  }, [parsed.records, fCategoria]);
+
+  const hayFiltros = Boolean(fCategoria);
+  const limpiarFiltros = () => {
+    setFCategoria('');
+  };
+
+  // 4) Todo el análisis (métricas, insights, gráficos) se calcula sobre los
+  //    datos YA filtrados, así que reacciona al instante a cada filtro.
+  const data = useMemo(() => {
+    const records = filtered;
 
     // Métricas clave
     const totalUnidades = records.reduce((a, r) => a + r.unidades, 0);
@@ -317,7 +370,7 @@ export default function SalesDashboard({ headers, rows }) {
       insight, avgTalla, tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
       insightColor, insightEstrella, insightConcentracion, insightVariante, insightMuertas,
     };
-  }, [headers, rows]);
+  }, [filtered]);
 
   const {
     kpis, totalUnidades, totalIngresos, insight, avgTalla,
@@ -402,6 +455,41 @@ export default function SalesDashboard({ headers, rows }) {
       className="rounded-2xl border border-[#1b1c20] p-4 md:p-6 space-y-4 md:space-y-5"
       style={{ background: 'radial-gradient(120% 80% at 50% 0%, #0E0F12 0%, #0A0A0B 60%)' }}
     >
+      {/* 0 · FILTROS — recalculan todo el dashboard al instante */}
+      <div
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-[#1b1c20] p-4 md:p-5"
+        style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}
+      >
+        <FilterSelect
+          label="Categoría" value={fCategoria} onChange={setFCategoria}
+          options={parsed.categorias} allLabel="Todas"
+        />
+        {hayFiltros ? (
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="h-10 px-4 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+          >
+            Limpiar filtros
+          </button>
+        ) : null}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div
+          className="rounded-xl border border-[#232428] p-12 md:p-16 text-center"
+          style={{ background: 'linear-gradient(150deg, #16171b 0%, #121316 100%)' }}
+        >
+          <div className={LABEL} style={{ color: EMBER }}>Sin resultados</div>
+          <p className="mt-4 font-serif text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
+            No hay ventas con estos filtros.
+          </p>
+          <p className="mt-3 text-[14px]" style={{ color: TXT2 }}>
+            Prueba a quitar algún filtro o pulsa «Limpiar filtros».
+          </p>
+        </div>
+      ) : (
+        <>
       {/* 1 · TITULAR — insight destacado, a lo ancho, con glow */}
       {insight ? (
         <div
@@ -603,6 +691,8 @@ export default function SalesDashboard({ headers, rows }) {
           </ChartCard>
         ) : null}
       </div>
+        </>
+      )}
     </div>
   );
 }
