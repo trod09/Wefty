@@ -11,7 +11,8 @@
       "Bash(npm audit *)",
       "Bash(pkill -f \"next dev\")",
       "Bash(npm run *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git commit *)"
     ]
   }
 }

@@ -28,14 +28,123 @@ const VENTAS_COLUMNS = {
   ingresos: 'num',
 };
 
-// Normaliza un encabezado para emparejarlo con las columnas de la tabla:
-// minúsculas, sin espacios sobrantes y sin acentos (categoría → categoria).
-function normalizeHeader(h) {
-  return (h || '')
-    .trim()
+// "Traductor de columnas": los 8 campos que el dashboard necesita, con el
+// nombre de su columna en la tabla (dbCol), el tipo de dato y una lista de
+// nombres equivalentes (sinónimos) en español e inglés. Sirve para reconocer
+// CSVs reales aunque sus cabeceras se llamen distinto o vengan en otro orden.
+const CANON_FIELDS = [
+  { key: 'fecha', dbCol: 'fecha', kind: 'date', label: 'fecha',
+    synonyms: ['fecha', 'date', 'dia', 'day', 'order date', 'fecha de pedido', 'fecha de venta', 'fecha pedido', 'created at', 'created', 'paid at', 'processed at', 'fulfilled at', 'order_date'] },
+  { key: 'producto', dbCol: 'producto', kind: 'text', label: 'producto',
+    synonyms: ['producto', 'product', 'item', 'articulo', 'product title', 'product name', 'lineitem name', 'line item', 'nombre', 'nombre producto', 'name', 'title', 'sku'] },
+  { key: 'categoria', dbCol: 'categoria', kind: 'text', label: 'categoría',
+    synonyms: ['categoria', 'category', 'product type', 'type', 'tipo', 'familia', 'collection', 'coleccion', 'product category', 'grupo'] },
+  { key: 'talla', dbCol: 'talla', kind: 'text', label: 'talla',
+    synonyms: ['talla', 'size', 'variant', 'variante', 'variant title', 'tallas', 'option1 value', 'option value', 'talla size'] },
+  { key: 'color', dbCol: 'color', kind: 'text', label: 'color',
+    synonyms: ['color', 'colour', 'colores', 'option2 value', 'color variante'] },
+  { key: 'unidades', dbCol: 'unidades_vendidas', kind: 'int', label: 'unidades',
+    synonyms: ['unidades', 'unidades vendidas', 'unidades_vendidas', 'cantidad', 'quantity', 'qty', 'units', 'units sold', 'cant', 'lineitem quantity', 'net items sold', 'items'] },
+  { key: 'precio', dbCol: 'precio_unitario', kind: 'num', label: 'precio',
+    synonyms: ['precio', 'precio unitario', 'precio_unitario', 'price', 'unit price', 'lineitem price', 'pvp', 'precio venta', 'sale price', 'variant price'] },
+  { key: 'ingresos', dbCol: 'ingresos', kind: 'num', label: 'ingresos',
+    synonyms: ['ingresos', 'revenue', 'importe', 'total', 'total sales', 'ventas', 'sales', 'amount', 'importe total', 'total price', 'gross sales', 'net sales', 'subtotal', 'facturacion', 'facturación'] },
+];
+
+// Normaliza un texto para comparar cabeceras: minúsculas, sin acentos, y con
+// guiones bajos/medios convertidos en espacios y espacios colapsados.
+function normalizeText(s) {
+  return String(s ?? '')
     .toLowerCase()
+    .trim()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[_\-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+}
+
+// Mantiene el nombre antiguo (lo usa el guardado) apuntando al normalizador.
+function normalizeHeader(h) {
+  return normalizeText(h);
+}
+
+// Detecta qué columna del CSV corresponde a cada uno de los 8 campos.
+// Devuelve un objeto { fecha: índice, producto: índice, ... }. Si no encuentra
+// un campo, su índice queda sin definir. Cada columna se asigna a un solo campo.
+// Primero busca coincidencias exactas; luego, coincidencias parciales.
+function detectMapping(headers) {
+  const norm = headers.map(normalizeText);
+  const used = new Array(headers.length).fill(false);
+  const mapping = {};
+
+  // Paso 1 — coincidencia exacta (la cabecera es igual a un sinónimo).
+  for (const f of CANON_FIELDS) {
+    for (let i = 0; i < norm.length; i++) {
+      if (used[i] || !norm[i]) continue;
+      if (f.synonyms.some((s) => normalizeText(s) === norm[i])) {
+        mapping[f.key] = i;
+        used[i] = true;
+        break;
+      }
+    }
+  }
+
+  // Paso 2 — coincidencia parcial (la cabecera contiene un sinónimo o viceversa).
+  for (const f of CANON_FIELDS) {
+    if (mapping[f.key] != null) continue;
+    for (let i = 0; i < norm.length; i++) {
+      if (used[i] || !norm[i]) continue;
+      const h = norm[i];
+      if (f.synonyms.some((s) => {
+        const ns = normalizeText(s);
+        return ns.length >= 3 && (h.includes(ns) || ns.includes(h));
+      })) {
+        mapping[f.key] = i;
+        used[i] = true;
+        break;
+      }
+    }
+  }
+
+  return mapping;
+}
+
+// Convierte un número escrito de cualquier forma a un número de verdad.
+// Tolera símbolos (€, $, %), espacios y separadores de miles, tanto en formato
+// europeo (1.234,56) como anglosajón (1,234.56). Devuelve null si no es válido.
+function parseNumberLoose(raw) {
+  if (raw == null) return null;
+  let s = String(raw).trim().replace(/[^0-9.,-]/g, '');
+  if (s === '') return null;
+  const ld = s.lastIndexOf('.');
+  const lc = s.lastIndexOf(',');
+  if (ld >= 0 && lc >= 0) {
+    // Si hay punto y coma, el último que aparece es el separador decimal.
+    if (lc > ld) s = s.replace(/\./g, '').replace(',', '.'); // 1.234,56 → 1234.56
+    else s = s.replace(/,/g, '');                            // 1,234.56 → 1234.56
+  } else if (lc >= 0) {
+    const p = s.split(',');
+    // Una sola coma: decimal (12,5) salvo que parezca separador de miles (1,234).
+    if (p.length === 2 && p[1].length !== 3) s = p.join('.');
+    else s = p.join('');
+  }
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Normaliza una fecha al formato AAAA-MM-DD que esperan el dashboard y Supabase.
+// Reconoce ISO (2026-06-08, con o sin hora), día/mes/año europeo (08/06/2026) y
+// año/mes/día. Si no reconoce el formato, devuelve el texto tal cual.
+function normalizeDate(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return '';
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const ymd = s.match(/^(\d{4})[/](\d{1,2})[/](\d{1,2})/);
+  if (ymd) return `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
+  const dmy = s.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+  return s;
 }
 
 // Convierte el texto de una celda al tipo que espera la columna.
@@ -44,9 +153,9 @@ function castValue(raw, kind) {
   const value = (raw ?? '').trim();
   if (kind === 'text') return value;
   if (value === '') return null;
-  const cleaned = value.replace(/[^0-9.,-]/g, '').replace(',', '.');
-  const n = kind === 'int' ? parseInt(cleaned, 10) : parseFloat(cleaned);
-  return Number.isNaN(n) ? null : n;
+  const n = parseNumberLoose(value);
+  if (n == null) return null;
+  return kind === 'int' ? Math.round(n) : n;
 }
 
 // Clases de etiqueta mono reutilizadas
@@ -174,16 +283,51 @@ export default function UploadPage() {
 
     try {
       const text = await file.text();
-      // Contamos las líneas no vacías. Asumimos que la primera es el
-      // encabezado (los títulos de las columnas), así que las filas de
-      // datos son el total de líneas menos esa primera.
+      // Quitamos las líneas vacías. La primera es el encabezado; el resto, datos.
       const lines = text.split(/\r\n|\r|\n/).filter((line) => line.trim() !== '');
-      const totalLines = lines.length;
-      const dataRows = Math.max(totalLines - 1, 0);
-      // La primera línea son las cabeceras; el resto, filas de datos.
-      const headers = lines.length ? parseCsvLine(lines[0]) : [];
-      const rows = lines.slice(1).map(parseCsvLine);
-      setResult({ name: file.name, source: 'csv', dataRows, totalLines, headers, rows });
+      const rawHeaders = lines.length ? parseCsvLine(lines[0]) : [];
+      const rawRows = lines.slice(1).map(parseCsvLine);
+
+      // Detectamos qué columna del CSV corresponde a cada campo que necesitamos.
+      const mapping = detectMapping(rawHeaders);
+      const missing = CANON_FIELDS.filter((f) => mapping[f.key] == null);
+
+      if (missing.length > 0) {
+        // Falta algún campo importante: avisamos en claro y no mostramos nada.
+        const faltan = missing.map((f) => f.label).join(', ');
+        setError(
+          `No reconocimos la columna para: ${faltan}. Tu CSV debe incluir esos datos ` +
+          `(admitimos nombres en español o inglés, en cualquier orden y con columnas de más). ` +
+          `Revisa las cabeceras de tu archivo.`
+        );
+        return;
+      }
+
+      // Reorganizamos el CSV a nuestras 8 columnas estándar, en orden fijo.
+      // Así el dashboard y el guardado reciben siempre el mismo formato.
+      const headers = CANON_FIELDS.map((f) => f.dbCol);
+      const rows = rawRows.map((row) =>
+        CANON_FIELDS.map((f) => {
+          const cell = row[mapping[f.key]] ?? '';
+          return f.kind === 'date' ? normalizeDate(cell) : String(cell).trim();
+        })
+      );
+
+      // Guardamos qué columna original detectamos para cada campo (transparencia).
+      const detected = CANON_FIELDS.map((f) => ({
+        label: f.label,
+        from: rawHeaders[mapping[f.key]] || '—',
+      }));
+
+      setResult({
+        name: file.name,
+        source: 'csv',
+        dataRows: rows.length,
+        totalLines: lines.length,
+        headers,
+        rows,
+        detected,
+      });
     } catch {
       setError('No se pudo leer el archivo. Inténtalo de nuevo.');
     }
@@ -420,6 +564,27 @@ export default function UploadPage() {
               <p className="mt-8 font-mono text-[12px] tracking-[0.04em]" style={{ color: '#6BCB9A' }}>
                 Cargado desde tus datos guardados. Sube un CSV nuevo para añadir más.
               </p>
+            ) : null}
+
+            {/* Columnas reconocidas automáticamente — para verificar el emparejamiento */}
+            {result.detected ? (
+              <details className="mt-8 group">
+                <summary className="flex items-center gap-3 cursor-pointer select-none">
+                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+                    Columnas reconocidas automáticamente
+                  </span>
+                  <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: '#5d5e63' }}>›</span>
+                </summary>
+                <div className="mt-4 flex flex-wrap gap-x-10 gap-y-2.5">
+                  {result.detected.map((d) => (
+                    <div key={d.label} className="flex items-baseline gap-2.5">
+                      <span className={MONO} style={{ color: '#8A8A8F' }}>{d.label}</span>
+                      <span className="font-mono text-[11px]" style={{ color: '#5d5e63' }}>←</span>
+                      <span className="text-[13px]" style={{ color: '#b9b9be' }}>{d.from}</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
             ) : null}
 
             {/* Dashboard de análisis */}
