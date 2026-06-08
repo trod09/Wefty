@@ -12,7 +12,8 @@
       "Bash(pkill -f \"next dev\")",
       "Bash(npm run *)",
       "Bash(curl *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(lsof -i :3000 -sTCP:LISTEN -n -P)"
     ]
   }
 }

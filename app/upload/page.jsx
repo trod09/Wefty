@@ -13,6 +13,7 @@ import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import SalesDashboard from '@/components/SalesDashboard';
 import SessionBadge from '@/components/SessionBadge';
+import UploadWelcome from '@/components/UploadWelcome';
 import { supabase } from '@/lib/supabase';
 
 // Columnas de la tabla "ventas" en Supabase y cómo convertir cada valor.
@@ -199,8 +200,10 @@ export default function UploadPage() {
   const [saveMessage, setSaveMessage] = useState('');
   // Guardián de acceso: 'checking' | 'authed' | 'guest'
   const [auth, setAuth] = useState('checking');
-  // ¿Estamos leyendo las ventas guardadas del usuario?
-  const [loadingSaved, setLoadingSaved] = useState(false);
+  // Estado de la lectura de ventas guardadas del usuario:
+  // 'checking' (aún consultando) | 'empty' (no tiene datos → usuario nuevo) |
+  // 'loaded' (sí tiene datos). Decide si mostramos la bienvenida o el panel.
+  const [savedState, setSavedState] = useState('checking');
   const router = useRouter();
 
   // Protege la página: solo se ve con sesión iniciada. Si no hay sesión,
@@ -239,7 +242,7 @@ export default function UploadPage() {
   useEffect(() => {
     if (auth !== 'authed') return;
     let mounted = true;
-    setLoadingSaved(true);
+    setSavedState('checking');
 
     const cols = Object.keys(VENTAS_COLUMNS); // orden fijo de columnas
     supabase
@@ -248,8 +251,11 @@ export default function UploadPage() {
       .order('fecha', { ascending: true })
       .then(({ data, error }) => {
         if (!mounted) return;
-        setLoadingSaved(false);
-        if (error || !data || data.length === 0) return;
+        // Sin filas guardadas (o error al leer): es un usuario nuevo → bienvenida.
+        if (error || !data || data.length === 0) {
+          setSavedState('empty');
+          return;
+        }
 
         // Pasamos las filas (objetos) al formato { headers, rows } del dashboard.
         const rows = data.map((r) => cols.map((c) => (r[c] == null ? '' : String(r[c]))));
@@ -264,6 +270,7 @@ export default function UploadPage() {
             rows,
           }
         );
+        setSavedState('loaded');
       });
 
     return () => {
@@ -409,6 +416,28 @@ export default function UploadPage() {
     );
   }
 
+  // Ya con sesión: mientras leemos si el usuario tiene ventas guardadas,
+  // mostramos un "cargando" mínimo para no parpadear entre bienvenida y panel.
+  if (savedState === 'checking' && !result) {
+    return (
+      <main
+        className="relative min-h-screen flex items-center justify-center text-[#F5F5F7]"
+        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+      >
+        <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
+        <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+          Cargando tu panel…
+        </span>
+      </main>
+    );
+  }
+
+  // Usuario nuevo: sin datos guardados y sin CSV subido todavía → pantalla de
+  // bienvenida que lo guía a subir su primer CSV. Reutiliza el mismo handleFile.
+  if (savedState === 'empty' && !result) {
+    return <UploadWelcome onFile={handleFile} error={error} />;
+  }
+
   return (
     <main
       className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
@@ -505,13 +534,6 @@ export default function UploadPage() {
             </Reveal>
           </div>
         </div>
-
-        {/* Cargando datos guardados (solo si aún no hay nada que mostrar) */}
-        {loadingSaved && !result ? (
-          <p className="mt-16 font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
-            Cargando tus ventas guardadas…
-          </p>
-        ) : null}
 
         {/* Result */}
         {result ? (
