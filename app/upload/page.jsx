@@ -163,10 +163,28 @@ function castValue(raw, kind) {
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 const SURFACE_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
 
-// Separa una línea de CSV en columnas, respetando las comillas dobles
-// (un dato "entre comillas" puede contener comas sin que cuenten como
-// separador, y dos comillas seguidas "" representan una comilla literal).
-function parseCsvLine(line) {
+// Detecta el separador del CSV mirando la primera línea: cuenta comas y
+// puntos y coma FUERA de comillas y gana el que más aparezca. Así los Excel
+// europeos (que exportan con ";" y decimales tipo "129,90") funcionan igual.
+function detectarSeparador(linea) {
+  let comas = 0;
+  let puntoYComas = 0;
+  let inQuotes = false;
+  for (const ch of linea) {
+    if (ch === '"') inQuotes = !inQuotes;
+    else if (!inQuotes) {
+      if (ch === ',') comas += 1;
+      else if (ch === ';') puntoYComas += 1;
+    }
+  }
+  return puntoYComas > comas ? ';' : ',';
+}
+
+// Separa una línea de CSV en columnas usando el separador indicado (coma o
+// punto y coma), respetando las comillas dobles (un dato "entre comillas"
+// puede contener separadores sin que cuenten, y dos comillas seguidas ""
+// representan una comilla literal).
+function parseCsvLine(line, sep = ',') {
   const cells = [];
   let cur = '';
   let inQuotes = false;
@@ -181,7 +199,7 @@ function parseCsvLine(line) {
       }
     } else if (ch === '"') {
       inQuotes = true;
-    } else if (ch === ',') {
+    } else if (ch === sep) {
       cells.push(cur);
       cur = '';
     } else {
@@ -292,8 +310,10 @@ export default function UploadPage() {
       const text = await file.text();
       // Quitamos las líneas vacías. La primera es el encabezado; el resto, datos.
       const lines = text.split(/\r\n|\r|\n/).filter((line) => line.trim() !== '');
-      const rawHeaders = lines.length ? parseCsvLine(lines[0]) : [];
-      const rawRows = lines.slice(1).map(parseCsvLine);
+      // Separador detectado en el encabezado: coma o punto y coma (Excel europeo).
+      const sep = lines.length ? detectarSeparador(lines[0]) : ',';
+      const rawHeaders = lines.length ? parseCsvLine(lines[0], sep) : [];
+      const rawRows = lines.slice(1).map((line) => parseCsvLine(line, sep));
 
       // Detectamos qué columna del CSV corresponde a cada campo que necesitamos.
       const mapping = detectMapping(rawHeaders);

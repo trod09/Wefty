@@ -13,7 +13,8 @@
       "Bash(npm run *)",
       "Bash(curl *)",
       "Bash(git commit *)",
-      "Bash(lsof -i :3000 -sTCP:LISTEN -n -P)"
+      "Bash(lsof -i :3000 -sTCP:LISTEN -n -P)",
+      "Bash(awk -F',' 'NR>1 {u[$2]+=$6; t+=$6; if\\($1<min||min==\"\"\\)min=$1; if\\($1>max\\)max=$1} END {print \"TOTAL:\", t, \"RANGO:\", min, \"->\", max; for \\(p in u\\) print p, u[p]}' ventas_ejemplo_loop.csv)"
     ]
   }
 }
