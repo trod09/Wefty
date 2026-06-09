@@ -51,6 +51,44 @@ Tailwind + a large block of hand-written CSS in **`app/globals.css`** (~270 line
 - Custom colors live in `tailwind.config.js`: `bone`, `cream`, `sand`, `ink`, `electric`, `navy`, `clay`, `ember`, and the `ash.50–700` scale. Use these names rather than raw hex.
 - Fonts are loaded via `next/font/google` in `app/layout.jsx` (Fraunces serif, Inter sans, JetBrains Mono) and exposed as CSS vars (`--font-fraunces`, `--font-inter`, `--font-jetbrains`) wired into Tailwind's `fontFamily` (`font-serif`/`font-sans`/`font-mono`). Do not add `<link>` font tags.
 
+### Producto (Loop) y Motor de stock
+
+Además de la landing (`/`), existe el producto: `/login` (Supabase auth) y `/upload`
+(subida de CSV de ventas + dashboard `components/SalesDashboard.jsx`, estética "dark
+editorial premium"). Los datos viajan como `records` ya parseados: `{fecha, producto,
+categoria, talla, color, unidades, precio, ingresos}`.
+
+El **motor de recomendación de stock** vive en `lib/engine/` (módulos `.mjs` de
+matemática pura, sin React — ejecutables desde Node) y su pantalla es
+`components/StockEngine.jsx` (la UI no calcula nada, solo pinta):
+
+- `datos.mjs` — series semanales por producto/variante/categoría/marca, perfil del
+  dataset y panel de configuración honesta (qué técnica está activa y por qué).
+- `limpieza.mjs` — outliers (>3 MAD sobre mediana móvil, winsorizados) y roturas de
+  stock (ceros sostenidos con hermanas vendiendo → demanda repuesta), con avisos.
+- `forecast.mjs` / `modelos.mjs` / `backtest.mjs` — banco de modelos (ingenuo, EWMA,
+  Holt amortiguado, Holt-Winters, naive estacional, Croston/SBA) y selección por
+  backtest rolling-origin (WAPE, mínimo 3 cortes; robusto = ≥26 semanas y ≥500 uds).
+- `estacionalidad.mjs` — índices semanales por categoría (solo con ≥52 semanas).
+- `bootstrap.mjs` — 500 simulaciones deterministas (semilla fija) remuestreando los
+  errores reales del modelo; percentiles empíricos, riesgos por talla.
+- `economia.mjs` — newsvendor: ratio crítico, margen esperado, riesgos en euros.
+- `ciclo.mjs` — lanzamiento/crecimiento/maduro/declive; en declive ajusta a la baja.
+- `curvas.mjs` — curva de tallas jerárquica con shrinkage n/(n+K), K=200; redondeo
+  por mayor resto (suma exacta); matriz talla×color por IPF.
+- `lanzamiento.mjs` — modo B: análogos con score transparente y curva de lanzamiento.
+- `motor.mjs` — orquestador: `prepararMotor(records)` una vez por dataset,
+  `recomendarReposicion(...)` por producto bajo demanda, `validacionGlobal(...)`.
+
+Reglas del motor: todo determinista; el motor usa SIEMPRE el dataset completo
+(ignora los filtros del dashboard); honestidad configurable (si una técnica no tiene
+datos suficientes se desactiva CON AVISO); cada resultado lleva su explicación
+("¿Por qué esta recomendación?") cuyos números cuadran con el resultado final.
+
+**Pruebas del motor**: `node scripts/test-engine.mjs` (112 casos con resultados
+calculados a mano + extremo a extremo con `ventas_ejemplo_loop.csv`). Ejecútalas
+tras tocar cualquier fichero de `lib/engine/`.
+
 ### Conventions
 
 - Import via the `@/*` alias (e.g. `import App from '@/components/App'`) — configured in `jsconfig.json`.

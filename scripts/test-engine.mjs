@@ -11,7 +11,7 @@ import {
 import { amortiguarOutliers, limpiarProducto } from '../lib/engine/limpieza.mjs';
 import { ajustarEWMA } from '../lib/engine/forecast.mjs';
 import {
-  curvaJerarquica, aplicarUmbralMinimo, repartoPorMayorResto,
+  curvaJerarquica, aplicarUmbralMinimo, repartoPorMayorResto, desgloseTallaColor,
 } from '../lib/engine/curvas.mjs';
 import { prepararMotor, recomendarReposicion, validacionGlobal } from '../lib/engine/motor.mjs';
 import { planCortes, competirModelos, seleccionarModelo } from '../lib/engine/backtest.mjs';
@@ -435,6 +435,31 @@ console.log('\n— Modo B: lanzamiento con análogos (parte 5) —');
     ['MEDIA', 'BAJA'].includes(rLan.confianza.nivel));
 }
 
+console.log('\n— Matriz talla × color con IPF (parte 6) —');
+{
+  // Semilla con estructura clara: la S se vende en rojo, la M en azul.
+  const m = desgloseTallaColor({
+    conjunta: new Map([['S|||Rojo', 10], ['S|||Azul', 1], ['M|||Rojo', 1], ['M|||Azul', 10]]),
+    repartoTallas: [{ talla: 'S', unidades: 6 }, { talla: 'M', unidades: 4 }],
+    pesosColores: new Map([['Rojo', 0.5], ['Azul', 0.5]]),
+  });
+  caso('IPF: cada talla cuadra EXACTA con su total (6 y 4)',
+    m != null && m.filas[0].total === 6 && m.filas[1].total === 4
+    && m.filas.every((f) => f.celdas.reduce((s, x) => s + x, 0) === f.total));
+  caso('IPF: los colores quedan a ±1 de su objetivo (5 y 5) y el total cuadra',
+    m.totalesColor.every((t) => Math.abs(t - 5) <= 1)
+    && m.totalesColor.reduce((s, x) => s + x, 0) === 10);
+  const iR = m.colores.indexOf('Rojo'), iA = m.colores.indexOf('Azul');
+  caso('IPF respeta tus combinaciones reales: la S sale mayormente roja y la M azul',
+    m.filas[0].celdas[iR] > m.filas[0].celdas[iA] && m.filas[1].celdas[iA] > m.filas[1].celdas[iR],
+    JSON.stringify(m.filas));
+  caso('con un solo color no hay matriz (no aporta nada)',
+    desgloseTallaColor({
+      conjunta: new Map(), repartoTallas: [{ talla: 'S', unidades: 5 }],
+      pesosColores: new Map([['Rojo', 1]]),
+    }) === null);
+}
+
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
 {
   const txt = fs.readFileSync(new URL('../ventas_ejemplo_loop.csv', import.meta.url), 'utf8');
@@ -475,6 +500,16 @@ console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
   const val = validacionGlobal(motor);
   caso('validación global honesta: no enseña números con 22 semanas (<26)',
     val.robusto === false && val.global === null);
+  caso('matriz talla×color del Vaquero: cada talla cuadra exacta y el total es el pedido',
+    r.matriz != null && r.matriz.total === r.recomendado
+    && r.matriz.filas.every((f) => f.celdas.reduce((s, x) => s + x, 0) === f.total));
+  caso('explicabilidad total: ≥7 pasos y el pedido final aparece tal cual en el desglose',
+    r.explicacion.length >= 7 && r.explicacion.some((e) => e.detalle.includes(r.recomendado.toLocaleString('es-ES'))),
+    `pasos=${r.explicacion.length}`);
+  const catCsv = [...motor.almacen.categorias.keys()][0];
+  const rLanCsv = recomendarLanzamiento(motor, { categoria: catCsv, precioCentro: 60 });
+  caso('lanzamiento sobre tu CSV: análogos, matriz y explicación presentes',
+    rLanCsv.ok && rLanCsv.analogos.length >= 3 && rLanCsv.matriz != null && rLanCsv.explicacion.length >= 4);
 
   if (r.ok) {
     console.log('\n  Recomendación real (compárala con la web):');

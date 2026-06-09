@@ -8,7 +8,7 @@
 // Importante: el motor usa SIEMPRE el dataset completo, aunque el dashboard
 // tenga filtros activos — pronosticar sobre datos filtrados daría pedidos
 // sesgados. Se indica con una nota sutil cuando hay filtros puestos.
-import React, { useMemo, useState } from 'react';
+import React, { useDeferredValue, useMemo, useState } from 'react';
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
@@ -145,6 +145,87 @@ function PanelConfiguracion({ perfil, configuracion }) {
           })}
         </ul>
       </div>
+    </details>
+  );
+}
+
+// Desglose talla × color (IPF): plegable, cuadra con ambas curvas a la vez.
+function MatrizTallaColor({ matriz }) {
+  if (!matriz) return null;
+  const celda = 'font-mono text-[12px] tnum text-right py-1.5 px-2';
+  return (
+    <details className="mt-4 group">
+      <summary className="flex items-center gap-3 cursor-pointer select-none">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+          Ver desglose talla × color
+        </span>
+        <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+      </summary>
+      <div className="mt-3 acc-body overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-white/10">
+              <th className={`${LABEL} text-left py-1.5 px-2 font-normal`} style={{ color: TXT3 }}>Talla</th>
+              {matriz.colores.map((c) => (
+                <th key={c} className={`${LABEL} text-right py-1.5 px-2 font-normal`} style={{ color: TXT3 }}>{c}</th>
+              ))}
+              <th className={`${LABEL} text-right py-1.5 px-2 font-normal`} style={{ color: TXT2 }}>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {matriz.filas.map((f) => (
+              <tr key={f.talla} className="border-b border-white/[0.06]">
+                <td className="font-mono text-[12px] py-1.5 px-2" style={{ color: TXT }}>{f.talla}</td>
+                {f.celdas.map((u, j) => (
+                  <td key={j} className={celda} style={{ color: u > 0 ? TXT : TXT3 }}>{u}</td>
+                ))}
+                <td className={celda} style={{ color: TXT2 }}>{f.total}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td className={`${LABEL} py-1.5 px-2`} style={{ color: TXT2 }}>Total</td>
+              {matriz.totalesColor.map((t, j) => (
+                <td key={j} className={celda} style={{ color: TXT2 }}>{t}</td>
+              ))}
+              <td className={celda} style={{ color: TXT }}>{matriz.total}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p className="mt-2 text-[11px] leading-snug" style={{ color: TXT3 }}>
+          Ajuste proporcional iterativo (IPF) sobre tus combinaciones reales: cada talla cuadra
+          exacta; los colores quedan a ±1 ud de su curva.
+        </p>
+      </div>
+    </details>
+  );
+}
+
+// "¿Por qué esta recomendación?" — MÓDULO 8: el porqué paso a paso, sin jerga.
+function Explicacion({ pasos }) {
+  if (!pasos?.length) return null;
+  return (
+    <details className="mt-5 group rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+      <summary className="flex items-center gap-3 cursor-pointer select-none">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+          ¿Por qué esta recomendación?
+        </span>
+        <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+      </summary>
+      <ol className="mt-4 space-y-3 acc-body">
+        {pasos.map((p, i) => (
+          <li key={p.titulo} className="flex gap-3.5">
+            <span className="font-mono text-[11px] tnum pt-0.5 flex-shrink-0" style={{ color: '#5d5e63' }}>
+              [{String(i + 1).padStart(2, '0')}]
+            </span>
+            <div>
+              <span className="font-mono text-[11px] tracking-[0.14em] uppercase" style={{ color: CIELO }}>{p.titulo}</span>
+              <p className="mt-1 text-[13px] leading-relaxed" style={{ color: TXT2 }}>{p.detalle}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </details>
   );
 }
@@ -303,16 +384,22 @@ export default function StockEngine({ records, hayFiltros }) {
   // no cuadra, devuelve los errores en claro y sigue en modo nivel de servicio.
   const costesIntentados = costeTxt.trim() !== '' && pvpTxt.trim() !== '';
 
+  // RENDIMIENTO: los inputs se reflejan al instante, pero el recálculo del
+  // motor va con valor diferido (useDeferredValue): si el cálculo tardara, la
+  // interfaz no se congela y se muestra "calculando…".
+  const paramsRepo = useMemo(() => ({
+    producto,
+    leadSemanas: leadEfectivo,
+    nivelServicio: Number(nivel),
+    escenario,
+    costes: costesIntentados ? { coste: costeTxt, pvp: pvpTxt, liquidacionPct: liqTxt } : null,
+  }), [producto, leadEfectivo, nivel, escenario, costesIntentados, costeTxt, pvpTxt, liqTxt]);
+  const paramsRepoDif = useDeferredValue(paramsRepo);
+
   const resultado = useMemo(() => {
-    if (!producto) return null;
-    return recomendarReposicion(motor, {
-      producto,
-      leadSemanas: leadEfectivo,
-      nivelServicio: Number(nivel),
-      escenario,
-      costes: costesIntentados ? { coste: costeTxt, pvp: pvpTxt, liquidacionPct: liqTxt } : null,
-    });
-  }, [motor, producto, leadEfectivo, nivel, escenario, costesIntentados, costeTxt, pvpTxt, liqTxt]);
+    if (!paramsRepoDif.producto) return null;
+    return recomendarReposicion(motor, paramsRepoDif);
+  }, [motor, paramsRepoDif]);
 
   const economiaActiva = Boolean(resultado?.ok && resultado.modoCantidad === 'economia');
 
@@ -325,15 +412,21 @@ export default function StockEngine({ records, hayFiltros }) {
   const lanCategoriaEf = categoriasLan.includes(lanCategoria) ? lanCategoria : (categoriasLan[0] ?? '');
   const lanBandaIdx = Math.min(Math.max(0, Number(lanBanda) || 0), Math.max(0, bandas.length - 1));
 
+  const paramsLan = useMemo(() => ({
+    activa: pestana === 'lanzamiento' && Boolean(lanCategoriaEf),
+    categoria: lanCategoriaEf,
+    precioCentro: bandas[lanBandaIdx]?.centro ?? 0,
+    unidadesTotales: lanTotalTxt.trim() === '' ? null : lanTotalTxt,
+    nColores: lanColoresTxt.trim() === '' ? null : lanColoresTxt,
+  }), [pestana, lanCategoriaEf, bandas, lanBandaIdx, lanTotalTxt, lanColoresTxt]);
+  const paramsLanDif = useDeferredValue(paramsLan);
+
   const resultadoLan = useMemo(() => {
-    if (pestana !== 'lanzamiento' || !lanCategoriaEf) return null;
-    return recomendarLanzamiento(motor, {
-      categoria: lanCategoriaEf,
-      precioCentro: bandas[lanBandaIdx]?.centro ?? 0,
-      unidadesTotales: lanTotalTxt.trim() === '' ? null : lanTotalTxt,
-      nColores: lanColoresTxt.trim() === '' ? null : lanColoresTxt,
-    });
-  }, [motor, pestana, lanCategoriaEf, bandas, lanBandaIdx, lanTotalTxt, lanColoresTxt]);
+    if (!paramsLanDif.activa) return null;
+    return recomendarLanzamiento(motor, paramsLanDif);
+  }, [motor, paramsLanDif]);
+
+  const calculando = paramsRepo !== paramsRepoDif || paramsLan !== paramsLanDif;
 
   async function copiarLanzamiento() {
     if (!resultadoLan?.ok) return;
@@ -398,8 +491,10 @@ export default function StockEngine({ records, hayFiltros }) {
           <span className="w-1.5 h-1.5 rounded-full bg-electric live-dot" />
           Motor de stock · cuánto pedir
         </div>
-        <span className={LABEL} style={{ color: TXT3 }}>
-          {hayFiltros ? 'usa todo tu histórico — ignora los filtros de arriba' : 'calculado sobre todo tu histórico'}
+        <span className={LABEL} style={{ color: calculando ? CIELO : TXT3 }}>
+          {calculando
+            ? 'calculando…'
+            : hayFiltros ? 'usa todo tu histórico — ignora los filtros de arriba' : 'calculado sobre todo tu histórico'}
         </span>
       </div>
 
@@ -596,6 +691,8 @@ export default function StockEngine({ records, hayFiltros }) {
                         </ul>
                       </div>
                     ) : null}
+
+                    <MatrizTallaColor matriz={resultadoLan.matriz} />
                   </div>
                 </div>
 
@@ -612,6 +709,8 @@ export default function StockEngine({ records, hayFiltros }) {
                     </ul>
                   </div>
                 ) : null}
+
+                <Explicacion pasos={resultadoLan.explicacion} />
 
                 <div className="mt-6 flex flex-wrap items-center gap-5">
                   <button
@@ -879,6 +978,8 @@ export default function StockEngine({ records, hayFiltros }) {
                         <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st12)}</span> a 12
                       </p>
                     ) : null}
+
+                    <MatrizTallaColor matriz={resultado.matriz} />
                   </div>
                 </div>
 
@@ -944,6 +1045,8 @@ export default function StockEngine({ records, hayFiltros }) {
                     </ul>
                   </div>
                 ) : null}
+
+                <Explicacion pasos={resultado.explicacion} />
 
                 {/* Acciones + descargo */}
                 <div className="mt-6 flex flex-wrap items-center gap-5">
