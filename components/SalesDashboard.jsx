@@ -11,6 +11,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Cell, PieChart, Pie, AreaChart, Area, LabelList, ReferenceLine,
 } from 'recharts';
+import StockEngine from '@/components/StockEngine';
 
 // ---- Paleta ------------------------------------------------------------
 const ELECTRIC = '#2D6BE4';
@@ -549,7 +550,16 @@ export default function SalesDashboard({ headers, rows }) {
           </div>
         </div>
       ) : null}
+        </>
+      )}
 
+      {/* 1c · MOTOR DE STOCK — recomienda pedidos. Va FUERA del condicional de
+          filtros porque pronostica siempre sobre el dataset completo: filtrar
+          la demanda histórica sesgaría los pedidos. */}
+      <StockEngine records={parsed.records} hayFiltros={hayFiltros} />
+
+      {filtered.length === 0 ? null : (
+        <>
       {/* 2 · SIGNOS VITALES — KPIs con jerarquía (ingresos protagonista) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         {kpis.map((k, i) => <Kpi key={i} {...k} />)}

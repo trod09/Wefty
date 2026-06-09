@@ -1,0 +1,215 @@
+// Pruebas del motor de stock — se ejecutan con:  node scripts/test-engine.mjs
+// Sin librerías: cada "caso" comprueba la matemática del motor contra un
+// resultado calculado a mano. Si todo está bien verás ✓ en verde y "TODO OK".
+// Al final hay una prueba de extremo a extremo con ventas_ejemplo_loop.csv que
+// imprime la recomendación real (los mismos números que debe enseñar la web).
+
+import fs from 'node:fs';
+import {
+  parseDia, lunesDe, fechaISO, construirAlmacen, perfilDelDataset,
+} from '../lib/engine/datos.mjs';
+import { amortiguarOutliers, limpiarProducto } from '../lib/engine/limpieza.mjs';
+import { ajustarEWMA } from '../lib/engine/forecast.mjs';
+import {
+  curvaJerarquica, aplicarUmbralMinimo, repartoPorMayorResto,
+} from '../lib/engine/curvas.mjs';
+import { prepararMotor, recomendarReposicion } from '../lib/engine/motor.mjs';
+
+let fallos = 0;
+function caso(nombre, ok, detalle = '') {
+  if (ok) console.log(`  ✓ ${nombre}`);
+  else { fallos += 1; console.log(`  ✗ ${nombre}${detalle ? ` — ${detalle}` : ''}`); }
+}
+const cerca = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol;
+
+// Genera filas de venta semanales: un registro por semana (lunes consecutivos).
+const LUNES_0 = parseDia('2026-01-05'); // lunes real
+const fechaSemana = (i) => fechaISO(LUNES_0 + i * 7 * 86400000);
+const fila = (i, producto, talla, uds, categoria = 'Test', color = 'Azul') => ({
+  fecha: fechaSemana(i), producto, categoria, talla, color, unidades: uds, precio: 10, ingresos: uds * 10,
+});
+
+console.log('\n— Fechas y semanas —');
+{
+  caso('2026-01-01 (jueves) pertenece a la semana del lunes 2025-12-29',
+    fechaISO(lunesDe(parseDia('2026-01-01'))) === '2025-12-29');
+  caso('2026-06-08 ya es lunes: su semana empieza ese mismo día',
+    fechaISO(lunesDe(parseDia('2026-06-08'))) === '2026-06-08');
+  caso('una fecha imposible (2026-02-31) se rechaza', parseDia('2026-02-31') === null);
+  caso('una fecha sin normalizar (31/05/2026) se rechaza', parseDia('31/05/2026') === null);
+}
+
+console.log('\n— EWMA (ritmo reciente) —');
+{
+  const plana = ajustarEWMA(new Array(16).fill(10));
+  caso('serie constante de 10/sem → tasa exacta 10', cerca(plana.tasa, 10));
+  caso('serie constante → sigma 0 (sin incertidumbre)', cerca(plana.sigma, 0));
+
+  // Semivida: tras 8 semanas vendiendo 20 (viniendo de 10), el nivel debe estar
+  // justo a mitad de camino: 15. Es la definición de "semivida 8 semanas".
+  const salto = ajustarEWMA([...new Array(8).fill(10), ...new Array(8).fill(20)]);
+  caso('semivida 8: tras 8 semanas a 20 (desde 10), la tasa es exactamente 15',
+    cerca(salto.tasa, 15), `tasa=${salto.tasa}`);
+}
+
+console.log('\n— Limpieza: picos atípicos —');
+{
+  const serie = new Array(12).fill(10); serie[6] = 100;
+  const { limpia, flags } = amortiguarOutliers(serie);
+  caso('en 10,10,…,100,…,10 se detecta exactamente 1 pico', flags.length === 1,
+    `flags=${flags.length}`);
+  caso('el pico de 100 se amortigua al umbral 13 (mediana 10 + 3×suelo 1)',
+    flags.length === 1 && flags[0].original === 100 && cerca(limpia[6], 13));
+
+  const normal = amortiguarOutliers([8, 12, 9, 11, 10, 13, 9, 12, 8, 11]);
+  caso('una serie con vaivén normal no genera ningún aviso', normal.flags.length === 0);
+}
+
+console.log('\n— Limpieza: roturas de stock —');
+{
+  // Variante S vende 5/sem 10 semanas y cae a cero 4 semanas; la M sigue a 3/sem.
+  const records = [];
+  for (let i = 0; i < 14; i++) {
+    if (i < 10) records.push(fila(i, 'Camiseta', 'S', 5));
+    records.push(fila(i, 'Camiseta', 'M', 3));
+  }
+  const alm = construirAlmacen(records);
+  const p = alm.productos.get('Camiseta');
+  const { serieLimpia, flags } = limpiarProducto(p, alm.semanas.length);
+  const rot = flags.filter((f) => f.tipo === 'rotura');
+  caso('se detecta 1 tramo de rotura (4 semanas a cero con la hermana vendiendo)',
+    rot.length === 1 && rot[0].semanas === 4, JSON.stringify(rot));
+  caso('el ritmo repuesto es el previo de la variante: 5 uds/sem',
+    rot.length === 1 && cerca(rot[0].tasa, 5));
+  caso('la rotura llega al final del histórico → se marca "abierta ahora"',
+    rot.length === 1 && rot[0].alFinal === true);
+  caso('la semana 11 del producto pasa de 3 (solo M) a 8 uds para el cálculo (3 + 5 repuestas)',
+    cerca(serieLimpia[11], 8));
+  caso('las semanas sin rotura no se tocan: semana 0 sigue en 8 uds (5 + 3)',
+    cerca(serieLimpia[0], 8));
+}
+
+console.log('\n— Curva jerárquica (shrinkage n/(n+K), K=200) —');
+{
+  const jer = curvaJerarquica({
+    tallasProducto: new Map([['S', 100], ['M', 100]]),       // n=200 → peso 0,5 exacto
+    tallasCategoria: new Map([['S', 300], ['M', 100]]),      // n=400 → 2/3 dentro de su tramo
+    tallasGlobal: new Map([['S', 100], ['M', 300]]),
+  });
+  caso('con 200 uds propias el producto pesa exactamente el 50%', cerca(jer.pesos.producto, 0.5));
+  caso('la categoría se queda el 33,3% y la marca el 16,7% restantes',
+    cerca(jer.pesos.categoria, 1 / 3, 1e-9) && cerca(jer.pesos.global, 1 / 6, 1e-9));
+  caso('curva final: S = 54,17% (0,5·50% + 0,333·75% + 0,167·25%)',
+    cerca(jer.curva.get('S'), 0.5416666666666666, 1e-9), `S=${jer.curva.get('S')}`);
+  caso('los pesos de la mezcla suman 1',
+    cerca(jer.pesos.producto + jer.pesos.categoria + jer.pesos.global, 1));
+}
+
+console.log('\n— Umbral del 2% y redondeo por mayor resto —');
+{
+  const dominio = ['XS', 'M', 'L'];
+  const curva = new Map([['XS', 0.01], ['M', 0.59], ['L', 0.40]]);
+  const filtrado = aplicarUmbralMinimo(curva, dominio);
+  caso('una talla con peso 1% queda excluida con aviso',
+    filtrado.excluidas.length === 1 && filtrado.excluidas[0].talla === 'XS');
+  caso('el resto se renormaliza: M pasa de 59% a 59,6%',
+    cerca(filtrado.curva.get('M'), 0.59 / 0.99, 1e-9));
+
+  const reparto = repartoPorMayorResto(
+    new Map([['A', 0.55], ['B', 0.27], ['C', 0.18]]), ['A', 'B', 'C'], 10
+  );
+  const uds = Object.fromEntries(reparto.map((r) => [r.talla, r.unidades]));
+  caso('10 uds al 55/27/18% → 5, 3 y 2 (los restos .7 y .8 ganan la unidad extra)',
+    uds.A === 5 && uds.B === 3 && uds.C === 2, JSON.stringify(uds));
+  caso('la suma cuadra exacta con el total', reparto.reduce((s, r) => s + r.unidades, 0) === 10);
+}
+
+console.log('\n— Casos límite —');
+{
+  // Histórico que acaba en miércoles → la última semana está a medias y no se usa.
+  const recs = [];
+  for (let i = 0; i < 9; i++) recs.push(fila(i, 'Gorro', 'U', 6));
+  recs.push({ ...fila(9, 'Gorro', 'U', 2), fecha: fechaISO(parseDia(fechaSemana(9)) + 2 * 86400000) }); // miércoles
+  const alm = construirAlmacen(recs);
+  caso('datos que acaban en miércoles → semana final marcada como parcial (3 días)',
+    alm.semanaParcial && alm.semanaParcial.dias === 3);
+  const motorG = prepararMotor(recs);
+  const rG = recomendarReposicion(motorG, { producto: 'Gorro' });
+  caso('esa semana parcial queda fuera del ajuste (9 semanas usadas de 10)',
+    rG.ok && rG.semanaParcialExcluida === true && rG.semanasAjuste === 9);
+
+  const motorMini = prepararMotor([fila(0, 'Bufanda', 'U', 5), fila(1, 'Bufanda', 'U', 6)]);
+  const rMini = recomendarReposicion(motorMini, { producto: 'Bufanda' });
+  caso('un producto con 11 uds históricas se bloquea (mínimo 20) con motivo claro',
+    rMini.ok === false && rMini.motivo === 'pocos-datos' && rMini.unidades === 11);
+
+  const rNada = recomendarReposicion(motorMini, { producto: 'No Existe' });
+  caso('un producto inexistente devuelve error amable', rNada.ok === false && rNada.motivo === 'no-encontrado');
+
+  const motorVacio = prepararMotor([]);
+  caso('sin datos: el motor lo dice y no calcula nada',
+    motorVacio.almacen.vacio === true && recomendarReposicion(motorVacio, { producto: 'X' }).motivo === 'sin-datos');
+}
+
+console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
+{
+  const txt = fs.readFileSync(new URL('../ventas_ejemplo_loop.csv', import.meta.url), 'utf8');
+  const lineas = txt.trim().split(/\r?\n/);
+  const records = lineas.slice(1).map((l) => {
+    const c = l.split(',');
+    return {
+      fecha: c[0], producto: c[1], categoria: c[2], talla: c[3], color: c[4],
+      unidades: Number(c[5]), precio: Number(c[6]), ingresos: Number(c[7]),
+    };
+  });
+
+  const motor = prepararMotor(records);
+  const perfil = perfilDelDataset(motor.almacen);
+  caso('perfil: 22 semanas de histórico (1 ene → 31 may 2026)', perfil.semanas === 22,
+    `semanas=${perfil.semanas}`);
+  caso('perfil: 1.690 unidades y 8 productos', perfil.totalUnidades === 1690 && perfil.nProductos === 8);
+  caso('la última semana acaba en domingo → completa, no se excluye nada', perfil.semanaParcial === null);
+
+  const cfg = Object.fromEntries(motor.configuracion.map((f) => [f.nombre, f.estado]));
+  caso('configuración honesta: estacionalidad DESACTIVADA (22 < 52 semanas)',
+    cfg['Holt-Winters y estacionalidad'] === 'desactivada');
+  caso('configuración honesta: backtesting DESACTIVADO (22 < 26 semanas)',
+    cfg['Backtesting (validación contra tu histórico)'] === 'desactivada');
+  caso('EWMA y curva de tallas: ACTIVAS', cfg['Pronóstico EWMA (media móvil exponencial)'] === 'activa'
+    && cfg['Curva de tallas jerárquica'] === 'activa');
+
+  const r = recomendarReposicion(motor, { producto: 'Vaquero Slim', leadSemanas: 4, nivelServicio: 95 });
+  caso('Vaquero Slim (270 uds): la recomendación se calcula', r.ok === true);
+  caso('el reparto por tallas suma EXACTO el total recomendado',
+    r.ok && r.reparto && r.reparto.reduce((s, f) => s + f.unidades, 0) === r.recomendado);
+  caso('los pesos de la mezcla de la curva suman 1',
+    r.ok && cerca(r.pesosCurva.producto + r.pesosCurva.categoria + r.pesosCurva.global, 1));
+  caso('recomendado = esperado + colchón (las cuentas del desglose cuadran)',
+    r.ok && r.esperado + r.colchon === r.recomendado);
+
+  if (r.ok) {
+    console.log('\n  Recomendación real (compárala con la web):');
+    console.log(`    · producto: ${r.producto} (${r.unidadesHistoricas} uds en ${r.semanasAjuste} semanas)`);
+    console.log(`    · ritmo reciente: ${r.tasaSemanal.toFixed(2)} uds/semana · sigma ${r.sigmaSemanal.toFixed(2)}`);
+    console.log(`    · horizonte: ${r.horizonte.total} semanas (${r.horizonte.lead} espera + ${r.horizonte.cobertura} cobertura)`);
+    console.log(`    · esperado ${r.esperado} + colchón ${r.colchon} = PEDIDO ${r.recomendado} uds (servicio ${r.nivelServicio}%)`);
+    console.log(`    · curva: ${Math.round(r.pesosCurva.producto * 100)}% producto + ${Math.round(r.pesosCurva.categoria * 100)}% categoría + ${Math.round(r.pesosCurva.global * 100)}% marca`);
+    console.log(`    · reparto: ${r.reparto.map((f) => `${f.talla}=${f.unidades}`).join('  ')}`);
+    console.log(`    · confianza ${r.confianza.nivel} (${r.confianza.motivo}) · avisos de limpieza: ${r.flags.length}`);
+  }
+
+  // Las 3 combinaciones del selector de servicio: a más servicio, más colchón.
+  const r90 = recomendarReposicion(motor, { producto: 'Vaquero Slim', nivelServicio: 90 });
+  const r99 = recomendarReposicion(motor, { producto: 'Vaquero Slim', nivelServicio: 99 });
+  caso('subir el nivel de servicio nunca baja el pedido (90% ≤ 95% ≤ 99%)',
+    r90.recomendado <= r.recomendado && r.recomendado <= r99.recomendado,
+    `${r90.recomendado} / ${r.recomendado} / ${r99.recomendado}`);
+
+  // Y un lead mayor pide más (8 semanas de espera > 4).
+  const rLargo = recomendarReposicion(motor, { producto: 'Vaquero Slim', leadSemanas: 8 });
+  caso('más semanas de espera del proveedor → pedido mayor', rLargo.recomendado > r.recomendado,
+    `lead8=${rLargo.recomendado} vs lead4=${r.recomendado}`);
+}
+
+console.log(fallos === 0 ? '\nTODO OK — la matemática del motor cuadra.\n' : `\n${fallos} CASO(S) FALLARON.\n`);
+process.exit(fallos === 0 ? 0 : 1);
