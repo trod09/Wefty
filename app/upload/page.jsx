@@ -163,6 +163,10 @@ function castValue(raw, kind) {
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 const SURFACE_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
 
+// Tamaño máximo del CSV: leerlo entero en memoria más allá de esto puede
+// congelar la pestaña. 15 MB dan para varios años de ventas línea a línea.
+const MAX_CSV_MB = 15;
+
 // Detecta el separador del CSV mirando la primera línea: cuenta comas y
 // puntos y coma FUERA de comillas y gana el que más aparezca. Así los Excel
 // europeos (que exportan con ";" y decimales tipo "129,90") funcionan igual.
@@ -305,6 +309,15 @@ export default function UploadPage() {
     // Al cargar un archivo nuevo, reseteamos cualquier mensaje de guardado previo.
     setSaveState('idle');
     setSaveMessage('');
+
+    // Guardia de tamaño: evita congelar el navegador con archivos enormes.
+    if (file.size > MAX_CSV_MB * 1024 * 1024) {
+      setError(
+        `El archivo pesa ${(file.size / 1048576).toLocaleString('es-ES', { maximumFractionDigits: 1 })} MB ` +
+        `y el máximo es ${MAX_CSV_MB} MB. Prueba a exportar un periodo más corto o solo las columnas de ventas.`
+      );
+      return;
+    }
 
     try {
       const text = await file.text();
