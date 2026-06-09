@@ -512,6 +512,46 @@ console.log('\n— Modo B afinado: mes de lanzamiento y posicionamiento de preci
     sinMes.ok && sinMes.ajusteEstacional === null && sinMes.posicionamiento === null);
 }
 
+console.log('\n— Modo B: lanzamiento tipo cápsula —');
+{
+  const recs = [];
+  for (let i = 0; i < 30; i++) {
+    recs.push({ ...fila(i, 'Camiseta Logo', 'M', 6, 'Camisetas', 'Negro'), precio: 30 });
+    recs.push({ ...fila(i, 'Camiseta Rayas', 'L', 4, 'Camisetas', 'Azul'), precio: 32 });
+    recs.push({ ...fila(i, 'Camiseta Lisa', 'S', 5, 'Camisetas', 'Blanco'), precio: 28 });
+  }
+  const motor = prepararMotor(recs);
+
+  const permanente = recomendarLanzamiento(motor, { categoria: 'Camisetas' });
+  const capsula = recomendarLanzamiento(motor, { categoria: 'Camisetas', tipo: 'capsula' });
+  caso('permanente por defecto: 12 semanas de curva, como siempre',
+    permanente.tipo === 'permanente' && permanente.semanasVenta === 12 && permanente.curva.length === 12);
+  caso('cápsula por defecto: 8 semanas de curva y aviso de "agotar"',
+    capsula.tipo === 'capsula' && capsula.semanasVenta === 8 && capsula.curva.length === 8
+    && capsula.avisos.some((a) => a.includes('agotar')), JSON.stringify(capsula.avisos));
+  caso('el total de la cápsula es la banda conservadora: suma de P25 de su curva',
+    capsula.totalEsSugerido
+    && capsula.totalSugerido === Math.max(1, Math.round(capsula.curva.reduce((s, c) => s + c.p25, 0))));
+  caso('cápsula (8 sem, P25) sugiere menos unidades que permanente (12 sem, media)',
+    capsula.totalSugerido < permanente.totalSugerido,
+    `capsula=${capsula.totalSugerido} permanente=${permanente.totalSugerido}`);
+  caso('el reparto por tallas de la cápsula sigue sumando exacto',
+    capsula.reparto && capsula.reparto.reduce((s, f) => s + f.unidades, 0) === capsula.total);
+
+  const corta = recomendarLanzamiento(motor, { categoria: 'Camisetas', tipo: 'capsula', semanasCapsula: '1' });
+  caso('cápsula de 1 semana → se ajusta al mínimo de 3 con aviso',
+    corta.semanasVenta === 3 && corta.curva.length === 3 && corta.avisos.some((a) => a.includes('mínimo')));
+  const larga = recomendarLanzamiento(motor, { categoria: 'Camisetas', tipo: 'capsula', semanasCapsula: 20 });
+  caso('cápsula de 20 semanas → se ajusta al máximo de 12 con aviso',
+    larga.semanasVenta === 12 && larga.avisos.some((a) => a.includes('máximo') || a.includes('12')));
+
+  const capsulaUds = recomendarLanzamiento(motor, { categoria: 'Camisetas', tipo: 'capsula', unidadesTotales: '300' });
+  caso('cápsula con unidades del usuario: manda tu cifra (300) y se mantiene el encuadre de agotar',
+    !capsulaUds.totalEsSugerido && capsulaUds.total === 300 && capsulaUds.avisos.some((a) => a.includes('agotar')));
+  caso('la explicación de la cápsula declara la banda P25 y las semanas',
+    capsula.explicacion.some((e) => e.titulo === 'Cantidad' && e.detalle.includes('P25') && e.detalle.includes('8 semanas')));
+}
+
 console.log('\n— Matriz talla × color con IPF (parte 6) —');
 {
   // Semilla con estructura clara: la S se vende en rojo, la M en azul.

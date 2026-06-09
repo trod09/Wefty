@@ -375,6 +375,8 @@ export default function StockEngine({ records, hayFiltros }) {
   const [lanBanda, setLanBanda] = useState('0');
   const [lanPos, setLanPos] = useState('');       // '' | basico | medio | premium
   const [lanMes, setLanMes] = useState('');       // '' | '1'..'12'
+  const [lanTipo, setLanTipo] = useState('permanente'); // permanente | capsula
+  const [lanSemanasTxt, setLanSemanasTxt] = useState('8');
   const [lanTotalTxt, setLanTotalTxt] = useState('');
   const [lanColoresTxt, setLanColoresTxt] = useState('');
   const [copiadoLan, setCopiadoLan] = useState(false);
@@ -433,9 +435,11 @@ export default function StockEngine({ records, hayFiltros }) {
     precioCentro: bandas[lanBandaIdx]?.centro ?? 0,
     posicionamiento: posiciones && lanPos ? lanPos : null,
     mesLanzamiento: lanMes === '' ? null : Number(lanMes),
+    tipo: lanTipo,
+    semanasCapsula: lanSemanasTxt,
     unidadesTotales: lanTotalTxt.trim() === '' ? null : lanTotalTxt,
     nColores: lanColoresTxt.trim() === '' ? null : lanColoresTxt,
-  }), [pestana, lanCategoriaEf, bandas, lanBandaIdx, posiciones, lanPos, lanMes, lanTotalTxt, lanColoresTxt]);
+  }), [pestana, lanCategoriaEf, bandas, lanBandaIdx, posiciones, lanPos, lanMes, lanTipo, lanSemanasTxt, lanTotalTxt, lanColoresTxt]);
   const paramsLanDif = useDeferredValue(paramsLan);
 
   const resultadoLan = useMemo(() => {
@@ -587,8 +591,33 @@ export default function StockEngine({ records, hayFiltros }) {
               </Campo>
 
               <Campo
+                etiqueta="Tipo de lanzamiento"
+                hint={lanTipo === 'capsula' ? 'Ventana corta sin reposición: el total apunta a agotar (banda P25).' : 'Producto que se queda en catálogo: curva de 12 semanas.'}
+              >
+                <Segmentos
+                  valor={lanTipo}
+                  onChange={setLanTipo}
+                  opciones={[{ v: 'permanente', t: 'Permanente' }, { v: 'capsula', t: 'Cápsula' }]}
+                />
+              </Campo>
+
+              {lanTipo === 'capsula' ? (
+                <Campo etiqueta="Semanas de venta" hint="Entre 3 y 12 (hasta donde llega la referencia de tus análogos).">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" min="3" max="12" step="1"
+                      value={lanSemanasTxt} onChange={(e) => setLanSemanasTxt(e.target.value)}
+                      className={`${INPUT_CLS} w-[90px] tnum`}
+                      style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                    />
+                    <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
+                  </div>
+                </Campo>
+              ) : null}
+
+              <Campo
                 etiqueta="Unidades totales"
-                hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para 12 semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
+                hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para ${resultadoLan.semanasVenta} semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
               >
                 <input
                   type="number" min="1" max="1000000" step="1"
@@ -631,15 +660,27 @@ export default function StockEngine({ records, hayFiltros }) {
                       boxShadow: '0 0 60px -26px rgba(45,107,228,0.7)',
                     }}
                   >
-                    <div className={LABEL} style={{ color: CIELO }}>Pedido de lanzamiento</div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className={LABEL} style={{ color: CIELO }}>Pedido de lanzamiento</span>
+                      {resultadoLan.tipo === 'capsula' ? (
+                        <span
+                          className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.14em] uppercase"
+                          style={{ color: AMBAR, borderColor: `${AMBAR}55`, background: `${AMBAR}14` }}
+                        >
+                          Cápsula · {resultadoLan.semanasVenta} semanas
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="mt-5 font-serif text-[58px] md:text-[68px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
                       {fmtInt(resultadoLan.total)}
                       <span className="font-mono text-[13px] tracking-[0.1em] uppercase ml-3" style={{ color: TXT2 }}>uds</span>
                     </div>
                     <p className="mt-4 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                       {resultadoLan.totalEsSugerido
-                        ? 'Sugerido: lo que vendieron tus análogos en sus primeras 12 semanas, ponderado por parecido.'
-                        : `Tus unidades (la curva sugería ≈${fmtInt(resultadoLan.totalSugerido)} para 12 semanas).`}
+                        ? (resultadoLan.tipo === 'capsula'
+                          ? `Sugerido para agotar en ${resultadoLan.semanasVenta} semanas: banda conservadora (P25) de tus análogos.`
+                          : 'Sugerido: lo que vendieron tus análogos en sus primeras 12 semanas, ponderado por parecido.')
+                        : `Tus unidades (la curva sugería ≈${fmtInt(resultadoLan.totalSugerido)} para ${resultadoLan.semanasVenta} semanas).`}
                     </p>
                     {resultadoLan.ajusteEstacional ? (
                       <p className="mt-3 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: CIELO }}>
