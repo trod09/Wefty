@@ -16,6 +16,8 @@ import {
 import { prepararMotor, recomendarReposicion, validacionGlobal } from '../lib/engine/motor.mjs';
 import { planCortes, competirModelos, seleccionarModelo } from '../lib/engine/backtest.mjs';
 import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
+import { mulberry32, cuantil, simularDemanda } from '../lib/engine/bootstrap.mjs';
+import { validarCostes, ratioCritico, evaluarPedido } from '../lib/engine/economia.mjs';
 
 let fallos = 0;
 function caso(nombre, ok, detalle = '') {
@@ -206,6 +208,57 @@ console.log('\n— Estacionalidad: índices semanales (≥52 semanas) —');
     indicesEstacionales(serie.slice(0, 40), (i) => i % 52) === null);
 }
 
+console.log('\n— Bootstrap determinista (parte 3) —');
+{
+  const r1 = mulberry32(42), r2 = mulberry32(42);
+  caso('misma semilla → misma secuencia (determinismo total)',
+    r1() === r2() && r1() === r2() && r1() === r2());
+
+  const orden = Array.from({ length: 100 }, (_, i) => i + 1); // 1..100
+  caso('cuantiles empíricos: P0=1, P50=50,5, P100=100',
+    cuantil(orden, 0) === 1 && cerca(cuantil(orden, 0.5), 50.5) && cuantil(orden, 1) === 100);
+
+  const sinError = simularDemanda({ path: new Array(8).fill(10), errores: [] });
+  caso('sin errores que remuestrear → todas las simulaciones = 80 exacto (degenerado y avisable)',
+    cerca(sinError.q(0.05), 80) && cerca(sinError.q(0.95), 80) && sinError.nErrores === 0);
+
+  const conError = simularDemanda({ path: new Array(8).fill(10), errores: [-3, -1, 0, 1, 3] });
+  caso('con errores simétricos: la mediana queda cerca de 80 y los percentiles se abren',
+    Math.abs(conError.q(0.5) - 80) < 3 && conError.q(0.9) > conError.q(0.5) && conError.q(0.1) < conError.q(0.5),
+    `P10=${conError.q(0.1).toFixed(1)} P50=${conError.q(0.5).toFixed(1)} P90=${conError.q(0.9).toFixed(1)}`);
+  const repe = simularDemanda({ path: new Array(8).fill(10), errores: [-3, -1, 0, 1, 3] });
+  caso('mismas entradas → mismas 500 simulaciones (reproducible)',
+    conError.q(0.25) === repe.q(0.25) && conError.q(0.75) === repe.q(0.75));
+}
+
+console.log('\n— Economía del pedido: newsvendor (parte 3) —');
+{
+  const rc = ratioCritico({ coste: 40, pvp: 100, liquidacionPct: 30 });
+  caso('PVP 100€, coste 40€, liquidación 30% → ratio crítico 6/7 ≈ 85,7%',
+    cerca(rc.cr, 60 / 70, 1e-9) && cerca(rc.liqValor, 30, 1e-9));
+
+  const ev = evaluarPedido([10, 20], 15, { pvp: 100, coste: 40, liqValor: 30 });
+  caso('a mano: demanda {10,20}, pido 15 → vendo 12,5, sobran 2,5, faltan 2,5',
+    cerca(ev.ventasEsperadas, 12.5) && cerca(ev.sobranteEsperado, 2.5) && cerca(ev.faltanteEsperado, 2.5));
+  caso('…margen esperado = 100·12,5 + 30·2,5 − 40·15 = 725€',
+    cerca(ev.margenEsperado, 725));
+  caso('…pérdida por rebajas 2,5·10 = 25€ y venta perdida 2,5·60 = 150€',
+    cerca(ev.perdidaRebajas, 25) && cerca(ev.ventaPerdida, 150));
+
+  // El cuantil del ratio crítico debe ganar a pedir poco y a pedir demasiado.
+  const sims = Array.from({ length: 500 }, (_, i) => i + 1); // demanda uniforme 1..500
+  const eco = { pvp: 100, coste: 40, liqValor: 30 };
+  const Qopt = Math.round(cuantil(sims, 60 / 70));
+  const mOpt = evaluarPedido(sims, Qopt, eco).margenEsperado;
+  caso('newsvendor: pedir el cuantil crítico da más margen que pedir la mediana o pasarse',
+    mOpt > evaluarPedido(sims, 250, eco).margenEsperado && mOpt > evaluarPedido(sims, 495, eco).margenEsperado,
+    `Qopt=${Qopt}`);
+
+  const malos = validarCostes({ coste: 50, pvp: 40, liquidacionPct: 30 });
+  caso('validación amable: coste ≥ PVP se rechaza con explicación',
+    !malos.ok && malos.errores.length === 1);
+}
+
 console.log('\n— Dataset sintético robusto (60 semanas, 600 uds): backtest de verdad —');
 {
   const records = [];
@@ -226,6 +279,34 @@ console.log('\n— Dataset sintético robusto (60 semanas, 600 uds): backtest de
     v.robusto && v.global && v.global.cortes >= 3 && v.global.wape != null);
   caso('validación por categoría: Polos validado (600 uds ≥ 200)',
     v.filas.length === 1 && v.filas[0].etiqueta === 'Polos' && !v.filas[0].insuficiente);
+
+  // — Parte 3 integrada: escenarios, riesgos, sell-through, economía —
+  const rCons = recomendarReposicion(motor, { producto: 'Polo Piqué', escenario: 'conservador' });
+  const rAgr = recomendarReposicion(motor, { producto: 'Polo Piqué', escenario: 'agresivo' });
+  caso('escenarios: pedido conservador ≤ esperado ≤ agresivo',
+    rCons.recomendado <= r.recomendado && r.recomendado <= rAgr.recomendado,
+    `${rCons.recomendado} / ${r.recomendado} / ${rAgr.recomendado}`);
+  caso('sell-through: vendiendo 10/sem con pedido ≈80 → ~100% vendido a las 8 semanas',
+    r.sellThrough && r.sellThrough.st8 > 0.95);
+  caso('riesgos por talla: presentes y acotados entre 0 y 1',
+    r.reparto.every((f) => f.riesgoRotura >= 0 && f.riesgoRotura <= 1 && f.riesgoRebaja >= 0 && f.riesgoRebaja <= 1));
+  caso('la banda de incertidumbre es coherente: P10 ≤ P50 ≤ P90',
+    r.intervalo.p10 <= r.escenarios.esperado && r.escenarios.esperado <= r.intervalo.p90);
+
+  const rEco = recomendarReposicion(motor, { producto: 'Polo Piqué', costes: { coste: 12, pvp: 30, liquidacionPct: 30 } });
+  caso('con costes válidos entra el modo economía: cuantil crítico (30−12)/(30−9) ≈ 85,7%',
+    rEco.modoCantidad === 'economia' && cerca(rEco.economia.cr, 18 / 21, 1e-9));
+  caso('newsvendor integrado: el óptimo nunca da menos margen que pedir la media histórica',
+    rEco.economia.ventajaVsMedia >= -0.01, `ventaja=${rEco.economia.ventajaVsMedia.toFixed(2)}€`);
+  caso('costes inválidos (coste>PVP) → se ignoran con explicación y sigue el modo servicio',
+    (() => {
+      const rMal = recomendarReposicion(motor, { producto: 'Polo Piqué', costes: { coste: 50, pvp: 30 } });
+      return rMal.modoCantidad === 'servicio' && rMal.erroresCostes?.length === 1;
+    })());
+
+  const rRepe = recomendarReposicion(motor, { producto: 'Polo Piqué' });
+  caso('determinismo: dos llamadas idénticas → exactamente el mismo pedido y reparto',
+    rRepe.recomendado === r.recomendado && JSON.stringify(rRepe.reparto) === JSON.stringify(r.reparto));
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');

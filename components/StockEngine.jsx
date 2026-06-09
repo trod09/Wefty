@@ -28,8 +28,12 @@ const INPUT_CLS = 'h-10 rounded-lg border border-[#232428] px-3 text-[14px] text
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
 const fmt1 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmtEur = (n) => (Number(n) || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 const pct0 = (x) => `${Math.round((Number(x) || 0) * 100)}%`;
 const pct1 = (x) => `${((Number(x) || 0) * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })}%`;
+
+// Color de un riesgo (0..1): tranquilo, atención o alerta.
+const colorRiesgo = (r) => (r > 0.25 ? '#E07A5F' : r > 0.1 ? '#E3C04B' : '#5d5e63');
 
 function Campo({ etiqueta, children, hint }) {
   return (
@@ -37,6 +41,27 @@ function Campo({ etiqueta, children, hint }) {
       <span className={LABEL} style={{ color: TXT2 }}>{etiqueta}</span>
       {children}
       {hint ? <span className="text-[11px] leading-snug max-w-[230px]" style={{ color: TXT3 }}>{hint}</span> : null}
+    </div>
+  );
+}
+
+// Control segmentado (escenarios de demanda).
+function Segmentos({ valor, onChange, opciones }) {
+  return (
+    <div className="inline-flex rounded-lg border border-[#232428] overflow-hidden">
+      {opciones.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => onChange(o.v)}
+          className={`h-10 px-3.5 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors ${
+            valor === o.v ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
+          }`}
+          style={{ background: valor === o.v ? 'rgba(45,107,228,0.28)' : '#0E0F12' }}
+        >
+          {o.t}
+        </button>
+      ))}
     </div>
   );
 }
@@ -174,19 +199,21 @@ function PanelValidacion({ motor }) {
   );
 }
 
-// Tabla del reparto por talla, con barras proporcionales.
+// Tabla del reparto por talla: barras proporcionales + riesgo de rotura (que
+// falte) y de rebaja (que sobre >30%) por talla, desde las simulaciones.
+const GRID_TALLAS = 'grid-cols-[44px_1fr_52px_44px_56px_56px]';
 function TablaTallas({ reparto, recomendado }) {
   const maxPeso = Math.max(...reparto.map((f) => f.peso), 0.0001);
   return (
     <div>
-      <div className="grid grid-cols-[56px_1fr_64px_52px] gap-3 pb-2 border-b border-white/10">
-        {['Talla', '', 'Uds', '%'].map((h, i) => (
+      <div className={`grid ${GRID_TALLAS} gap-2.5 pb-2 border-b border-white/10`}>
+        {['Talla', '', 'Uds', '%', 'Rotura', 'Rebaja'].map((h, i) => (
           <span key={i} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
         ))}
       </div>
       <ul>
         {reparto.map((f) => (
-          <li key={f.talla} className="grid grid-cols-[56px_1fr_64px_52px] gap-3 items-center py-2 border-b border-white/[0.06]">
+          <li key={f.talla} className={`grid ${GRID_TALLAS} gap-2.5 items-center py-2 border-b border-white/[0.06]`}>
             <span className="font-mono text-[13px]" style={{ color: TXT }}>{f.talla}</span>
             <span className="h-[18px] rounded-sm relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <span
@@ -199,14 +226,21 @@ function TablaTallas({ reparto, recomendado }) {
             </span>
             <span className="font-mono text-[14px] tnum text-right" style={{ color: TXT }}>{fmtInt(f.unidades)}</span>
             <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>{pct1(f.peso)}</span>
+            <span className="font-mono text-[11px] tnum text-right" style={{ color: colorRiesgo(f.riesgoRotura) }}>
+              {f.riesgoRotura != null ? pct0(f.riesgoRotura) : '—'}
+            </span>
+            <span className="font-mono text-[11px] tnum text-right" style={{ color: colorRiesgo(f.riesgoRebaja) }}>
+              {f.riesgoRebaja != null ? pct0(f.riesgoRebaja) : '—'}
+            </span>
           </li>
         ))}
       </ul>
-      <div className="grid grid-cols-[56px_1fr_64px_52px] gap-3 items-center pt-2.5">
+      <div className={`grid ${GRID_TALLAS} gap-2.5 items-center pt-2.5`}>
         <span className={LABEL} style={{ color: TXT2 }}>Total</span>
         <span />
         <span className="font-mono text-[14px] tnum text-right" style={{ color: TXT }}>{fmtInt(recomendado)}</span>
         <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>100%</span>
+        <span className="col-span-2" />
       </div>
     </div>
   );
@@ -217,6 +251,11 @@ export default function StockEngine({ records, hayFiltros }) {
   const [prodSel, setProdSel] = useState('');
   const [leadTxt, setLeadTxt] = useState('4');
   const [nivel, setNivel] = useState('95');
+  const [escenario, setEscenario] = useState('esperado');
+  // Economía del pedido (opcional): con coste y PVP el motor optimiza margen.
+  const [costeTxt, setCosteTxt] = useState('');
+  const [pvpTxt, setPvpTxt] = useState('');
+  const [liqTxt, setLiqTxt] = useState('');
   const [copiado, setCopiado] = useState(false);
 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
@@ -229,6 +268,9 @@ export default function StockEngine({ records, hayFiltros }) {
   const leadNum = Number(leadTxt);
   const leadValido = Number.isFinite(leadNum) && leadNum >= LEAD_MIN && leadNum <= LEAD_MAX;
   const leadEfectivo = leadValido ? leadNum : 4;
+  // La economía se intenta cuando hay coste y PVP; el motor valida y, si algo
+  // no cuadra, devuelve los errores en claro y sigue en modo nivel de servicio.
+  const costesIntentados = costeTxt.trim() !== '' && pvpTxt.trim() !== '';
 
   const resultado = useMemo(() => {
     if (!producto) return null;
@@ -236,8 +278,12 @@ export default function StockEngine({ records, hayFiltros }) {
       producto,
       leadSemanas: leadEfectivo,
       nivelServicio: Number(nivel),
+      escenario,
+      costes: costesIntentados ? { coste: costeTxt, pvp: pvpTxt, liquidacionPct: liqTxt } : null,
     });
-  }, [motor, producto, leadEfectivo, nivel]);
+  }, [motor, producto, leadEfectivo, nivel, escenario, costesIntentados, costeTxt, pvpTxt, liqTxt]);
+
+  const economiaActiva = Boolean(resultado?.ok && resultado.modoCantidad === 'economia');
 
   if (motor.almacen.vacio) {
     return (
@@ -253,9 +299,12 @@ export default function StockEngine({ records, hayFiltros }) {
   async function copiarPedido() {
     if (!resultado?.ok) return;
     const r = resultado;
+    const criterio = r.modoCantidad === 'economia'
+      ? `cuantil óptimo ${Math.round(r.economia.cr * 100)}% (maximiza margen)`
+      : `nivel de servicio ${r.nivelServicio}% · escenario ${r.escenario}`;
     const lineas = [
       `Pedido recomendado — ${r.producto}`,
-      `Cubre ${r.horizonte.total} semanas · nivel de servicio ${r.nivelServicio}%`,
+      `Cubre ${r.horizonte.total} semanas · ${criterio}`,
       'Talla\tUnidades',
       ...(r.reparto ? r.reparto.map((f) => `${f.talla}\t${f.unidades}`) : []),
       `Total\t${r.recomendado}`,
@@ -345,20 +394,71 @@ export default function StockEngine({ records, hayFiltros }) {
                 </div>
               </Campo>
 
-              <Campo
-                etiqueta="Nivel de servicio"
-                hint="Probabilidad de no quedarte sin stock en ese horizonte. Más nivel, más colchón."
-              >
-                <select
-                  value={nivel}
-                  onChange={(e) => setNivel(e.target.value)}
-                  className={`${INPUT_CLS} min-w-[210px] cursor-pointer`}
-                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+              {!economiaActiva ? (
+                <Campo
+                  etiqueta="Nivel de servicio"
+                  hint="Probabilidad de no quedarte sin stock en ese horizonte. Más nivel, más colchón."
                 >
-                  <option value="90">90% — ajustado</option>
-                  <option value="95">95% — equilibrado</option>
-                  <option value="99">99% — casi sin roturas</option>
-                </select>
+                  <select
+                    value={nivel}
+                    onChange={(e) => setNivel(e.target.value)}
+                    className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
+                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  >
+                    <option value="90">90% — ajustado</option>
+                    <option value="95">95% — equilibrado</option>
+                    <option value="99">99% — casi sin roturas</option>
+                  </select>
+                </Campo>
+              ) : null}
+
+              {!economiaActiva ? (
+                <Campo
+                  etiqueta="Escenario de demanda"
+                  hint="Conservador planifica con el P25 de las simulaciones; agresivo, con el P75."
+                >
+                  <Segmentos
+                    valor={escenario}
+                    onChange={setEscenario}
+                    opciones={[
+                      { v: 'conservador', t: 'Conserv.' },
+                      { v: 'esperado', t: 'Esperado' },
+                      { v: 'agresivo', t: 'Agresivo' },
+                    ]}
+                  />
+                </Campo>
+              ) : null}
+
+              <Campo
+                etiqueta="Economía del pedido (opcional)"
+                hint={
+                  resultado?.erroresCostes?.length
+                    ? resultado.erroresCostes[0]
+                    : economiaActiva
+                      ? `Cuantil óptimo ${pct0(resultado.economia.cr)}: el pedido maximiza tu margen esperado.`
+                      : 'Con coste y PVP, el pedido pasa a maximizar tu margen (liquidación: 30% del PVP si no la cambias).'
+                }
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min="0" step="0.01" placeholder="coste €"
+                    value={costeTxt} onChange={(e) => setCosteTxt(e.target.value)}
+                    className={`${INPUT_CLS} w-[92px] tnum`}
+                    style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                  />
+                  <input
+                    type="number" min="0" step="0.01" placeholder="PVP €"
+                    value={pvpTxt} onChange={(e) => setPvpTxt(e.target.value)}
+                    className={`${INPUT_CLS} w-[92px] tnum`}
+                    style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                  />
+                  <input
+                    type="number" min="0" max="90" step="1" placeholder="liq. 30%"
+                    value={liqTxt} onChange={(e) => setLiqTxt(e.target.value)}
+                    className={`${INPUT_CLS} w-[92px] tnum`}
+                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  />
+                </div>
               </Campo>
             </div>
 
@@ -399,16 +499,29 @@ export default function StockEngine({ records, hayFiltros }) {
                         El ritmo reciente de este producto es ≈0 uds/semana: con tus datos en la mano,
                         ahora mismo no hace falta reponer.
                       </p>
+                    ) : resultado.modoCantidad === 'economia' ? (
+                      <p className="mt-5 text-[14px] leading-relaxed" style={{ color: TXT2 }}>
+                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda mediana
+                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> extra hasta el{' '}
+                        cuantil óptimo <span style={{ color: TXT }}>{pct0(resultado.economia.cr)}</span> —
+                        el pedido que maximiza tu margen esperado.
+                      </p>
                     ) : (
                       <p className="mt-5 text-[14px] leading-relaxed" style={{ color: TXT2 }}>
-                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda esperada
-                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> de colchón de seguridad
-                        (servicio {resultado.nivelServicio}%).
+                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda{' '}
+                        {resultado.escenario === 'conservador' ? 'conservadora (P25)' : resultado.escenario === 'agresivo' ? 'agresiva (P75)' : 'esperada (P50)'}
+                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> de colchón de
+                        seguridad (servicio {resultado.nivelServicio}%).
                       </p>
                     )}
                     <p className="mt-2 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                       Cubre {resultado.horizonte.total} semanas: {resultado.horizonte.lead} de espera del
                       proveedor + {resultado.horizonte.cobertura} de venta.
+                    </p>
+                    <p className="mt-2 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT3 }}>
+                      banda 80%: {fmtInt(resultado.intervalo.p10)}–{fmtInt(resultado.intervalo.p90)} uds ·
+                      P25 {fmtInt(resultado.escenarios.conservador)} · P50 {fmtInt(resultado.escenarios.esperado)} · P75 {fmtInt(resultado.escenarios.agresivo)}
+                      {' · '}{resultado.bootstrap.simulaciones} simulaciones
                     </p>
 
                     <div className="mt-5 font-mono text-[11px] tracking-[0.04em] space-y-1" style={{ color: TXT2 }}>
@@ -468,16 +581,70 @@ export default function StockEngine({ records, hayFiltros }) {
                         por debajo del mínimo del 2%.
                       </p>
                     ) : null}
+
+                    {resultado.sellThrough ? (
+                      <p className="mt-3 pt-3 border-t border-white/10 font-mono text-[11px] tracking-[0.02em]" style={{ color: TXT2 }}>
+                        sell-through proyectado:{' '}
+                        <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st8)}</span> vendido a 8 semanas ·{' '}
+                        <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st12)}</span> a 12
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
-                {/* Avisos de la limpieza estadística */}
-                {resultado.flags.length > 0 ? (
+                {/* Economía del pedido en euros (cuando hay costes) */}
+                {resultado.economia ? (
+                  <div className="mt-5 rounded-xl border border-[#2a3654] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(45,107,228,0.10) 0%, #121316 70%)' }}>
+                    <div className={LABEL} style={{ color: CIELO }}>Economía del pedido · newsvendor</div>
+                    <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div>
+                        <div className={LABEL} style={{ color: TXT3 }}>Margen esperado</div>
+                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: TXT }}>
+                          {fmtEur(resultado.economia.evaluacion.margenEsperado)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={LABEL} style={{ color: TXT3 }}>vs pedir la media ({fmtInt(resultado.economia.pedidoMedia)} uds)</div>
+                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: resultado.economia.ventajaVsMedia >= 1 ? VERDE : TXT }}>
+                          {resultado.economia.ventajaVsMedia >= 1 ? `+${fmtEur(resultado.economia.ventajaVsMedia)}` : '≈ igual'}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={LABEL} style={{ color: TXT3 }}>Pérdida esperada por rebajas</div>
+                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: AMBAR }}>
+                          {fmtEur(resultado.economia.evaluacion.perdidaRebajas)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className={LABEL} style={{ color: TXT3 }}>Venta perdida esperada</div>
+                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: AMBAR }}>
+                          {fmtEur(resultado.economia.evaluacion.ventaPerdida)}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-[12px] leading-relaxed max-w-[70ch]" style={{ color: TXT2 }}>
+                      Ratio crítico = (PVP − coste) / (PVP − liquidación) = {pct0(resultado.economia.cr)}:
+                      pedir hasta ese percentil de demanda equilibra el coste de quedarte corto (margen
+                      perdido) con el de pasarte (liquidar a {fmtEur(resultado.economia.liqValor)}/ud).
+                      Sobrante esperado: {fmt1(resultado.economia.evaluacion.sobranteEsperado)} uds ·
+                      faltante esperado: {fmt1(resultado.economia.evaluacion.faltanteEsperado)} uds.
+                    </p>
+                  </div>
+                ) : null}
+
+                {/* Avisos: limpieza estadística + notas del cálculo */}
+                {resultado.flags.length > 0 || resultado.avisos.length > 0 ? (
                   <div className="mt-5 rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
                     <div className={LABEL} style={{ color: AMBAR }}>
-                      Avisos de la limpieza estadística · {resultado.flags.length}
+                      Avisos del motor · {resultado.flags.length + resultado.avisos.length}
                     </div>
                     <ul className="mt-3 space-y-2">
+                      {resultado.avisos.map((texto, i) => (
+                        <li key={`a${i}`} className="flex gap-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
+                          <span className="mt-[7px] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: AMBAR }} />
+                          <span>{texto}</span>
+                        </li>
+                      ))}
                       {resultado.flags.map((f, i) => (
                         <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                           <span className="mt-[7px] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: f.tipo === 'rotura' ? EMBER : AMBAR }} />
