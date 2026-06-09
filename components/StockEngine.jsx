@@ -39,6 +39,11 @@ const pct1 = (x) => `${((Number(x) || 0) * 100).toLocaleString('es-ES', { maximu
 // Color de un riesgo (0..1): tranquilo, atención o alerta.
 const colorRiesgo = (r) => (r > 0.25 ? '#E07A5F' : r > 0.1 ? '#E3C04B' : '#5d5e63');
 
+// Seguridad al copiar a hojas de cálculo: una celda que empieza por = + - @
+// podría interpretarse como FÓRMULA al pegarla en Excel/Sheets (inyección CSV).
+// Anteponemos un apóstrofo para que siempre sea texto.
+const textoSeguro = (s) => (/^[=+\-@]/.test(String(s).trim()) ? `'${s}` : String(s));
+
 function Campo({ etiqueta, children, hint }) {
   return (
     <div className="flex flex-col gap-1.5">
@@ -432,11 +437,11 @@ export default function StockEngine({ records, hayFiltros }) {
     if (!resultadoLan?.ok) return;
     const r = resultadoLan;
     const lineas = [
-      `Pedido de lanzamiento — ${r.categoria} (nuevo)`,
+      `Pedido de lanzamiento — ${textoSeguro(r.categoria)} (nuevo)`,
       `Total: ${r.total} uds${r.totalEsSugerido ? ' (sugerido por la curva de análogos)' : ''}`,
       'Talla\tUnidades',
-      ...(r.reparto ? r.reparto.map((f) => `${f.talla}\t${f.unidades}`) : []),
-      ...(r.repartoColores ? ['', 'Color\tUnidades', ...r.repartoColores.map((f) => `${f.talla}\t${f.unidades}`)] : []),
+      ...(r.reparto ? r.reparto.map((f) => `${textoSeguro(f.talla)}\t${f.unidades}`) : []),
+      ...(r.repartoColores ? ['', 'Color\tUnidades', ...r.repartoColores.map((f) => `${textoSeguro(f.talla)}\t${f.unidades}`)] : []),
     ];
     try {
       await navigator.clipboard.writeText(lineas.join('\n'));
@@ -463,10 +468,10 @@ export default function StockEngine({ records, hayFiltros }) {
       ? `cuantil óptimo ${Math.round(r.economia.cr * 100)}% (maximiza margen)`
       : `nivel de servicio ${r.nivelServicio}% · escenario ${r.escenario}`;
     const lineas = [
-      `Pedido recomendado — ${r.producto}`,
+      `Pedido recomendado — ${textoSeguro(r.producto)}`,
       `Cubre ${r.horizonte.total} semanas · ${criterio}`,
       'Talla\tUnidades',
-      ...(r.reparto ? r.reparto.map((f) => `${f.talla}\t${f.unidades}`) : []),
+      ...(r.reparto ? r.reparto.map((f) => `${textoSeguro(f.talla)}\t${f.unidades}`) : []),
       `Total\t${r.recomendado}`,
     ];
     try {
