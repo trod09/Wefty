@@ -547,7 +547,7 @@ export default function StockEngine({ records, hayFiltros }) {
                 hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para 12 semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
               >
                 <input
-                  type="number" min="1" step="1"
+                  type="number" min="1" max="1000000" step="1"
                   placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
                   value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[150px] tnum`}

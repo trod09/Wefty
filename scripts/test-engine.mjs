@@ -423,6 +423,10 @@ console.log('\n— Modo B: lanzamiento con análogos (parte 5) —');
     && rLan500.repartoColores.length === 2
     && rLan500.repartoColores.reduce((s, f) => s + f.unidades, 0) === 500);
 
+  const rLanTope = recomendarLanzamiento(motor, { categoria: 'Camisetas', precioCentro: 30, unidadesTotales: '99999999999' });
+  caso('una cifra absurda de unidades se ajusta al tope de 1.000.000 con aviso',
+    rLanTope.ok && rLanTope.total === 1000000 && rLanTope.avisos.some((a) => a.includes('tope')));
+
   const rLanAbr = recomendarLanzamiento(motor, { categoria: 'Vestidos', precioCentro: 30 });
   caso('categoría sin análogos → aviso claro y se usan los más parecidos del catálogo',
     rLanAbr.ok && rLanAbr.avisos.some((a) => a.includes('Vestidos')));
