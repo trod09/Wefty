@@ -18,6 +18,7 @@ import { planCortes, competirModelos, seleccionarModelo } from '../lib/engine/ba
 import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
 import { mulberry32, cuantil, simularDemanda } from '../lib/engine/bootstrap.mjs';
 import { validarCostes, ratioCritico, evaluarPedido } from '../lib/engine/economia.mjs';
+import { clasificarCiclo, aplicarCiclo, pendienteRelativa } from '../lib/engine/ciclo.mjs';
 
 let fallos = 0;
 function caso(nombre, ok, detalle = '') {
@@ -307,6 +308,74 @@ console.log('\n— Dataset sintético robusto (60 semanas, 600 uds): backtest de
   const rRepe = recomendarReposicion(motor, { producto: 'Polo Piqué' });
   caso('determinismo: dos llamadas idénticas → exactamente el mismo pedido y reparto',
     rRepe.recomendado === r.recomendado && JSON.stringify(rRepe.reparto) === JSON.stringify(r.reparto));
+}
+
+console.log('\n— Ciclo de vida del producto (parte 4) —');
+{
+  caso('pendiente relativa: serie 10,11,…,21 sube ≈+6,5%/semana',
+    cerca(pendienteRelativa(Array.from({ length: 12 }, (_, t) => 10 + t)), 1 / 15.5, 1e-9));
+
+  caso('5 semanas de vida → LANZAMIENTO', clasificarCiclo([3, 5, 6, 7, 8]).fase === 'LANZAMIENTO');
+  caso('20 semanas estables → MADURO', clasificarCiclo(new Array(20).fill(10)).fase === 'MADURO');
+
+  const declive = [...new Array(12).fill(20), ...Array.from({ length: 12 }, (_, t) => 20 - 1.5 * t)];
+  caso('caída sostenida (20 → 3,5 en 12 semanas) → DECLIVE',
+    clasificarCiclo(declive).fase === 'DECLIVE', `fase=${clasificarCiclo(declive).fase}`);
+
+  const crecimiento = [...new Array(12).fill(5), ...Array.from({ length: 12 }, (_, t) => 5 + 1.2 * t)];
+  caso('subida sostenida (5 → 18 en 12 semanas) → CRECIMIENTO',
+    clasificarCiclo(crecimiento).fase === 'CRECIMIENTO', `fase=${clasificarCiclo(crecimiento).fase}`);
+
+  const ciclo = { fase: 'DECLIVE', pendienteRel: -0.05, edad: 24 };
+  const aj = aplicarCiclo(new Array(8).fill(10), ciclo, false);
+  caso('declive con modelo plano: la 1ª semana baja a 9,5 y la 8ª a ≈6,6 (−5% compuesto)',
+    aj.ajustado && cerca(aj.path[0], 9.5, 1e-9) && cerca(aj.path[7], 10 * Math.pow(0.95, 8), 1e-9));
+  caso('…pero con Holt (que ya modela tendencia) NO se ajusta dos veces',
+    aplicarCiclo(new Array(8).fill(10), ciclo, true).ajustado === false);
+  caso('el suelo del 30% impide proyectar a cero: semana 40 ≥ 3 uds',
+    aplicarCiclo(new Array(40).fill(10), ciclo, false).path[39] >= 3);
+}
+
+console.log('\n— Integración del ciclo y la estación en la recomendación —');
+{
+  // Producto en declive con histórico corto (modo regla → EWMA plano → ajusta).
+  const recsDeclive = [];
+  for (let i = 0; i < 20; i++) {
+    const uds = i < 10 ? 18 : Math.max(2, 18 - 2 * (i - 9));
+    recsDeclive.push(fila(i, 'Chaqueta Vieja', 'M', Math.round(uds * 0.6), 'Chaquetas'));
+    recsDeclive.push(fila(i, 'Chaqueta Vieja', 'L', Math.round(uds * 0.4), 'Chaquetas'));
+  }
+  const motorD = prepararMotor(recsDeclive);
+  const rD = recomendarReposicion(motorD, { producto: 'Chaqueta Vieja' });
+  caso('producto cayendo → badge DECLIVE y recomendación ajustada a la baja',
+    rD.ok && rD.ciclo.fase === 'DECLIVE' && rD.ciclo.ajustado === true && rD.ciclo.factorTotal < 1,
+    JSON.stringify({ fase: rD.ciclo.fase, ajustado: rD.ciclo.ajustado }));
+  caso('…con su aviso en claro ("generaría sobrestock")',
+    rD.avisos.some((a) => a.includes('sobrestock')));
+
+  // Producto con 5 semanas de vida → LANZAMIENTO con aviso.
+  const recsNuevo = [];
+  for (let i = 0; i < 5; i++) recsNuevo.push(fila(i, 'Top Nuevo', 'M', 8));
+  const rN = recomendarReposicion(prepararMotor(recsNuevo), { producto: 'Top Nuevo' });
+  caso('producto con 5 semanas → LANZAMIENTO con aviso de histórico corto',
+    rN.ok && rN.ciclo.fase === 'LANZAMIENTO' && rN.avisos.some((a) => a.includes('lanzamiento')));
+
+  // Producto estacional con 110 semanas: el modelo estacional gana y la
+  // recomendación declara que la estación va incluida.
+  const recsEst = [];
+  for (let i = 0; i < 110; i++) {
+    const uds = Math.max(0, Math.round(20 * (1 + 0.5 * Math.sin((2 * Math.PI * i) / 52))));
+    recsEst.push(fila(i, 'Bikini Olas', 'M', uds, 'Baño'));
+    recsEst.push(fila(i, 'Bikini Olas', 'L', Math.max(0, Math.round(uds * 0.5)), 'Baño'));
+  }
+  const motorE = prepararMotor(recsEst);
+  const rE = recomendarReposicion(motorE, { producto: 'Bikini Olas' });
+  caso('110 semanas estacionales → gana un modelo estacional (snaive o HW)',
+    rE.ok && rE.modelo.modo === 'backtest' && ['snaive', 'hw'].includes(rE.modelo.clave),
+    `ganó ${rE.modelo.clave}`);
+  caso('…y la lectura estacional existe y va incluida en el pronóstico',
+    rE.estacionalidad != null && rE.estacionalidad.usadaPorModelo === true
+    && rE.estacionalidad.factorHorizonte > 0);
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');

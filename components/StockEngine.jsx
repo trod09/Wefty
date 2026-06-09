@@ -68,6 +68,27 @@ function Segmentos({ valor, onChange, opciones }) {
 
 const COLOR_CONFIANZA = { ALTA: VERDE, MEDIA: AMBAR, BAJA: EMBER };
 
+// Badge del ciclo de vida (módulo 5): en qué fase está el producto.
+const ESTILO_CICLO = {
+  LANZAMIENTO: { color: CIELO, texto: 'Lanzamiento' },
+  CRECIMIENTO: { color: VERDE, texto: 'Crecimiento' },
+  MADURO: { color: '#9a9aa0', texto: 'Maduro' },
+  DECLIVE: { color: EMBER, texto: 'Declive' },
+};
+function BadgeCiclo({ ciclo }) {
+  const e = ESTILO_CICLO[ciclo.fase] || ESTILO_CICLO.MADURO;
+  return (
+    <span
+      className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.14em] uppercase"
+      style={{ color: e.color, borderColor: `${e.color}55`, background: `${e.color}14` }}
+      title={ciclo.detalle}
+    >
+      <span className="w-1.5 h-1.5 rounded-full" style={{ background: e.color }} />
+      {e.texto}
+    </span>
+  );
+}
+
 function BadgeConfianza({ confianza }) {
   const c = COLOR_CONFIANZA[confianza.nivel] || TXT2;
   return (
@@ -488,7 +509,10 @@ export default function StockEngine({ records, hayFiltros }) {
                       boxShadow: '0 0 60px -26px rgba(45,107,228,0.7)',
                     }}
                   >
-                    <div className={LABEL} style={{ color: CIELO }}>Pedido recomendado</div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className={LABEL} style={{ color: CIELO }}>Pedido recomendado</span>
+                      <BadgeCiclo ciclo={resultado.ciclo} />
+                    </div>
                     <div className="mt-5 font-serif text-[64px] md:text-[78px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
                       {fmtInt(resultado.recomendado)}
                       <span className="font-mono text-[13px] tracking-[0.1em] uppercase ml-3" style={{ color: TXT2 }}>uds</span>
@@ -530,6 +554,20 @@ export default function StockEngine({ records, hayFiltros }) {
                         {resultado.semanasAjuste} semanas analizadas · {fmtInt(resultado.unidadesHistoricas)} uds históricas
                         {resultado.semanaParcialExcluida ? ' · última semana parcial excluida' : ''}
                       </div>
+                      <div>
+                        ciclo de vida: <span style={{ color: TXT }}>{resultado.ciclo.fase.toLowerCase()}</span> — {resultado.ciclo.detalle}
+                      </div>
+                      {resultado.estacionalidad ? (
+                        <div>
+                          estación: próximas {resultado.horizonte.total} semanas ≈{' '}
+                          <span style={{ color: TXT }}>
+                            {resultado.estacionalidad.factorHorizonte >= 1 ? '+' : '−'}
+                            {Math.abs(Math.round((resultado.estacionalidad.factorHorizonte - 1) * 100))}%
+                          </span>{' '}
+                          vs media anual
+                          {resultado.estacionalidad.usadaPorModelo ? ' · ya incluida en el pronóstico' : ' · informativa (el modelo ganador es plano)'}
+                        </div>
+                      ) : null}
                     </div>
 
                     {/* La credencial del motor: qué modelo ganó y contra qué se midió */}
