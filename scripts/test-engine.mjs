@@ -19,7 +19,9 @@ import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
 import { mulberry32, cuantil, simularDemanda } from '../lib/engine/bootstrap.mjs';
 import { validarCostes, ratioCritico, evaluarPedido } from '../lib/engine/economia.mjs';
 import { clasificarCiclo, aplicarCiclo, pendienteRelativa } from '../lib/engine/ciclo.mjs';
-import { bandasDePrecio, buscarAnalogos, recomendarLanzamiento } from '../lib/engine/lanzamiento.mjs';
+import {
+  bandasDePrecio, buscarAnalogos, recomendarLanzamiento, posicionamientosDePrecio,
+} from '../lib/engine/lanzamiento.mjs';
 
 let fallos = 0;
 function caso(nombre, ok, detalle = '') {
@@ -437,6 +439,77 @@ console.log('\n— Modo B: lanzamiento con análogos (parte 5) —');
 
   caso('la confianza de un lanzamiento nunca pasa de MEDIA (es una apuesta)',
     ['MEDIA', 'BAJA'].includes(rLan.confianza.nivel));
+}
+
+console.log('\n— Modo B afinado: mes de lanzamiento y posicionamiento de precio —');
+{
+  // Catálogo con 3 camisetas a 20/30/40 € y nacimientos en meses distintos.
+  // LUNES_0 es 2026-01-05: la semana 0 cae en enero (invierno).
+  const recs = [];
+  for (let i = 0; i < 30; i++) recs.push({ ...fila(i, 'Tee Base', 'M', 4, 'Camisetas', 'Negro'), precio: 20 });
+  for (let i = 4; i < 30; i++) recs.push({ ...fila(i, 'Tee Media', 'M', 4, 'Camisetas', 'Blanco'), precio: 30 }); // nace en feb (invierno)
+  for (let i = 14; i < 30; i++) recs.push({ ...fila(i, 'Tee Cara', 'M', 5, 'Camisetas', 'Azul'), precio: 40 });  // nace en abr (primavera)
+  const motor = prepararMotor(recs);
+
+  const pos = posicionamientosDePrecio(motor, 'Camisetas');
+  caso('terciles de la categoría: Básico ≤20 €, Medio 20–30 €, Premium >30 €',
+    pos != null && cerca(pos.limites.t1, 20) && cerca(pos.limites.t2, 30)
+    && pos.opciones.map((o) => o.clave).join(',') === 'basico,medio,premium');
+
+  const anaPremium = buscarAnalogos(motor, { categoria: 'Camisetas', posicionamiento: { objetivo: 2, limites: pos.limites } });
+  const ptsPorNombre = Object.fromEntries(anaPremium.map((a) => [a.nombre, a.puntos.precio]));
+  caso('posicionamiento Premium: mismo tercil +30, vecino +15, lejano 0',
+    ptsPorNombre['Tee Cara'] === 30 && ptsPorNombre['Tee Media'] === 15 && ptsPorNombre['Tee Base'] === 0,
+    JSON.stringify(ptsPorNombre));
+
+  caso('una categoría con precios casi idénticos no da terciles (fallback honesto)',
+    posicionamientosDePrecio(prepararMotor([
+      ...Array.from({ length: 25 }, (_, i) => ({ ...fila(i, 'A', 'M', 2, 'Polos'), precio: 30 })),
+      ...Array.from({ length: 25 }, (_, i) => ({ ...fila(i, 'B', 'M', 2, 'Polos'), precio: 30 })),
+      ...Array.from({ length: 25 }, (_, i) => ({ ...fila(i, 'C', 'M', 2, 'Polos'), precio: 30.4 })),
+    ]), 'Polos') === null);
+
+  // Mes de lanzamiento → estaciones: feb (invierno) vs abr (primavera).
+  const anaEnero = buscarAnalogos(motor, { categoria: 'Camisetas', mesLanzamiento: 1 }); // enero = invierno
+  const estPorNombre = Object.fromEntries(anaEnero.map((a) => [a.nombre, a.puntos.estacion]));
+  caso('mes objetivo enero: análogo nacido en invierno +20, en primavera (vecina) +10, sin nacimiento visible 0',
+    estPorNombre['Tee Media'] === 20 && estPorNombre['Tee Cara'] === 10 && estPorNombre['Tee Base'] === 0,
+    JSON.stringify(estPorNombre));
+  const anaJulio = buscarAnalogos(motor, { categoria: 'Camisetas', mesLanzamiento: 7 }); // verano: opuesta a invierno
+  caso('mes objetivo julio: el análogo de invierno puntúa 0 (estación opuesta)',
+    anaJulio.find((a) => a.nombre === 'Tee Media').puntos.estacion === 0);
+
+  // Sin estacionalidad activa (<52 semanas), el mes avisa y NO toca la curva.
+  const sinMes = recomendarLanzamiento(motor, { categoria: 'Camisetas' });
+  const conMes = recomendarLanzamiento(motor, { categoria: 'Camisetas', mesLanzamiento: 10 });
+  caso('con 30 semanas: el mes solo afina análogos — aviso honesto y curva intacta',
+    conMes.ok && conMes.ajusteEstacional === null
+    && conMes.avisos.some((a) => a.includes('52'))
+    && conMes.totalSugerido === sinMes.totalSugerido);
+
+  // Con 110 semanas estacionales: lanzar en el pico pide más que en el valle.
+  // Pico de la senoidal en la semana 13 desde el 5 ene → ~abril; valle ~octubre.
+  const recsEst = [];
+  for (let i = 0; i < 110; i++) {
+    const uds = Math.max(0, Math.round(20 * (1 + 0.5 * Math.sin((2 * Math.PI * i) / 52))));
+    recsEst.push(fila(i, 'Bikini Olas', 'M', uds, 'Baño'));
+    recsEst.push(fila(i, 'Bikini Sol', 'L', Math.max(0, Math.round(uds * 0.6)), 'Baño'));
+  }
+  const motorE = prepararMotor(recsEst);
+  const enPico = recomendarLanzamiento(motorE, { categoria: 'Baño', mesLanzamiento: 4 });
+  const enValle = recomendarLanzamiento(motorE, { categoria: 'Baño', mesLanzamiento: 10 });
+  caso('con estacionalidad activa: lanzar en el mes pico sugiere más unidades que en el valle',
+    enPico.ok && enValle.ok && enPico.totalSugerido > enValle.totalSugerido,
+    `pico=${enPico.totalSugerido} valle=${enValle.totalSugerido}`);
+  caso('…y el efecto se declara con su factor (pico >1, valle <1)',
+    enPico.ajusteEstacional.factorMedio > 1 && enValle.ajusteEstacional.factorMedio < 1,
+    `factores: ${enPico.ajusteEstacional.factorMedio.toFixed(2)} / ${enValle.ajusteEstacional.factorMedio.toFixed(2)}`);
+  caso('…y la explicación menciona la estacionalidad del mes elegido',
+    enPico.explicacion.some((e) => e.detalle.includes('abril') && e.detalle.includes('estacionalidad')));
+
+  // Sin tocar los inputs nuevos, el resultado es el de siempre (sin avisos nuevos).
+  caso('sin mes ni posicionamiento: ni ajuste estacional ni avisos nuevos',
+    sinMes.ok && sinMes.ajusteEstacional === null && sinMes.posicionamiento === null);
 }
 
 console.log('\n— Matriz talla × color con IPF (parte 6) —');

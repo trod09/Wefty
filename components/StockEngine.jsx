@@ -16,7 +16,9 @@ import {
   prepararMotor, recomendarReposicion, productosOrdenados, validacionGlobal,
   LEAD_MIN, LEAD_MAX,
 } from '@/lib/engine/motor.mjs';
-import { bandasDePrecio, recomendarLanzamiento } from '@/lib/engine/lanzamiento.mjs';
+import {
+  bandasDePrecio, recomendarLanzamiento, posicionamientosDePrecio, MESES_LANZAMIENTO,
+} from '@/lib/engine/lanzamiento.mjs';
 import { fmtFecha } from '@/lib/engine/datos.mjs';
 
 const EMBER = '#E07A5F';
@@ -371,6 +373,8 @@ export default function StockEngine({ records, hayFiltros }) {
   // Modo B — lanzamiento de producto nuevo.
   const [lanCategoria, setLanCategoria] = useState('');
   const [lanBanda, setLanBanda] = useState('0');
+  const [lanPos, setLanPos] = useState('');       // '' | basico | medio | premium
+  const [lanMes, setLanMes] = useState('');       // '' | '1'..'12'
   const [lanTotalTxt, setLanTotalTxt] = useState('');
   const [lanColoresTxt, setLanColoresTxt] = useState('');
   const [copiadoLan, setCopiadoLan] = useState(false);
@@ -416,14 +420,22 @@ export default function StockEngine({ records, hayFiltros }) {
   const bandas = useMemo(() => bandasDePrecio(motor), [motor]);
   const lanCategoriaEf = categoriasLan.includes(lanCategoria) ? lanCategoria : (categoriasLan[0] ?? '');
   const lanBandaIdx = Math.min(Math.max(0, Number(lanBanda) || 0), Math.max(0, bandas.length - 1));
+  // Posicionamiento por terciles de la categoría elegida; null si la categoría
+  // no da para terciles (entonces se enseña la banda general, con nota honesta).
+  const posiciones = useMemo(
+    () => (lanCategoriaEf ? posicionamientosDePrecio(motor, lanCategoriaEf) : null),
+    [motor, lanCategoriaEf]
+  );
 
   const paramsLan = useMemo(() => ({
     activa: pestana === 'lanzamiento' && Boolean(lanCategoriaEf),
     categoria: lanCategoriaEf,
     precioCentro: bandas[lanBandaIdx]?.centro ?? 0,
+    posicionamiento: posiciones && lanPos ? lanPos : null,
+    mesLanzamiento: lanMes === '' ? null : Number(lanMes),
     unidadesTotales: lanTotalTxt.trim() === '' ? null : lanTotalTxt,
     nColores: lanColoresTxt.trim() === '' ? null : lanColoresTxt,
-  }), [pestana, lanCategoriaEf, bandas, lanBandaIdx, lanTotalTxt, lanColoresTxt]);
+  }), [pestana, lanCategoriaEf, bandas, lanBandaIdx, posiciones, lanPos, lanMes, lanTotalTxt, lanColoresTxt]);
   const paramsLanDif = useDeferredValue(paramsLan);
 
   const resultadoLan = useMemo(() => {
@@ -529,8 +541,23 @@ export default function StockEngine({ records, hayFiltros }) {
                 </select>
               </Campo>
 
-              {bandas.length > 1 ? (
-                <Campo etiqueta="Banda de precio" hint="Derivada de los precios de tu propio catálogo.">
+              {posiciones ? (
+                <Campo
+                  etiqueta="Posicionamiento de precio"
+                  hint={lanPos ? 'Análogos del mismo tercil +30, tercil vecino +15.' : 'Opcional: terciles de los precios reales de esta categoría.'}
+                >
+                  <select
+                    value={lanPos}
+                    onChange={(e) => setLanPos(e.target.value)}
+                    className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
+                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  >
+                    <option value="">Sin preferencia</option>
+                    {posiciones.opciones.map((o) => <option key={o.clave} value={o.clave}>{o.etiqueta}</option>)}
+                  </select>
+                </Campo>
+              ) : bandas.length > 1 ? (
+                <Campo etiqueta="Banda de precio" hint="Esta categoría no da para terciles (precios escasos o casi idénticos) — banda general del catálogo.">
                   <select
                     value={String(lanBandaIdx)}
                     onChange={(e) => setLanBanda(e.target.value)}
@@ -541,6 +568,23 @@ export default function StockEngine({ records, hayFiltros }) {
                   </select>
                 </Campo>
               ) : null}
+
+              <Campo
+                etiqueta="Mes de lanzamiento"
+                hint={lanMes === '' ? 'Opcional: cruza con la estacionalidad y afina los análogos.' : 'Análogos de la misma estación +20, estación vecina +10.'}
+              >
+                <select
+                  value={lanMes}
+                  onChange={(e) => setLanMes(e.target.value)}
+                  className={`${INPUT_CLS} min-w-[160px] cursor-pointer`}
+                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                >
+                  <option value="">Sin definir</option>
+                  {MESES_LANZAMIENTO.map((m, i) => (
+                    <option key={m} value={String(i + 1)}>{m.charAt(0).toUpperCase() + m.slice(1)}</option>
+                  ))}
+                </select>
+              </Campo>
 
               <Campo
                 etiqueta="Unidades totales"
@@ -597,6 +641,14 @@ export default function StockEngine({ records, hayFiltros }) {
                         ? 'Sugerido: lo que vendieron tus análogos en sus primeras 12 semanas, ponderado por parecido.'
                         : `Tus unidades (la curva sugería ≈${fmtInt(resultadoLan.totalSugerido)} para 12 semanas).`}
                     </p>
+                    {resultadoLan.ajusteEstacional ? (
+                      <p className="mt-3 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: CIELO }}>
+                        lanzamiento en {resultadoLan.ajusteEstacional.nombreMes}: demanda inicial{' '}
+                        {resultadoLan.ajusteEstacional.factorMedio >= 1 ? '+' : '−'}
+                        {Math.abs(Math.round((resultadoLan.ajusteEstacional.factorMedio - 1) * 100))}%{' '}
+                        por estacionalidad de {resultadoLan.categoria}
+                      </p>
+                    ) : null}
                     {resultadoLan.pesosCurva ? (
                       <p className="mt-3 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT3 }}>
                         curva de tallas: {pct0(resultadoLan.pesosCurva.producto)} análogos
