@@ -19,6 +19,7 @@ import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
 import { mulberry32, cuantil, simularDemanda } from '../lib/engine/bootstrap.mjs';
 import { validarCostes, ratioCritico, evaluarPedido } from '../lib/engine/economia.mjs';
 import { clasificarCiclo, aplicarCiclo, pendienteRelativa } from '../lib/engine/ciclo.mjs';
+import { bandasDePrecio, buscarAnalogos, recomendarLanzamiento } from '../lib/engine/lanzamiento.mjs';
 
 let fallos = 0;
 function caso(nombre, ok, detalle = '') {
@@ -376,6 +377,62 @@ console.log('\n— Integración del ciclo y la estación en la recomendación �
   caso('…y la lectura estacional existe y va incluida en el pronóstico',
     rE.estacionalidad != null && rE.estacionalidad.usadaPorModelo === true
     && rE.estacionalidad.factorHorizonte > 0);
+}
+
+console.log('\n— Modo B: lanzamiento con análogos (parte 5) —');
+{
+  // Catálogo sintético: 2 camisetas consolidadas (30 €), 1 abrigo caro (150 €)
+  // y 1 camiseta nueva lanzada a mitad del histórico.
+  const recs = [];
+  for (let i = 0; i < 30; i++) {
+    recs.push({ ...fila(i, 'Camiseta Logo', 'M', 6, 'Camisetas', 'Negro'), precio: 30 });
+    recs.push({ ...fila(i, 'Camiseta Logo', 'L', 4, 'Camisetas', 'Blanco'), precio: 30 });
+    recs.push({ ...fila(i, 'Camiseta Rayas', 'M', 5, 'Camisetas', 'Azul'), precio: 32 });
+    recs.push({ ...fila(i, 'Abrigo Pesado', 'M', 3, 'Abrigos', 'Negro'), precio: 150 });
+  }
+  for (let i = 20; i < 30; i++) recs.push({ ...fila(i, 'Camiseta Nueva', 'S', 4, 'Camisetas', 'Rosa'), precio: 28 });
+  const motor = prepararMotor(recs);
+
+  const bandas = bandasDePrecio(motor);
+  caso('las bandas de precio salen de TU catálogo (terciles, 3 bandas)', bandas.length === 3,
+    JSON.stringify(bandas.map((b) => b.etiqueta)));
+
+  const analogos = buscarAnalogos(motor, { categoria: 'Camisetas', precioCentro: 30 });
+  caso('los análogos de una camiseta de 30 € son las camisetas, no el abrigo',
+    analogos.length >= 3 && analogos[0].categoria === 'Camisetas'
+    && analogos[analogos.length - 1].nombre === 'Abrigo Pesado',
+    JSON.stringify(analogos.map((a) => `${a.nombre}:${a.score}`)));
+  caso('el score se desglosa en abierto (categoría 50 + precio + estación)',
+    analogos[0].puntos.categoria === 50 && analogos[0].score >= 50);
+  caso('un análogo nacido DENTRO del histórico puntúa estación; uno que ya vendía el día 1, no',
+    analogos.some((a) => a.estacionVisible) && analogos.some((a) => !a.estacionVisible));
+
+  const rLan = recomendarLanzamiento(motor, { categoria: 'Camisetas', precioCentro: 30 });
+  caso('el lanzamiento propone curva de 12 semanas con banda P25–P75 coherente',
+    rLan.ok && rLan.curva.length === 12 && rLan.curva.every((c) => c.p25 <= c.media + 1e-9 && c.media <= c.p75 + 1e-9));
+  caso('total sugerido = suma de la curva media (12 semanas)',
+    rLan.totalEsSugerido && Math.abs(rLan.totalSugerido - rLan.curva.reduce((s, c) => s + c.media, 0)) < 1);
+  caso('el reparto por talla del lanzamiento suma EXACTO el total',
+    rLan.reparto && rLan.reparto.reduce((s, f) => s + f.unidades, 0) === rLan.total);
+  caso('reparto por color disponible y suma exacta',
+    rLan.repartoColores && rLan.repartoColores.reduce((s, f) => s + f.unidades, 0) === rLan.total);
+
+  const rLan500 = recomendarLanzamiento(motor, { categoria: 'Camisetas', precioCentro: 30, unidadesTotales: '500', nColores: '2' });
+  caso('con 500 uds y 2 colores: reparte 500 exactas entre los 2 colores top',
+    rLan500.ok && !rLan500.totalEsSugerido && rLan500.total === 500
+    && rLan500.repartoColores.length === 2
+    && rLan500.repartoColores.reduce((s, f) => s + f.unidades, 0) === 500);
+
+  const rLanAbr = recomendarLanzamiento(motor, { categoria: 'Vestidos', precioCentro: 30 });
+  caso('categoría sin análogos → aviso claro y se usan los más parecidos del catálogo',
+    rLanAbr.ok && rLanAbr.avisos.some((a) => a.includes('Vestidos')));
+
+  const rSin = recomendarLanzamiento(prepararMotor([fila(0, 'Solo', 'M', 3)]), { categoria: 'X', precioCentro: 0 });
+  caso('catálogo sin productos con histórico mínimo → mensaje de la red de Wefty',
+    rSin.ok === false && rSin.motivo === 'sin-analogos');
+
+  caso('la confianza de un lanzamiento nunca pasa de MEDIA (es una apuesta)',
+    ['MEDIA', 'BAJA'].includes(rLan.confianza.nivel));
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');

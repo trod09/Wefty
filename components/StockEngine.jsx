@@ -10,9 +10,13 @@
 // sesgados. Se indica con una nota sutil cuando hay filtros puestos.
 import React, { useMemo, useState } from 'react';
 import {
+  ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+} from 'recharts';
+import {
   prepararMotor, recomendarReposicion, productosOrdenados, validacionGlobal,
   LEAD_MIN, LEAD_MAX,
 } from '@/lib/engine/motor.mjs';
+import { bandasDePrecio, recomendarLanzamiento } from '@/lib/engine/lanzamiento.mjs';
 import { fmtFecha } from '@/lib/engine/datos.mjs';
 
 const EMBER = '#E07A5F';
@@ -278,6 +282,12 @@ export default function StockEngine({ records, hayFiltros }) {
   const [pvpTxt, setPvpTxt] = useState('');
   const [liqTxt, setLiqTxt] = useState('');
   const [copiado, setCopiado] = useState(false);
+  // Modo B — lanzamiento de producto nuevo.
+  const [lanCategoria, setLanCategoria] = useState('');
+  const [lanBanda, setLanBanda] = useState('0');
+  const [lanTotalTxt, setLanTotalTxt] = useState('');
+  const [lanColoresTxt, setLanColoresTxt] = useState('');
+  const [copiadoLan, setCopiadoLan] = useState(false);
 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
   // catálogo, operaciones baratas). El pronóstico se calcula solo para el
@@ -305,6 +315,42 @@ export default function StockEngine({ records, hayFiltros }) {
   }, [motor, producto, leadEfectivo, nivel, escenario, costesIntentados, costeTxt, pvpTxt, liqTxt]);
 
   const economiaActiva = Boolean(resultado?.ok && resultado.modoCantidad === 'economia');
+
+  // — Modo B: lanzamiento. Solo se calcula con la pestaña abierta (bajo demanda). —
+  const categoriasLan = useMemo(
+    () => [...motor.almacen.categorias.keys()].sort((a, b) => a.localeCompare(b, 'es')),
+    [motor]
+  );
+  const bandas = useMemo(() => bandasDePrecio(motor), [motor]);
+  const lanCategoriaEf = categoriasLan.includes(lanCategoria) ? lanCategoria : (categoriasLan[0] ?? '');
+  const lanBandaIdx = Math.min(Math.max(0, Number(lanBanda) || 0), Math.max(0, bandas.length - 1));
+
+  const resultadoLan = useMemo(() => {
+    if (pestana !== 'lanzamiento' || !lanCategoriaEf) return null;
+    return recomendarLanzamiento(motor, {
+      categoria: lanCategoriaEf,
+      precioCentro: bandas[lanBandaIdx]?.centro ?? 0,
+      unidadesTotales: lanTotalTxt.trim() === '' ? null : lanTotalTxt,
+      nColores: lanColoresTxt.trim() === '' ? null : lanColoresTxt,
+    });
+  }, [motor, pestana, lanCategoriaEf, bandas, lanBandaIdx, lanTotalTxt, lanColoresTxt]);
+
+  async function copiarLanzamiento() {
+    if (!resultadoLan?.ok) return;
+    const r = resultadoLan;
+    const lineas = [
+      `Pedido de lanzamiento — ${r.categoria} (nuevo)`,
+      `Total: ${r.total} uds${r.totalEsSugerido ? ' (sugerido por la curva de análogos)' : ''}`,
+      'Talla\tUnidades',
+      ...(r.reparto ? r.reparto.map((f) => `${f.talla}\t${f.unidades}`) : []),
+      ...(r.repartoColores ? ['', 'Color\tUnidades', ...r.repartoColores.map((f) => `${f.talla}\t${f.unidades}`)] : []),
+    ];
+    try {
+      await navigator.clipboard.writeText(lineas.join('\n'));
+      setCopiadoLan(true);
+      setTimeout(() => setCopiadoLan(false), 2000);
+    } catch { /* sin permiso de portapapeles */ }
+  }
 
   if (motor.almacen.vacio) {
     return (
@@ -369,14 +415,220 @@ export default function StockEngine({ records, hayFiltros }) {
         </div>
 
         {pestana === 'lanzamiento' ? (
-          <div className="py-12 text-center">
-            <div className={LABEL} style={{ color: CIELO }}>Próximamente · parte 5 del motor</div>
-            <p className="mt-4 mx-auto max-w-[52ch] text-[15px] leading-relaxed" style={{ color: TXT2 }}>
-              Pedido inicial para un producto SIN histórico: el motor buscará tus productos
-              análogos (misma categoría, banda de precio parecida), aprenderá de sus primeras
-              semanas de vida y te propondrá cantidad total y reparto por talla y color.
-            </p>
-          </div>
+          <>
+            {/* Entradas del lanzamiento */}
+            <div className="mt-6 flex flex-wrap items-start gap-5">
+              <Campo etiqueta="Categoría del producto nuevo">
+                <select
+                  value={lanCategoriaEf}
+                  onChange={(e) => setLanCategoria(e.target.value)}
+                  className={`${INPUT_CLS} min-w-[190px] cursor-pointer`}
+                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                >
+                  {categoriasLan.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </Campo>
+
+              {bandas.length > 1 ? (
+                <Campo etiqueta="Banda de precio" hint="Derivada de los precios de tu propio catálogo.">
+                  <select
+                    value={String(lanBandaIdx)}
+                    onChange={(e) => setLanBanda(e.target.value)}
+                    className={`${INPUT_CLS} min-w-[170px] cursor-pointer`}
+                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  >
+                    {bandas.map((b, i) => <option key={i} value={String(i)}>{b.etiqueta}</option>)}
+                  </select>
+                </Campo>
+              ) : null}
+
+              <Campo
+                etiqueta="Unidades totales"
+                hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para 12 semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
+              >
+                <input
+                  type="number" min="1" step="1"
+                  placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
+                  value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
+                  className={`${INPUT_CLS} w-[150px] tnum`}
+                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                />
+              </Campo>
+
+              <Campo etiqueta="Nº de colores (opcional)" hint="Cuántos colores lanzarás; vacío = los que sugieren tus análogos.">
+                <input
+                  type="number" min="1" step="1" placeholder="todos"
+                  value={lanColoresTxt} onChange={(e) => setLanColoresTxt(e.target.value)}
+                  className={`${INPUT_CLS} w-[110px] tnum`}
+                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                />
+              </Campo>
+            </div>
+
+            {resultadoLan && !resultadoLan.ok ? (
+              <div className="mt-8 rounded-xl border border-[#232428] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #101114 0%, #0c0d10 100%)' }}>
+                <div className={LABEL} style={{ color: EMBER }}>Sin análogos suficientes</div>
+                <p className="mt-4 text-[15px] leading-relaxed max-w-[58ch]" style={{ color: TXT2 }}>
+                  Ningún producto de tu catálogo tiene aún el histórico mínimo ({resultadoLan.minimo ?? 20} uds y 6 semanas)
+                  para servir de referencia. Aquí es donde la red de Wefty (datos agregados de marcas
+                  similares) te dará la respuesta — próximamente.
+                </p>
+              </div>
+            ) : null}
+
+            {resultadoLan?.ok ? (
+              <>
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
+                  {/* Total propuesto */}
+                  <div
+                    className="lg:col-span-4 relative rounded-xl border border-[#2a3654] p-7 md:p-8 overflow-hidden flex flex-col"
+                    style={{
+                      background: 'linear-gradient(150deg, rgba(45,107,228,0.16) 0%, rgba(45,107,228,0.04) 40%, #141518 100%)',
+                      boxShadow: '0 0 60px -26px rgba(45,107,228,0.7)',
+                    }}
+                  >
+                    <div className={LABEL} style={{ color: CIELO }}>Pedido de lanzamiento</div>
+                    <div className="mt-5 font-serif text-[58px] md:text-[68px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
+                      {fmtInt(resultadoLan.total)}
+                      <span className="font-mono text-[13px] tracking-[0.1em] uppercase ml-3" style={{ color: TXT2 }}>uds</span>
+                    </div>
+                    <p className="mt-4 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
+                      {resultadoLan.totalEsSugerido
+                        ? 'Sugerido: lo que vendieron tus análogos en sus primeras 12 semanas, ponderado por parecido.'
+                        : `Tus unidades (la curva sugería ≈${fmtInt(resultadoLan.totalSugerido)} para 12 semanas).`}
+                    </p>
+                    {resultadoLan.pesosCurva ? (
+                      <p className="mt-3 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT3 }}>
+                        curva de tallas: {pct0(resultadoLan.pesosCurva.producto)} análogos
+                        {' + '}{pct0(resultadoLan.pesosCurva.categoria)} categoría
+                        {' + '}{pct0(resultadoLan.pesosCurva.global)} marca
+                      </p>
+                    ) : null}
+                    <div className="mt-auto pt-5">
+                      <BadgeConfianza confianza={resultadoLan.confianza} />
+                      <span className="block mt-2 text-[11px] leading-snug" style={{ color: TXT3 }}>{resultadoLan.confianza.motivo}</span>
+                    </div>
+                  </div>
+
+                  {/* Curva de lanzamiento con banda P25–P75 */}
+                  <div className="lg:col-span-8 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                    <div className="flex items-baseline justify-between gap-4 mb-4">
+                      <span className={LABEL} style={{ color: TXT2 }}>Curva de lanzamiento esperada</span>
+                      <span className={LABEL} style={{ color: TXT3 }}>uds/semana · banda P25–P75</span>
+                    </div>
+                    <div className="h-[240px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart
+                          data={resultadoLan.curva.map((c) => ({ semana: `S${c.semana}`, media: c.media, rango: [c.p25, c.p75] }))}
+                          margin={{ top: 8, right: 12, left: -16, bottom: 0 }}
+                        >
+                          <CartesianGrid vertical={false} stroke="#FFFFFF" strokeOpacity={0.06} />
+                          <XAxis dataKey="semana" tick={{ fontSize: 10, fill: TXT2, fontFamily: 'var(--font-jetbrains), monospace' }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fontSize: 10, fill: TXT2, fontFamily: 'var(--font-jetbrains), monospace' }} axisLine={false} tickLine={false} width={42} />
+                          <Tooltip
+                            cursor={{ stroke: 'rgba(255,255,255,0.15)' }}
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload?.length) return null;
+                              const d = payload[0].payload;
+                              return (
+                                <div className="rounded-lg border border-[#2a2c31] px-3.5 py-2.5" style={{ background: 'rgba(25,26,30,0.97)' }}>
+                                  <div className="font-mono text-[11px]" style={{ color: TXT }}>{label}</div>
+                                  <div className="font-mono text-[11px] tnum" style={{ color: TXT2 }}>media {fmt1(d.media)} uds · banda {fmt1(d.rango[0])}–{fmt1(d.rango[1])}</div>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Area dataKey="rango" stroke="none" fill="#2D6BE4" fillOpacity={0.16} />
+                          <Line dataKey="media" stroke="#3F7BEC" strokeWidth={2.5} dot={{ r: 3, fill: '#3F7BEC', strokeWidth: 0 }} />
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Análogos con score transparente */}
+                  <div className="lg:col-span-6 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                    <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Basado en tus análogos · score transparente</div>
+                    <ul className="space-y-3">
+                      {resultadoLan.analogos.map((a) => (
+                        <li key={a.nombre} className="flex items-start justify-between gap-4 pb-3 border-b border-white/[0.06]">
+                          <div className="min-w-0">
+                            <div className="text-[14px] truncate" style={{ color: TXT }}>{a.nombre}</div>
+                            <div className="mt-1 font-mono text-[10px] tracking-[0.06em]" style={{ color: TXT3 }}>
+                              categoría +{a.puntos.categoria} · precio +{a.puntos.precio} ·{' '}
+                              {a.estacionVisible ? `estación +${a.puntos.estacion}` : 'estación n/d'}
+                              {' · '}{fmtInt(a.unidades)} uds · {fmt1(a.precioMedio)} €
+                            </div>
+                          </div>
+                          <span
+                            className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] h-8 rounded-lg border font-mono text-[13px] tnum"
+                            style={{ color: CIELO, borderColor: '#2a3654', background: 'rgba(45,107,228,0.10)' }}
+                          >
+                            {a.score}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Reparto por talla y color */}
+                  <div className="lg:col-span-6 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                    <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Reparto propuesto</div>
+                    {!resultadoLan.reparto ? (
+                      <p className="text-[14px]" style={{ color: TXT2 }}>Tus análogos no traen tallas: te damos solo el total.</p>
+                    ) : (
+                      <TablaTallas reparto={resultadoLan.reparto} recomendado={resultadoLan.total} />
+                    )}
+                    {resultadoLan.excluidas.length > 0 ? (
+                      <p className="mt-2 text-[12px] leading-relaxed" style={{ color: AMBAR }}>
+                        Sin unidades para {resultadoLan.excluidas.map((e) => `${e.talla} (peso ${pct1(e.peso)})`).join(', ')} — bajo el mínimo del 2%.
+                      </p>
+                    ) : null}
+                    {resultadoLan.repartoColores ? (
+                      <div className="mt-5 pt-4 border-t border-white/10">
+                        <div className={`${LABEL} mb-2`} style={{ color: TXT3 }}>Por color</div>
+                        <ul className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                          {resultadoLan.repartoColores.map((f) => (
+                            <li key={f.talla} className="flex items-baseline justify-between gap-3 font-mono text-[12px]">
+                              <span className="truncate" style={{ color: TXT2 }}>{f.talla}</span>
+                              <span className="tnum" style={{ color: TXT }}>{fmtInt(f.unidades)} <span style={{ color: TXT3 }}>· {pct1(f.peso)}</span></span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+
+                {resultadoLan.avisos.length > 0 ? (
+                  <div className="mt-5 rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                    <div className={LABEL} style={{ color: AMBAR }}>Avisos · {resultadoLan.avisos.length}</div>
+                    <ul className="mt-3 space-y-2">
+                      {resultadoLan.avisos.map((texto, i) => (
+                        <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
+                          <span className="mt-[7px] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: AMBAR }} />
+                          <span>{texto}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="mt-6 flex flex-wrap items-center gap-5">
+                  <button
+                    type="button"
+                    onClick={copiarLanzamiento}
+                    className="h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                    style={{ background: copiadoLan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoLan ? `${VERDE}66` : undefined, color: copiadoLan ? VERDE : undefined }}
+                  >
+                    {copiadoLan ? 'Copiado ✓' : 'Copiar pedido'}
+                  </button>
+                  <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
+                    Un lanzamiento siempre es una apuesta — esto es tu mejor referencia interna, no una garantía.
+                  </span>
+                </div>
+              </>
+            ) : null}
+          </>
         ) : (
           <>
             {/* Entradas */}
