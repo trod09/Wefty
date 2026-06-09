@@ -10,7 +10,8 @@
 // sesgados. Se indica con una nota sutil cuando hay filtros puestos.
 import React, { useMemo, useState } from 'react';
 import {
-  prepararMotor, recomendarReposicion, productosOrdenados, LEAD_MIN, LEAD_MAX,
+  prepararMotor, recomendarReposicion, productosOrdenados, validacionGlobal,
+  LEAD_MIN, LEAD_MAX,
 } from '@/lib/engine/motor.mjs';
 import { fmtFecha } from '@/lib/engine/datos.mjs';
 
@@ -93,6 +94,81 @@ function PanelConfiguracion({ perfil, configuracion }) {
             );
           })}
         </ul>
+      </div>
+    </details>
+  );
+}
+
+// Panel "Validación del motor" — MÓDULO 7: la credibilidad. Backtest global y
+// por categoría contra el propio histórico del usuario. Si los datos no dan
+// para una validación robusta, se dice claramente en vez de enseñar números débiles.
+function PanelValidacion({ motor }) {
+  const v = useMemo(() => validacionGlobal(motor), [motor]);
+
+  const FilaVal = ({ f }) => (
+    <li className="grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 items-baseline py-2 border-b border-white/[0.06]">
+      <span className="text-[13px] truncate" style={{ color: TXT }}>{f.etiqueta}</span>
+      {f.insuficiente ? (
+        <span className="col-span-4 font-mono text-[11px]" style={{ color: TXT3 }}>
+          pocos datos para validar ({fmtInt(f.unidades)} uds)
+        </span>
+      ) : (
+        <>
+          <span className="font-mono text-[11px] truncate" style={{ color: TXT2 }}>{f.modelo}</span>
+          <span className="font-mono text-[12px] tnum text-right" style={{ color: TXT }}>{pct0(f.wape)}</span>
+          <span className="font-mono text-[11px] tnum text-right" style={{ color: f.mejora != null && f.mejora > 0 ? VERDE : TXT3 }}>
+            {f.mejora != null ? (f.mejora > 0 ? `−${pct0(f.mejora)} de error` : 'sin mejora') : 'es el baseline'}
+          </span>
+          <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT3 }}>{f.cortes} cortes</span>
+        </>
+      )}
+    </li>
+  );
+
+  return (
+    <details className="mt-4 group border-t border-white/10 pt-5">
+      <summary className="flex items-center gap-3 cursor-pointer select-none">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+          Validación del motor — error real sobre tu histórico
+        </span>
+        <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+      </summary>
+      <div className="mt-5 acc-body">
+        {!v.robusto ? (
+          <p className="text-[13px] leading-relaxed max-w-[62ch]" style={{ color: TXT2 }}>
+            Tu histórico aún no da para una validación robusta: hacen falta {v.minSemanas} semanas
+            y {fmtInt(v.minUnidades)} unidades (tienes {v.semanas} y {fmtInt(v.unidades)}). Antes que
+            enseñarte números débiles, preferimos decírtelo — cada semana de ventas que subas afina el motor.
+          </p>
+        ) : (
+          <>
+            <p className="text-[13px] leading-relaxed max-w-[68ch]" style={{ color: TXT2 }}>
+              El motor viaja a varios puntos de tu pasado, pronostica «a ciegas» las 4 semanas
+              siguientes y comprueba cuánto falló. El error es WAPE (desviación media ponderada);
+              «−X% de error» = cuánto mejora al pronóstico ingenuo de extrapolar a ojo.
+            </p>
+            {v.global && !v.global.insuficiente ? (
+              <p className="mt-4 text-[14px] leading-relaxed" style={{ color: TXT }}>
+                Toda la marca: error del <span style={{ color: CIELO }}>{pct0(v.global.wape)}</span> con{' '}
+                {v.global.modelo}
+                {v.global.mejora != null && v.global.mejora > 0 ? (
+                  <> — un <span style={{ color: VERDE }}>{pct0(v.global.mejora)}</span> mejor que extrapolar a ojo</>
+                ) : null}{' '}
+                <span style={{ color: TXT3 }}>({v.global.cortes} cortes)</span>.
+              </p>
+            ) : null}
+            {v.filas.length ? (
+              <ul className="mt-4">
+                <li className="grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-white/10">
+                  {['Categoría', 'Mejor modelo', 'Error', 'vs ingenuo', 'Cortes'].map((h, i) => (
+                    <span key={h} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
+                  ))}
+                </li>
+                {v.filas.map((f) => <FilaVal key={f.etiqueta} f={f} />)}
+              </ul>
+            ) : null}
+          </>
+        )}
       </div>
     </details>
   );
@@ -336,11 +412,20 @@ export default function StockEngine({ records, hayFiltros }) {
                     </p>
 
                     <div className="mt-5 font-mono text-[11px] tracking-[0.04em] space-y-1" style={{ color: TXT2 }}>
-                      <div>ritmo reciente ≈ <span className="tnum" style={{ color: TXT }}>{fmt1(resultado.tasaSemanal)}</span> uds/semana</div>
+                      <div>ritmo previsto ≈ <span className="tnum" style={{ color: TXT }}>{fmt1(resultado.tasaSemanal)}</span> uds/semana</div>
                       <div>
                         {resultado.semanasAjuste} semanas analizadas · {fmtInt(resultado.unidadesHistoricas)} uds históricas
                         {resultado.semanaParcialExcluida ? ' · última semana parcial excluida' : ''}
                       </div>
+                    </div>
+
+                    {/* La credencial del motor: qué modelo ganó y contra qué se midió */}
+                    <div className="mt-4 pt-4 border-t border-white/10">
+                      <div className={LABEL} style={{ color: CIELO }}>Motor seleccionado</div>
+                      <p className="mt-1.5 text-[13px] leading-snug" style={{ color: TXT }}>{resultado.modelo.resumen}</p>
+                      <p className="mt-1 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT2 }}>
+                        {resultado.modelo.detalle}
+                      </p>
                     </div>
 
                     <div className="mt-auto pt-5">
@@ -423,6 +508,7 @@ export default function StockEngine({ records, hayFiltros }) {
         )}
 
         <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} />
+        <PanelValidacion motor={motor} />
       </div>
     </div>
   );

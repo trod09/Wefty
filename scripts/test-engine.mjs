@@ -13,7 +13,9 @@ import { ajustarEWMA } from '../lib/engine/forecast.mjs';
 import {
   curvaJerarquica, aplicarUmbralMinimo, repartoPorMayorResto,
 } from '../lib/engine/curvas.mjs';
-import { prepararMotor, recomendarReposicion } from '../lib/engine/motor.mjs';
+import { prepararMotor, recomendarReposicion, validacionGlobal } from '../lib/engine/motor.mjs';
+import { planCortes, competirModelos, seleccionarModelo } from '../lib/engine/backtest.mjs';
+import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
 
 let fallos = 0;
 function caso(nombre, ok, detalle = '') {
@@ -151,6 +153,81 @@ console.log('\n— Casos límite —');
     motorVacio.almacen.vacio === true && recomendarReposicion(motorVacio, { producto: 'X' }).motivo === 'sin-datos');
 }
 
+console.log('\n— Banco de modelos: backtest rolling-origin y selección (parte 2) —');
+{
+  const ctxBase = { intermitencia: 0, indices: null, binAt: (i) => i % 52 };
+
+  caso('planCortes(19) → 3 cortes en las semanas [9, 12, 15]',
+    JSON.stringify(planCortes(19)) === '[9,12,15]');
+  caso('con 12 semanas no caben 3 cortes → no hay competición (honestidad)',
+    competirModelos(new Array(12).fill(10), ctxBase) === null);
+
+  // Serie plana: acertar es trivial; el ganador debe tener error 0.
+  const selPlana = seleccionarModelo(new Array(30).fill(10), ctxBase, { robusto: true });
+  caso('serie plana: ganador del backtest con WAPE 0', selPlana.modo === 'backtest' && cerca(selPlana.wape, 0));
+  caso('serie plana: empate técnico (±2%) → mini-ensemble de los dos mejores',
+    selPlana.empateCon != null && cerca(selPlana.ajuste.path(4)[0], 10, 0.2));
+
+  // Tendencia clara: Holt amortiguado debe ganar a los modelos planos.
+  const selTend = seleccionarModelo(Array.from({ length: 60 }, (_, t) => 10 + t), ctxBase, { robusto: true });
+  const wapeEwmaT = selTend.ranking.find((r) => r.clave === 'ewma')?.wape;
+  caso('serie con tendencia (+1/semana): gana Holt amortiguado', selTend.clave === 'holt', `ganó ${selTend.clave}`);
+  caso('…con menos error que EWMA en el backtest', wapeEwmaT != null && selTend.wape < wapeEwmaT,
+    `holt=${selTend.wape?.toFixed(3)} ewma=${wapeEwmaT?.toFixed(3)}`);
+
+  // Estacionalidad perfecta de periodo 52: el naive estacional clava el backtest.
+  const estacional = Array.from({ length: 110 }, (_, t) => 20 * (1 + 0.5 * Math.sin((2 * Math.PI * t) / 52)));
+  const selEst = seleccionarModelo(estacional, ctxBase, { robusto: true });
+  caso('serie estacional (110 semanas): gana el naive estacional con error ≈0',
+    selEst.clave === 'snaive' && selEst.wape < 0.02, `ganó ${selEst.clave} (wape ${selEst.wape?.toFixed(3)})`);
+  caso('…y mejora >50% sobre el pronóstico ingenuo', selEst.mejora != null && selEst.mejora > 0.5,
+    `mejora=${selEst.mejora}`);
+
+  // Intermitencia sin backtest robusto → Croston/SBA por regla de pre-flight.
+  const intermitente = Array.from({ length: 40 }, (_, t) => (t % 5 === 4 ? 5 : 0));
+  const selInt = seleccionarModelo(intermitente, { ...ctxBase, intermitencia: 0.8 }, { robusto: false });
+  caso('serie intermitente sin backtest robusto → Croston/SBA por regla',
+    selInt.modo === 'regla' && selInt.clave === 'croston');
+  caso('Croston/SBA: 5 uds cada 5 semanas → tasa ≈0,95/sem (corrección 1−α/2)',
+    cerca(selInt.ajuste.path(1)[0], 0.95, 0.05), `tasa=${selInt.ajuste.path(1)[0]}`);
+}
+
+console.log('\n— Estacionalidad: índices semanales (≥52 semanas) —');
+{
+  const serie = Array.from({ length: 110 }, (_, t) => 20 * (1 + 0.5 * Math.sin((2 * Math.PI * t) / 52)));
+  const r = indicesEstacionales(serie, (i) => i % 52);
+  const mediaIdx = r ? [...r.indices].reduce((s, x) => s + x, 0) / 52 : 0;
+  caso('con ≥52 semanas hay índices y su media es exactamente 1', r != null && cerca(mediaIdx, 1, 1e-9));
+  caso('la semana pico del año recibe índice claramente >1 (semana 13)',
+    r.indices[13] > 1.1, `idx=${r.indices[13]?.toFixed(3)}`);
+  caso('la semana valle recibe índice claramente <1 (semana 39)',
+    r.indices[39] < 0.9, `idx=${r.indices[39]?.toFixed(3)}`);
+  caso('con menos de 52 semanas devuelve null (no se inventa estación)',
+    indicesEstacionales(serie.slice(0, 40), (i) => i % 52) === null);
+}
+
+console.log('\n— Dataset sintético robusto (60 semanas, 600 uds): backtest de verdad —');
+{
+  const records = [];
+  for (let i = 0; i < 60; i++) {
+    records.push(fila(i, 'Polo Piqué', 'M', 6, 'Polos'));
+    records.push(fila(i, 'Polo Piqué', 'L', 4, 'Polos'));
+  }
+  const motor = prepararMotor(records);
+  caso('60 semanas y 600 uds → backtesting robusto ACTIVO', motor.robusto === true);
+  const r = recomendarReposicion(motor, { producto: 'Polo Piqué' });
+  caso('la recomendación sale de la competición (modo backtest, con WAPE medido)',
+    r.ok && r.modelo.modo === 'backtest' && r.modelo.wape != null && r.modelo.cortes >= 3,
+    JSON.stringify(r.modelo));
+  caso('serie estable de 10/sem → pedido ≈ 80 uds para 8 semanas (error≈0 → colchón≈0)',
+    r.ok && Math.abs(r.recomendado - 80) <= 4, `recomendado=${r.recomendado}`);
+  const v = validacionGlobal(motor);
+  caso('validación global: fila de toda la marca con sus cortes',
+    v.robusto && v.global && v.global.cortes >= 3 && v.global.wape != null);
+  caso('validación por categoría: Polos validado (600 uds ≥ 200)',
+    v.filas.length === 1 && v.filas[0].etiqueta === 'Polos' && !v.filas[0].insuficiente);
+}
+
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
 {
   const txt = fs.readFileSync(new URL('../ventas_ejemplo_loop.csv', import.meta.url), 'utf8');
@@ -172,9 +249,9 @@ console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
 
   const cfg = Object.fromEntries(motor.configuracion.map((f) => [f.nombre, f.estado]));
   caso('configuración honesta: estacionalidad DESACTIVADA (22 < 52 semanas)',
-    cfg['Holt-Winters y estacionalidad'] === 'desactivada');
+    cfg['Estacionalidad (Holt-Winters y naive estacional)'] === 'desactivada');
   caso('configuración honesta: backtesting DESACTIVADO (22 < 26 semanas)',
-    cfg['Backtesting (validación contra tu histórico)'] === 'desactivada');
+    cfg['Banco de modelos con backtesting'] === 'desactivada');
   caso('EWMA y curva de tallas: ACTIVAS', cfg['Pronóstico EWMA (media móvil exponencial)'] === 'activa'
     && cfg['Curva de tallas jerárquica'] === 'activa');
 
@@ -186,6 +263,11 @@ console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
     r.ok && cerca(r.pesosCurva.producto + r.pesosCurva.categoria + r.pesosCurva.global, 1));
   caso('recomendado = esperado + colchón (las cuentas del desglose cuadran)',
     r.ok && r.esperado + r.colchon === r.recomendado);
+  caso('con 22 semanas el modelo va por regla de pre-flight: EWMA por defecto',
+    r.modelo.modo === 'regla' && r.modelo.clave === 'ewma', JSON.stringify({ modo: r.modelo.modo, clave: r.modelo.clave }));
+  const val = validacionGlobal(motor);
+  caso('validación global honesta: no enseña números con 22 semanas (<26)',
+    val.robusto === false && val.global === null);
 
   if (r.ok) {
     console.log('\n  Recomendación real (compárala con la web):');
