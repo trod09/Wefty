@@ -232,6 +232,12 @@ export default function SalesDashboard({ headers, rows }) {
   const data = useMemo(() => {
     const records = filtered;
 
+    // Conciencia de filtros: con el filtro de producto, los insights "de
+    // catálogo" (estrella, concentración) son tautológicos y se ocultan; con
+    // filtros activos, una variante única sería un "100%" trivial.
+    const conFiltroProducto = Boolean(fProducto);
+    const conFiltros = Boolean(fProducto || fCategoria);
+
     // Métricas clave
     const totalUnidades = records.reduce((a, r) => a + r.unidades, 0);
     const totalIngresos = records.reduce((a, r) => a + r.ingresos, 0);
@@ -295,18 +301,20 @@ export default function SalesDashboard({ headers, rows }) {
     }
 
     // 2) Producto estrella: el que más factura y su % sobre los ingresos.
+    //    Con el filtro de producto activo sería "el 100%": se oculta.
     const prodPorIngresos = [...groupSum(records, (r) => r.producto, (r) => r.ingresos).entries()]
       .filter(([p]) => p)
       .sort((a, b) => b[1] - a[1]);
     let insightEstrella = null;
-    if (prodPorIngresos.length > 0 && totalIngresos > 0) {
+    if (!conFiltroProducto && prodPorIngresos.length > 0 && totalIngresos > 0) {
       const [prod, ing] = prodPorIngresos[0];
       insightEstrella = { producto: prod, pct: Math.round((ing / totalIngresos) * 100) };
     }
 
-    // 3) Concentración de catálogo: mínimo de productos que suman el 80% de ingresos.
+    // 3) Concentración de catálogo: mínimo de productos que suman el 80% de
+    //    ingresos. Sin catálogo que concentrar (filtro de producto): oculto.
     let insightConcentracion = null;
-    if (prodPorIngresos.length >= 2 && totalIngresos > 0) {
+    if (!conFiltroProducto && prodPorIngresos.length >= 2 && totalIngresos > 0) {
       let acumulado = 0;
       let n = 0;
       for (const [, ing] of prodPorIngresos) {
@@ -330,7 +338,8 @@ export default function SalesDashboard({ headers, rows }) {
     const varEntries = [...varAgg.entries()];
     let insightVariante = null;
     let insightMuertas = null;
-    if (varEntries.length > 0) {
+    // Con filtros activos, una única variante daría un "100%" trivial: fuera.
+    if (varEntries.length >= (conFiltros ? 2 : 1)) {
       const ordenadas = [...varEntries].sort((a, b) => b[1] - a[1]);
       const [topKey, topU] = ordenadas[0];
       const [tTalla, tColor] = topKey.split('|||');
@@ -376,7 +385,7 @@ export default function SalesDashboard({ headers, rows }) {
       insight, avgTalla, tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
       insightColor, insightEstrella, insightConcentracion, insightVariante, insightMuertas,
     };
-  }, [filtered]);
+  }, [filtered, fCategoria, fProducto]);
 
   const {
     kpis, totalUnidades, totalIngresos, insight, avgTalla,
@@ -386,27 +395,34 @@ export default function SalesDashboard({ headers, rows }) {
 
   // Lista de insights de apoyo: dato real + qué implica para el inventario.
   // Cada uno solo aparece si hay datos suficientes para calcularlo.
+  // Con filtros activos, los textos declaran su ámbito ("de Sudadera Zip",
+  // "en Sudaderas") para no leerse como conclusiones de toda la tienda.
   const em = (txt, color) => <span className="font-medium" style={{ color }}>{txt}</span>;
+  const ambito = fProducto ? ` de ${fProducto}` : fCategoria ? ` en ${fCategoria}` : '';
   const insightsApoyo = [
     insightColor && {
       key: 'color', label: 'Color que no rota', accent: EMBER,
-      body: <>El color {em(insightColor.color, EMBER)} solo representa el {em(`${insightColor.pct}%`, EMBER)} de tus ventas — posible exceso de inventario.</>,
+      body: <>El color {em(insightColor.color, EMBER)} solo representa el {em(`${insightColor.pct}%`, EMBER)} de tus ventas{ambito} — posible exceso de inventario.</>,
     },
     insightEstrella && {
       key: 'estrella', label: 'Producto estrella', accent: ELECTRIC,
-      body: <>{em(insightEstrella.producto, ELECTRIC)} concentra el {em(`${insightEstrella.pct}%`, ELECTRIC)} de tus ingresos — protégelo en stock y campañas.</>,
+      body: <>{em(insightEstrella.producto, ELECTRIC)} concentra el {em(`${insightEstrella.pct}%`, ELECTRIC)} de tus ingresos{fCategoria ? ` en ${fCategoria}` : ''} — protégelo en stock y campañas.</>,
     },
     insightConcentracion && {
       key: 'concentracion', label: 'Concentración de catálogo', accent: ELECTRIC,
-      body: <>El {em(`${insightConcentracion.pct}%`, ELECTRIC)} de tus ventas viene de solo {em(insightConcentracion.n, ELECTRIC)} de tus {insightConcentracion.total} productos — el resto pesa poco.</>,
+      body: fCategoria ? (
+        <>El {em(`${insightConcentracion.pct}%`, ELECTRIC)} de tus ventas en {fCategoria} viene de solo {em(insightConcentracion.n, ELECTRIC)} de los {insightConcentracion.total} productos de la categoría — el resto pesa poco.</>
+      ) : (
+        <>El {em(`${insightConcentracion.pct}%`, ELECTRIC)} de tus ventas viene de solo {em(insightConcentracion.n, ELECTRIC)} de tus {insightConcentracion.total} productos — el resto pesa poco.</>
+      ),
     },
     insightVariante && {
       key: 'variante', label: 'Variante ganadora', accent: ELECTRIC,
-      body: <>Tu variante estrella es {em(`${insightVariante.talla}/${insightVariante.color}`, ELECTRIC)} ({em(`${insightVariante.pct}%`, ELECTRIC)}) — asegura su stock.</>,
+      body: <>Tu variante estrella{ambito} es {em(`${insightVariante.talla}/${insightVariante.color}`, ELECTRIC)} ({em(`${insightVariante.pct}%`, ELECTRIC)}) — asegura su stock.</>,
     },
     insightMuertas && {
       key: 'muertas', label: 'Variantes muertas', accent: EMBER,
-      body: <>Tienes {em(insightMuertas.n, EMBER)} {insightMuertas.n === 1 ? 'variante' : 'variantes'} con ventas mínimas — {insightMuertas.n === 1 ? 'candidata' : 'candidatas'} a revisar o descatalogar.</>,
+      body: <>Tienes {em(insightMuertas.n, EMBER)} {insightMuertas.n === 1 ? 'variante' : 'variantes'}{ambito} con ventas mínimas — {insightMuertas.n === 1 ? 'candidata' : 'candidatas'} a revisar o descatalogar.</>,
     },
   ].filter(Boolean);
 
@@ -520,7 +536,8 @@ export default function SalesDashboard({ headers, rows }) {
           <p className="relative mt-6 font-serif font-light text-[34px] md:text-[60px] leading-[1.08] tracking-[-0.025em] max-w-[24ch]" style={{ color: TXT }}>
             Las tallas <span style={{ color: ELECTRIC }}>{insight.a}</span> y{' '}
             <span style={{ color: ELECTRIC }}>{insight.b}</span> concentran el{' '}
-            <span style={{ color: EMBER }}>{insight.topPct}%</span> de las unidades vendidas.
+            <span style={{ color: EMBER }}>{insight.topPct}%</span> de las unidades vendidas
+            {fProducto ? ` de ${fProducto}` : fCategoria ? ` en ${fCategoria}` : ''}.
             La <span style={{ color: EMBER }}>{insight.minTalla}</span> apenas rota
             (<span style={{ color: EMBER }}>{insight.minPct}%</span>).
           </p>
