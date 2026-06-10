@@ -30,7 +30,9 @@ const TXT2 = '#8A8A8F';
 const TXT3 = '#5d5e63';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 const CARD_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
-const INPUT_CLS = 'h-10 rounded-lg border border-[#232428] px-3 text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC]';
+// Inputs: 16px en móvil (iOS hace zoom forzado con cualquier input menor) y
+// 44px de alto táctil; en escritorio, el tamaño compacto de siempre.
+const INPUT_CLS = 'h-11 md:h-10 rounded-lg border border-[#232428] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC]';
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
 const fmt1 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -65,7 +67,7 @@ function Segmentos({ valor, onChange, opciones }) {
           key={o.v}
           type="button"
           onClick={() => onChange(o.v)}
-          className={`h-10 px-3.5 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors ${
+          className={`h-11 md:h-10 px-3.5 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors ${
             valor === o.v ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
           }`}
           style={{ background: valor === o.v ? 'rgba(45,107,228,0.28)' : '#0E0F12' }}
@@ -123,7 +125,7 @@ function PanelConfiguracion({ perfil, configuracion }) {
   };
   return (
     <details className="mt-8 group border-t border-white/10 pt-5">
-      <summary className="flex items-center gap-3 cursor-pointer select-none">
+      <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
           Configuración del motor — qué está activo y por qué
         </span>
@@ -162,14 +164,14 @@ function MatrizTallaColor({ matriz }) {
   const celda = 'font-mono text-[12px] tnum text-right py-1.5 px-2';
   return (
     <details className="mt-4 group">
-      <summary className="flex items-center gap-3 cursor-pointer select-none">
+      <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
           Ver desglose talla × color
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
       </summary>
       <div className="mt-3 acc-body overflow-x-auto">
-        <table className="w-full border-collapse">
+        <table className="w-full min-w-[460px] border-collapse">
           <thead>
             <tr className="border-b border-white/10">
               <th className={`${LABEL} text-left py-1.5 px-2 font-normal`} style={{ color: TXT3 }}>Talla</th>
@@ -200,6 +202,9 @@ function MatrizTallaColor({ matriz }) {
             </tr>
           </tfoot>
         </table>
+        <p className="md:hidden mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>
+          ← desliza para ver toda la matriz →
+        </p>
         <p className="mt-2 text-[11px] leading-snug" style={{ color: TXT3 }}>
           Ajuste proporcional iterativo (IPF) sobre tus combinaciones reales: cada talla cuadra
           exacta; los colores quedan a ±1 ud de su curva.
@@ -214,7 +219,7 @@ function Explicacion({ pasos }) {
   if (!pasos?.length) return null;
   return (
     <details className="mt-5 group rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
-      <summary className="flex items-center gap-3 cursor-pointer select-none">
+      <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
           ¿Por qué esta recomendación?
         </span>
@@ -243,29 +248,56 @@ function Explicacion({ pasos }) {
 function PanelValidacion({ motor }) {
   const v = useMemo(() => validacionGlobal(motor), [motor]);
 
+  // En móvil la rejilla de 5 columnas no cabe (sus mínimos suman ~560px y el
+  // overflow-hidden de la página la cortaría): cada fila pasa a tarjeta apilada.
+  const textoMejora = (f) =>
+    f.mejora != null ? (f.mejora > 0 ? `−${pct0(f.mejora)} de error` : 'sin mejora') : 'es el baseline';
   const FilaVal = ({ f }) => (
-    <li className="grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 items-baseline py-2 border-b border-white/[0.06]">
-      <span className="text-[13px] truncate" style={{ color: TXT }}>{f.etiqueta}</span>
-      {f.insuficiente ? (
-        <span className="col-span-4 font-mono text-[11px]" style={{ color: TXT3 }}>
-          pocos datos para validar ({fmtInt(f.unidades)} uds)
-        </span>
-      ) : (
-        <>
-          <span className="font-mono text-[11px] truncate" style={{ color: TXT2 }}>{f.modelo}</span>
-          <span className="font-mono text-[12px] tnum text-right" style={{ color: TXT }}>{pct0(f.wape)}</span>
-          <span className="font-mono text-[11px] tnum text-right" style={{ color: f.mejora != null && f.mejora > 0 ? VERDE : TXT3 }}>
-            {f.mejora != null ? (f.mejora > 0 ? `−${pct0(f.mejora)} de error` : 'sin mejora') : 'es el baseline'}
+    <li className="border-b border-white/[0.06]">
+      {/* Móvil: tarjeta apilada */}
+      <div className="md:hidden py-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="text-[13px]" style={{ color: TXT }}>{f.etiqueta}</span>
+          {!f.insuficiente ? (
+            <span className="font-mono text-[12px] tnum flex-shrink-0" style={{ color: TXT }}>{pct0(f.wape)} error</span>
+          ) : null}
+        </div>
+        {f.insuficiente ? (
+          <p className="mt-1 font-mono text-[11px]" style={{ color: TXT3 }}>
+            pocos datos para validar ({fmtInt(f.unidades)} uds)
+          </p>
+        ) : (
+          <p className="mt-1 font-mono text-[11px] leading-relaxed" style={{ color: TXT2 }}>
+            {f.modelo} ·{' '}
+            <span style={{ color: f.mejora != null && f.mejora > 0 ? VERDE : TXT3 }}>{textoMejora(f)}</span>
+            {' · '}{f.cortes} cortes
+          </p>
+        )}
+      </div>
+      {/* Escritorio: rejilla */}
+      <div className="hidden md:grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 items-baseline py-2">
+        <span className="text-[13px] truncate" style={{ color: TXT }}>{f.etiqueta}</span>
+        {f.insuficiente ? (
+          <span className="col-span-4 font-mono text-[11px]" style={{ color: TXT3 }}>
+            pocos datos para validar ({fmtInt(f.unidades)} uds)
           </span>
-          <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT3 }}>{f.cortes} cortes</span>
-        </>
-      )}
+        ) : (
+          <>
+            <span className="font-mono text-[11px] truncate" style={{ color: TXT2 }}>{f.modelo}</span>
+            <span className="font-mono text-[12px] tnum text-right" style={{ color: TXT }}>{pct0(f.wape)}</span>
+            <span className="font-mono text-[11px] tnum text-right" style={{ color: f.mejora != null && f.mejora > 0 ? VERDE : TXT3 }}>
+              {textoMejora(f)}
+            </span>
+            <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT3 }}>{f.cortes} cortes</span>
+          </>
+        )}
+      </div>
     </li>
   );
 
   return (
     <details className="mt-4 group border-t border-white/10 pt-5">
-      <summary className="flex items-center gap-3 cursor-pointer select-none">
+      <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
           Validación del motor — error real sobre tu histórico
         </span>
@@ -297,7 +329,7 @@ function PanelValidacion({ motor }) {
             ) : null}
             {v.filas.length ? (
               <ul className="mt-4">
-                <li className="grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-white/10">
+                <li className="hidden md:grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-white/10">
                   {['Categoría', 'Mejor modelo', 'Error', 'vs ingenuo', 'Cortes'].map((h, i) => (
                     <span key={h} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
                   ))}
@@ -314,37 +346,50 @@ function PanelValidacion({ motor }) {
 
 // Tabla del reparto por talla: barras proporcionales + riesgo de rotura (que
 // falte) y de rebaja (que sobre >30%) por talla, desde las simulaciones.
-const GRID_TALLAS = 'grid-cols-[44px_1fr_52px_44px_56px_56px]';
+// En móvil la rejilla completa no cabe (375px): las columnas de riesgo bajan
+// a chips bajo cada fila y la barra conserva su sitio.
+const GRID_TALLAS = 'grid-cols-[44px_1fr_52px_44px] md:grid-cols-[44px_1fr_52px_44px_56px_56px]';
 function TablaTallas({ reparto, recomendado }) {
   const maxPeso = Math.max(...reparto.map((f) => f.peso), 0.0001);
+  const conRiesgos = reparto.some((f) => f.riesgoRotura != null);
   return (
     <div>
       <div className={`grid ${GRID_TALLAS} gap-2.5 pb-2 border-b border-white/10`}>
-        {['Talla', '', 'Uds', '%', 'Rotura', 'Rebaja'].map((h, i) => (
-          <span key={i} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
+        {['Talla', '', 'Uds', '%'].map((h, i) => (
+          <span key={h || i} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
         ))}
+        <span className={`${LABEL} hidden md:block text-right`} style={{ color: TXT3 }}>Rotura</span>
+        <span className={`${LABEL} hidden md:block text-right`} style={{ color: TXT3 }}>Rebaja</span>
       </div>
       <ul>
         {reparto.map((f) => (
-          <li key={f.talla} className={`grid ${GRID_TALLAS} gap-2.5 items-center py-2 border-b border-white/[0.06]`}>
-            <span className="font-mono text-[13px]" style={{ color: TXT }}>{f.talla}</span>
-            <span className="h-[18px] rounded-sm relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-              <span
-                className="absolute inset-y-0 left-0 rounded-sm transition-all duration-300"
-                style={{
-                  width: `${Math.max((f.peso / maxPeso) * 100, 2)}%`,
-                  background: 'linear-gradient(90deg, #234E9E 0%, #3F7BEC 100%)',
-                }}
-              />
-            </span>
-            <span className="font-mono text-[14px] tnum text-right" style={{ color: TXT }}>{fmtInt(f.unidades)}</span>
-            <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>{pct1(f.peso)}</span>
-            <span className="font-mono text-[11px] tnum text-right" style={{ color: colorRiesgo(f.riesgoRotura) }}>
-              {f.riesgoRotura != null ? pct0(f.riesgoRotura) : '—'}
-            </span>
-            <span className="font-mono text-[11px] tnum text-right" style={{ color: colorRiesgo(f.riesgoRebaja) }}>
-              {f.riesgoRebaja != null ? pct0(f.riesgoRebaja) : '—'}
-            </span>
+          <li key={f.talla} className="py-2 border-b border-white/[0.06]">
+            <div className={`grid ${GRID_TALLAS} gap-2.5 items-center`}>
+              <span className="font-mono text-[13px]" style={{ color: TXT }}>{f.talla}</span>
+              <span className="h-[18px] rounded-sm relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                <span
+                  className="absolute inset-y-0 left-0 rounded-sm transition-all duration-300"
+                  style={{
+                    width: `${Math.max((f.peso / maxPeso) * 100, 2)}%`,
+                    background: 'linear-gradient(90deg, #234E9E 0%, #3F7BEC 100%)',
+                  }}
+                />
+              </span>
+              <span className="font-mono text-[14px] tnum text-right" style={{ color: TXT }}>{fmtInt(f.unidades)}</span>
+              <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>{pct1(f.peso)}</span>
+              <span className="hidden md:block font-mono text-[11px] tnum text-right" style={{ color: colorRiesgo(f.riesgoRotura) }}>
+                {f.riesgoRotura != null ? pct0(f.riesgoRotura) : '—'}
+              </span>
+              <span className="hidden md:block font-mono text-[11px] tnum text-right" style={{ color: colorRiesgo(f.riesgoRebaja) }}>
+                {f.riesgoRebaja != null ? pct0(f.riesgoRebaja) : '—'}
+              </span>
+            </div>
+            {conRiesgos && f.riesgoRotura != null ? (
+              <div className="md:hidden mt-1.5 flex gap-4 font-mono text-[10px] tracking-[0.1em] uppercase">
+                <span style={{ color: colorRiesgo(f.riesgoRotura) }}>rotura {pct0(f.riesgoRotura)}</span>
+                <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>rebaja {pct0(f.riesgoRebaja)}</span>
+              </div>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -353,7 +398,7 @@ function TablaTallas({ reparto, recomendado }) {
         <span />
         <span className="font-mono text-[14px] tnum text-right" style={{ color: TXT }}>{fmtInt(recomendado)}</span>
         <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>100%</span>
-        <span className="col-span-2" />
+        <span className="hidden md:block col-span-2" />
       </div>
     </div>
   );
@@ -499,8 +544,9 @@ export default function StockEngine({ records, hayFiltros }) {
     }
   }
 
+  // Pestañas con área táctil ≥44px en móvil (padding extra solo ahí).
   const tabCls = (activa) =>
-    `pb-2.5 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors border-b-2 ${
+    `pt-3 pb-3.5 md:pt-0 md:pb-2.5 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors border-b-2 ${
       activa ? 'border-[#2D6BE4] text-[#F5F5F7]' : 'border-transparent text-[#8A8A8F] hover:text-[#F5F5F7]'
     }`;
 
@@ -605,7 +651,7 @@ export default function StockEngine({ records, hayFiltros }) {
                 <Campo etiqueta="Semanas de venta" hint="Entre 3 y 12 (hasta donde llega la referencia de tus análogos).">
                   <div className="flex items-center gap-2">
                     <input
-                      type="number" min="3" max="12" step="1"
+                      type="number" inputMode="numeric" min="3" max="12" step="1"
                       value={lanSemanasTxt} onChange={(e) => setLanSemanasTxt(e.target.value)}
                       className={`${INPUT_CLS} w-[90px] tnum`}
                       style={{ background: '#0E0F12', colorScheme: 'dark' }}
@@ -620,7 +666,7 @@ export default function StockEngine({ records, hayFiltros }) {
                 hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para ${resultadoLan.semanasVenta} semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
               >
                 <input
-                  type="number" min="1" max="1000000" step="1"
+                  type="number" inputMode="numeric" min="1" max="1000000" step="1"
                   placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
                   value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[150px] tnum`}
@@ -630,7 +676,7 @@ export default function StockEngine({ records, hayFiltros }) {
 
               <Campo etiqueta="Nº de colores (opcional)" hint="Cuántos colores lanzarás; vacío = los que sugieren tus análogos.">
                 <input
-                  type="number" min="1" step="1" placeholder="todos"
+                  type="number" inputMode="numeric" min="1" step="1" placeholder="todos"
                   value={lanColoresTxt} onChange={(e) => setLanColoresTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[110px] tnum`}
                   style={{ background: '#0E0F12', colorScheme: 'dark' }}
@@ -852,6 +898,7 @@ export default function StockEngine({ records, hayFiltros }) {
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
+                    inputMode="numeric"
                     min={LEAD_MIN}
                     max={LEAD_MAX}
                     step={1}
@@ -911,19 +958,19 @@ export default function StockEngine({ records, hayFiltros }) {
               >
                 <div className="flex items-center gap-2">
                   <input
-                    type="number" min="0" step="0.01" placeholder="coste €"
+                    type="number" inputMode="decimal" min="0" step="0.01" placeholder="coste €"
                     value={costeTxt} onChange={(e) => setCosteTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[92px] tnum`}
                     style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
                   />
                   <input
-                    type="number" min="0" step="0.01" placeholder="PVP €"
+                    type="number" inputMode="decimal" min="0" step="0.01" placeholder="PVP €"
                     value={pvpTxt} onChange={(e) => setPvpTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[92px] tnum`}
                     style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
                   />
                   <input
-                    type="number" min="0" max="90" step="1" placeholder="liq. 30%"
+                    type="number" inputMode="decimal" min="0" max="90" step="1" placeholder="liq. 30%"
                     value={liqTxt} onChange={(e) => setLiqTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[92px] tnum`}
                     style={{ background: '#0E0F12', colorScheme: 'dark' }}

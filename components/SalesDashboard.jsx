@@ -156,7 +156,7 @@ function FilterSelect({ label, value, onChange, options, allLabel }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-10 min-w-[170px] rounded-lg border border-[#232428] px-3 text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC] cursor-pointer"
+        className="h-11 md:h-10 min-w-[170px] rounded-lg border border-[#232428] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC] cursor-pointer"
         style={{ background: '#0E0F12', colorScheme: 'dark' }}
       >
         <option value="">{allLabel}</option>
@@ -211,6 +211,17 @@ export default function SalesDashboard({ headers, rows }) {
     setFCategoria('');
     setFProducto('');
   }, [headers, rows]);
+
+  // ¿Pantalla móvil? Recharts no se adapta por CSS: en móvil compactamos el
+  // gráfico de productos (eje más corto, sin etiquetas a la derecha).
+  const [esMovil, setEsMovil] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const aplicar = () => setEsMovil(mq.matches);
+    aplicar();
+    mq.addEventListener('change', aplicar);
+    return () => mq.removeEventListener('change', aplicar);
+  }, []);
 
   // 3) Aplicamos los filtros activos sobre los records.
   const filtered = useMemo(() => {
@@ -494,7 +505,7 @@ export default function SalesDashboard({ headers, rows }) {
           <button
             type="button"
             onClick={limpiarFiltros}
-            className="btn-sheen h-10 px-4 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+            className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
           >
             Limpiar filtros
           </button>
@@ -652,7 +663,7 @@ export default function SalesDashboard({ headers, rows }) {
           <ChartCard title="Ingresos por producto" subtitle={`top ${productoData.length}`} className="lg:col-span-8">
             <div className="h-[340px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={productoData} layout="vertical" margin={{ top: 4, right: 130, left: 8, bottom: 4 }}>
+                <BarChart data={productoData} layout="vertical" margin={{ top: 4, right: esMovil ? 12 : 130, left: 8, bottom: 4 }}>
                   <defs>
                     <linearGradient id="gradProducto" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="0%" stopColor="#234E9E" />
@@ -660,10 +671,10 @@ export default function SalesDashboard({ headers, rows }) {
                     </linearGradient>
                   </defs>
                   <XAxis type="number" hide />
-                  <YAxis type="category" dataKey="producto" width={132} tick={{ ...tickMono, fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="producto" width={esMovil ? 92 : 132} tick={{ ...tickMono, fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<ProductoTip />} />
                   <Bar dataKey="ingresos" name="Ingresos" radius={[0, 4, 4, 0]} maxBarSize={26} fill="url(#gradProducto)">
-                    <LabelList content={renderProductoLabel} />
+                    {esMovil ? null : <LabelList content={renderProductoLabel} />}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
