@@ -15,7 +15,12 @@ Ante la duda, mejor hacer una pregunta corta que adivinar.
 
 ## What this is
 
-Weft's single-page marketing/landing site — "the data co-op for DTC fashion." It is a one-route Next.js 14 (App Router) app, migrated from a single-file in-browser HTML prototype (React+Babel via CDN, Tailwind via CDN). There is no backend, no routing beyond `/`, and no tests. The product is essentially a static, heavily-animated landing page.
+Wefty — predicción de stock para marcas de moda (mercado: España, todo en español). App Next.js 14 (App Router) con dos mundos que comparten la misma estética "dark editorial premium":
+
+- **Landing de marketing** (`/`): 5 secciones (hero, problema, cómo funciona, la red, cierre) en `components/landing/`.
+- **Producto "Loop"** (`/login`, `/upload`): subida de CSV de ventas, dashboard y el motor de stock (ver "Producto y Motor de stock" más abajo). Backend: Supabase (auth + tabla `ventas` con RLS).
+
+Las pruebas del motor viven en `scripts/test-engine.mjs` (Node puro, sin framework).
 
 ## Commands
 
@@ -30,15 +35,22 @@ Requires Node 18.18+ (20+ recommended). JavaScript only (`.jsx`) — no TypeScri
 
 ## Architecture
 
-The whole page renders through one chain: `app/page.jsx` → `components/App.jsx` → the section components. `App.jsx` is the page composition — it imports each section in order and also defines the inline "glue" sections (`BrandMarqueeSection`, `PullQuoteSection`, `WordmarkSection`) including their copy/data. To reorder or add a section, edit `App.jsx`.
+**Landing (`/`)**: `app/page.jsx` → `components/landing/LandingWefty.jsx` → secciones. Piezas:
 
-Three shared modules underpin everything; understand these before touching any section:
+- `HeroWefty.jsx` — nav mínima + titular palabra a palabra (con "adivinar" tachado) + CTA.
+- `CampoDemanda.jsx` — canvas protagonista del hero (barras de demanda con "lectura" azul); también cierra la página en `CierreCta`.
+- `MallaRed.jsx` — canvas de puntos conectándose (sección La Red).
+- `Secciones.jsx` — Problema, ComoFunciona, LaRed y CierreCta.
+- `RevelarLp.jsx` — reveals al hacer scroll (IntersectionObserver → clases `lp-revela`/`lp-vis`).
 
-- **`components/hooks.jsx`** — all behavior. `useReveal`/`Reveal` (IntersectionObserver scroll-in, toggles the `.reveal`/`.in` CSS classes), `useScrollProgress` (rAF-driven 0→1 scroll position for an element), `useCountUp`, `useMagnetic` (pointer-follow button effect), and the shared `EASE` cubic-bezier constant. Animations are CSS-class-driven from here, not a library.
-- **`components/primitives.jsx`** — reusable UI atoms: `MonoLabel`, `SectionLabel`, `MagneticButton`, `UnderlineLink`, `Hairline`, `Stat`.
-- **`components/decor.jsx`** — decorative/atmospheric elements: `CornerCrosshairs`, `BrandMarquee`, `PullQuote`, `WordmarkBand`, `Annotation`, `Fn`.
+Reglas de animación de la landing: clases con prefijo `lp-` en `globals.css`; solo `transform`/`opacity`; el estado FINAL es la base CSS y las animaciones viven dentro de `@media (prefers-reduced-motion: no-preference)`; los canvas pintan un fotograma estático con movimiento reducido y pausan su bucle fuera de pantalla.
 
-Each `Xxx.jsx` section (Hero, Problem, HowItWorks, NetworkEffect, Dashboard, Trust, Pricing, FAQ, Footer, Nav) is self-contained and composes the primitives/hooks/decor above.
+Módulos compartidos (los usa también el producto — tocar con cuidado):
+
+- **`components/hooks.jsx`** — `useReveal`/`Reveal` (clases `.reveal`/`.in`), `useScrollProgress`, `useCountUp`, `useMagnetic`, constante `EASE`.
+- **`components/primitives.jsx`** — `MonoLabel`, `SectionLabel`, `MagneticButton`, `UnderlineLink`, `Hairline`, `Stat`.
+- **`components/decor.jsx`** — `CornerCrosshairs`, `Annotation`, `Fn` (y exports legacy sin uso).
+- **`components/EnterAppButton.jsx`** + **`useProductHref.js`** — el CTA consciente de sesión: con sesión → `/upload`, sin sesión → `/login`. No romper esa lógica.
 
 ### Client components
 
@@ -93,4 +105,4 @@ tras tocar cualquier fichero de `lib/engine/`.
 
 - Import via the `@/*` alias (e.g. `import App from '@/components/App'`) — configured in `jsconfig.json`.
 - Section layout uses a recurring 12-column grid pattern: `max-w-[1440px] mx-auto px-8 md:px-12` containers with `grid grid-cols-12 gap-6`.
-- Copy contains intentional editorial typography (em dashes, curly quotes, the `roster · q3 '26` mono labels). The brand roster, stats, and quotes are hardcoded as data arrays inside the relevant section/glue components — there is no CMS.
+- Copy 100% en español de España (de tú, sin anglicismos), con tipografía editorial intencionada (rayas, comillas curvas, etiquetas mono tipo `[02] · El problema`). Todo el copy va hardcodeado en los componentes — no hay CMS.

@@ -28,24 +28,7 @@ body {
   color: #fafaf7;
 }
 
-/* Hero word-reveal */
-.word-reveal {
-  display: inline-block;
-  opacity: 0;
-  filter: blur(8px);
-  transform: translateY(16px);
-  transition:
-    opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
-    filter 900ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.word-reveal.in {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0);
-}
-
-/* Generic fade/blur-in for scroll-revealed blocks */
+/* Generic fade/blur-in for scroll-revealed blocks (lo usa el producto) */
 .reveal {
   opacity: 0;
   filter: blur(6px);
@@ -59,19 +42,6 @@ body {
   opacity: 1;
   filter: blur(0);
   transform: translateY(0);
-}
-
-/* Mask reveal */
-.mask-reveal {
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 0%);
-  mask-image: linear-gradient(180deg, #000 0%, transparent 0%);
-  transition:
-    -webkit-mask-image 1200ms cubic-bezier(0.22, 1, 0.36, 1),
-    mask-image 1200ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.mask-reveal.in {
-  -webkit-mask-image: linear-gradient(180deg, #000 100%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 100%, transparent 100%);
 }
 
 /* Animated underline */
@@ -154,38 +124,13 @@ details > summary::-webkit-details-marker {
   height: 1px;
 }
 
-/* Editorial emphasis: italic serif word in a section headline */
-.emph {
-  font-style: italic;
-  font-weight: 400;
-}
-.emph-blue {
-  color: #2d6be4;
-}
-.emph-clay {
-  color: #c85a3f;
-}
-.emph-navy {
-  color: #1b2d6b;
-}
-
-/* Pull marks — small accent strokes used to underline a word */
-.pull-blue {
-  box-shadow: inset 0 -0.12em 0 rgba(45, 107, 228, 0.18);
-  padding: 0 0.06em;
-}
-.pull-clay {
-  box-shadow: inset 0 -0.12em 0 rgba(200, 90, 63, 0.22);
-  padding: 0 0.06em;
-}
-
-/* Scrollbar discreet */
+/* Scrollbar discreta, a juego con el mundo oscuro */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d6d6ce;
+  background: #2a2c31;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-track {
@@ -235,16 +180,6 @@ details[open] .acc-body {
 }
 .bar.in {
   transform: scaleY(1);
-}
-
-/* Pricing card hover */
-.price-card {
-  transition:
-    border-color 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.price-card:hover {
-  border-color: #0a0a0a;
 }
 
 /* Cursor blink */

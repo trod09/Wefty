@@ -22,15 +22,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: 'Wefty — The data co-op for DTC fashion.',
+  title: {
+    default: 'Wefty — Predicción de stock para marcas de moda',
+    template: '%s · Wefty',
+  },
   description:
-    'Wefty is a data co-op for DTC fashion. Connect your Shopify; every brand that joins makes the forecasts sharper — for all of us.',
+    'Wefty predice cuántas unidades fabricar de cada producto, talla y color a partir de tus ventas — incluso de los productos que aún no has lanzado.',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable}`}
     >
       <body className="font-sans">{children}</body>
