@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Favicon de Wefty: W serif dibujada como trazado (sin fuentes externas)
+       sobre la pastilla oscura de la marca, para que funcione igual de bien
+       en pestañas con tema claro y oscuro. -->
+  <rect width="64" height="64" rx="14" fill="#0F1014"/>
+  <path
+    fill="#FAFAF7"
+    d="M12 20 L19 20 L24.5 38 L32 26 L39.5 38 L45 20 L52 20 L39.5 46 L32 34 L24.5 46 Z"
+  />
+</svg>
