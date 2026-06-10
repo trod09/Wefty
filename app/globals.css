@@ -353,3 +353,38 @@ details[open] .acc-body {
     100% { transform: translateY(12px); opacity: 0; }
   }
 }
+
+/* Revelado al hacer scroll (landing): estado final visible para quien pide
+   movimiento reducido; con movimiento, entra con fade + desplazamiento. */
+.lp-barra {
+  transform-origin: bottom;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-revela {
+    opacity: 0;
+    transform: translateY(26px);
+    transition:
+      opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--rd, 0s);
+  }
+  .lp-revela.lp-vis {
+    opacity: 1;
+    transform: none;
+  }
+  /* Las barras de los glifos crecen escalonadas al revelarse su tarjeta */
+  .lp-revela .lp-barra {
+    transform: scaleY(0.12);
+    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(var(--rd, 0s) + var(--bd, 0s) + 0.25s);
+  }
+  .lp-revela.lp-vis .lp-barra {
+    transform: scaleY(1);
+  }
+}
+
+/* Desvanece la malla de la red hacia los bordes de su sección */
+.lp-mascara-radial {
+  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 35%, transparent 78%);
+  mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 35%, transparent 78%);
+}
