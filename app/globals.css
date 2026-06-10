@@ -218,12 +218,6 @@ details[open] .acc-body {
    y solo tocan transform/opacity (60fps, cero reflow).
    ———————————————————————————————————————————————————————————————— */
 
-/* Desvanece el campo de demanda hacia arriba para fundirlo con el fondo */
-.lp-mascara-arriba {
-  -webkit-mask-image: linear-gradient(to top, black 52%, transparent 100%);
-  mask-image: linear-gradient(to top, black 52%, transparent 100%);
-}
-
 .lp-palabra {
   display: inline-block;
 }
@@ -316,10 +310,4 @@ details[open] .acc-body {
   .lp-revela.lp-vis .lp-barra {
     transform: scaleY(1);
   }
-}
-
-/* Desvanece la malla de la red hacia los bordes de su sección */
-.lp-mascara-radial {
-  -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 35%, transparent 78%);
-  mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 35%, transparent 78%);
 }

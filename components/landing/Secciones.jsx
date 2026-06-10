@@ -6,8 +6,6 @@
 // ilustraciones. Copy brevísimo: si sobra una palabra, fuera.
 import EnterAppButton from '@/components/EnterAppButton';
 import RevelarLp from './RevelarLp';
-import MallaRed from './MallaRed';
-import CampoDemanda from './CampoDemanda';
 
 const MONO = 'font-mono text-[11px] tracking-[0.18em] uppercase';
 const CONT = 'max-w-[1440px] mx-auto px-6 md:px-12';
@@ -164,12 +162,8 @@ export function ComoFunciona() {
 // ——— 04 · LA RED (el diferenciador) ——————————————————————————————————
 export function LaRed() {
   return (
-    <section className="relative border-t border-white/[0.07] overflow-hidden">
-      {/* La malla de puntos conectándose, desvanecida hacia los bordes */}
-      <div className="absolute inset-0 lp-mascara-radial pointer-events-none">
-        <MallaRed className="block w-full h-full" />
-      </div>
-
+    <section className="relative border-t border-white/[0.07]">
+      {/* La malla de la red la pinta el lienzo fijo (HiloDemanda) en esta fase */}
       <div className={`${CONT} relative z-10 py-28 md:py-44 text-center`}>
         <RevelarLp>
           <div className="flex items-baseline justify-center gap-4">
@@ -200,13 +194,9 @@ export function LaRed() {
 // ——— 05 · CIERRE ———————————————————————————————————————————————————————
 export function CierreCta() {
   return (
-    <section className="relative border-t border-white/[0.07] overflow-hidden">
-      {/* Eco del hero: el campo de demanda despide la página */}
-      <div className="absolute inset-x-0 bottom-0 h-[18vh] lp-mascara-arriba pointer-events-none opacity-70">
-        <CampoDemanda className="block w-full h-full" />
-      </div>
-
-      <div className={`${CONT} relative z-10 pt-28 md:pt-40 pb-32 md:pb-40 text-center`}>
+    <section className="relative border-t border-white/[0.07]">
+      {/* El hilo de demanda se asienta aquí en su curva perfecta, detrás */}
+      <div className={`${CONT} relative z-10 pt-28 md:pt-40 pb-36 md:pb-44 text-center`}>
         <RevelarLp>
           <h2 className="mx-auto font-serif font-light text-[clamp(38px,7vw,96px)] leading-[1.0] tracking-[-0.033em] max-w-[14ch]">
             Tu próximo pedido, sin adivinar.

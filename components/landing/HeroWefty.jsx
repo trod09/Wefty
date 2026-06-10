@@ -10,7 +10,6 @@
 // todo es legible al instante. Solo se anima transform/opacity.
 import EnterAppButton from '@/components/EnterAppButton';
 import { useProductHref } from '@/components/useProductHref';
-import CampoDemanda from './CampoDemanda';
 
 const MONO = 'font-mono text-[11px] tracking-[0.18em] uppercase';
 
@@ -49,10 +48,7 @@ export default function HeroWefty() {
         </a>
       </nav>
 
-      {/* Campo de demanda — al fondo, desvanecido hacia arriba */}
-      <div className="absolute inset-x-0 bottom-0 h-[30vh] md:h-[38vh] lp-mascara-arriba pointer-events-none">
-        <CampoDemanda className="block w-full h-full" />
-      </div>
+      {/* El campo de demanda lo pinta el lienzo fijo (HiloDemanda), detrás */}
 
       {/* Contenido */}
       <div className="relative z-10 flex-1 flex items-center">

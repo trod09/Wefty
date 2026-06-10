@@ -37,9 +37,9 @@ Requires Node 18.18+ (20+ recommended). JavaScript only (`.jsx`) — no TypeScri
 
 **Landing (`/`)**: `app/page.jsx` → `components/landing/LandingWefty.jsx` → secciones. Piezas:
 
+- `HiloDemanda.jsx` — LA pieza: lienzo fijo a pantalla completa conducido por el scroll (con inercia) que narra el producto en 5 fases: caos de barras → errores (tapas ámbar + huecos fantasma) → la curva del modelo dibujándose → malla de la red → curva de tallas perfecta. Lee los límites de cada `div[data-fase]` de `LandingWefty`.
+- `BrujulaFases.jsx` — raíl fijo derecho (solo escritorio) que marca la fase activa.
 - `HeroWefty.jsx` — nav mínima + titular palabra a palabra (con "adivinar" tachado) + CTA.
-- `CampoDemanda.jsx` — canvas protagonista del hero (barras de demanda con "lectura" azul); también cierra la página en `CierreCta`.
-- `MallaRed.jsx` — canvas de puntos conectándose (sección La Red).
 - `Secciones.jsx` — Problema, ComoFunciona, LaRed y CierreCta.
 - `RevelarLp.jsx` — reveals al hacer scroll (IntersectionObserver → clases `lp-revela`/`lp-vis`).
 
