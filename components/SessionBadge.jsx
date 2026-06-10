@@ -49,7 +49,7 @@ export default function SessionBadge() {
           <button
             type="button"
             onClick={() => supabase.auth.signOut()}
-            className={`${MONO} transition-colors`}
+            className={`${MONO} transition-colors py-3 -my-3 px-2 -mx-2`}
             style={{ color: '#8A8A8F' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#F5F5F7')}
             onMouseLeave={(e) => (e.currentTarget.style.color = '#8A8A8F')}

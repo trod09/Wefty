@@ -112,7 +112,7 @@ export default function LoginPage() {
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
-      <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-24 md:pt-32 pb-24">
+      <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-16 md:pt-32 pb-24">
         {/* Top bar */}
         <div className="flex items-baseline justify-between">
           <UnderlineLink href="/" dark className="font-serif text-[22px] tracking-[-0.02em]">
@@ -124,7 +124,7 @@ export default function LoginPage() {
         <Hairline dark className="mt-6" />
 
         {/* Section label row */}
-        <div className="grid grid-cols-12 gap-6 mt-16 md:mt-20">
+        <div className="grid grid-cols-12 gap-6 mt-10 md:mt-20">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
             <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>[00]</span>
             <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
@@ -138,7 +138,7 @@ export default function LoginPage() {
           Entra en tu cuenta.
         </h1>
 
-        <div className="grid grid-cols-12 gap-6 mt-12 md:mt-16">
+        <div className="grid grid-cols-12 gap-6 mt-9 md:mt-16">
           {/* Columna izquierda: descripción / estado de sesión */}
           <div className="col-span-12 md:col-span-5">
             <Reveal>
@@ -151,7 +151,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className={`mt-6 ${MONO} transition-colors text-[#8A8A8F] hover:text-[#F5F5F7]`}
+                    className={`mt-6 ${MONO} transition-colors text-[#8A8A8F] hover:text-[#F5F5F7] py-3 -my-3 px-2 -mx-2`}
                   >
                     Cerrar sesión
                   </button>
@@ -187,7 +187,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="tu@email.com"
-                      className="w-full h-12 px-4 rounded-lg bg-[#0E0F12] border border-[#232428] text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#3F7BEC]"
+                      className="w-full h-12 px-4 rounded-lg bg-[#0E0F12] border border-[#232428] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#3F7BEC]"
                     />
                   </div>
                   <div>
@@ -201,7 +201,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-12 px-4 rounded-lg bg-[#0E0F12] border border-[#232428] text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#3F7BEC]"
+                      className="w-full h-12 px-4 rounded-lg bg-[#0E0F12] border border-[#232428] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#3F7BEC]"
                     />
                   </div>
                 </div>
