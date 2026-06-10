@@ -604,3 +604,14 @@ details[open] .acc-body {
     }
   }
 }
+
+/* Convergencia del split de [02]: en móvil (mitades apiladas) el recorrido
+   lateral se acorta — el gesto "enfrentado" es cosa del escritorio. */
+.lp-convergencia {
+  --dist: 24px;
+}
+@media (min-width: 1024px) {
+  .lp-convergencia {
+    --dist: 64px;
+  }
+}

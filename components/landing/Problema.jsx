@@ -227,14 +227,14 @@ export function Problema() {
       </div>
 
       {/* El escenario dividido: dos destinos enfrentados */}
-      <Convergencia className="relative">
+      <Convergencia className="relative lp-convergencia">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1px_1fr]">
           {/* IZQUIERDA — FABRICAS DE MÁS */}
           <div
             className="relative flex items-center lg:min-h-[68vh] py-16 md:py-20"
             style={{
               background: 'radial-gradient(110% 90% at 30% 50%, rgba(224,122,95,0.07) 0%, transparent 65%)',
-              transform: 'translateX(calc((1 - var(--conv)) * -64px))',
+              transform: 'translateX(calc((1 - var(--conv)) * -1 * var(--dist, 64px)))',
               opacity: 'calc(0.3 + var(--conv) * 0.7)',
             }}
           >
@@ -271,7 +271,7 @@ export function Problema() {
             className="relative flex items-center lg:min-h-[68vh] py-16 md:py-20"
             style={{
               background: 'radial-gradient(110% 90% at 70% 50%, rgba(63,123,236,0.07) 0%, transparent 65%)',
-              transform: 'translateX(calc((1 - var(--conv)) * 64px))',
+              transform: 'translateX(calc((1 - var(--conv)) * var(--dist, 64px)))',
               opacity: 'calc(0.3 + var(--conv) * 0.7)',
             }}
           >

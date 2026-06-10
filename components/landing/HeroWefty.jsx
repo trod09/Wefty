@@ -43,7 +43,7 @@ export default function HeroWefty() {
       {/* Nav mínima */}
       <nav className="relative z-20 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-7 flex items-baseline justify-between">
         <span className="font-serif text-[24px] tracking-[-0.02em] text-[#F5F5F7] select-none">Wefty</span>
-        <a href={href} className={`${MONO} text-[#8A8A8F] hover:text-[#F5F5F7] transition-colors`}>
+        <a href={href} className={`${MONO} text-[#8A8A8F] hover:text-[#F5F5F7] transition-colors py-3 -my-3 px-2 -mx-2`}>
           Entrar →
         </a>
       </nav>
@@ -80,7 +80,7 @@ export default function HeroWefty() {
       </div>
 
       {/* Indicador de scroll */}
-      <div className="relative z-10 pb-7 flex justify-center lp-sube" style={{ '--d': '1.6s' }}>
+      <div className="relative z-10 pb-9 md:pb-7 flex justify-center lp-sube" style={{ '--d': '1.6s' }}>
         <span className="flex flex-col items-center gap-2.5 font-mono text-[10px] tracking-[0.22em] uppercase" style={{ color: '#5d5e63' }}>
           Desliza
           <span className="lp-linea-scroll" />
