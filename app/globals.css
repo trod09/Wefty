@@ -2,10 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fondo base oscuro: la landing y el producto comparten el mismo mundo
+   visual; así el rebote del scroll (overscroll) nunca enseña un flash claro.
+   Cada página pinta su propio fondo encima, como hasta ahora. */
 html,
 body {
-  background: #fafaf7;
-  color: #0a0a0a;
+  background: #0a0a0b;
+  color: #f5f5f7;
 }
 
 body {
@@ -271,4 +274,82 @@ details[open] .acc-body {
     linear-gradient(to right, rgba(250, 250, 247, 0.06) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(250, 250, 247, 0.06) 1px, transparent 1px);
   background-size: 80px 80px;
+}
+
+/* ————————————————————————————————————————————————————————————————
+   Landing Wefty (prefijo lp-) — estilos encapsulados del rediseño.
+   Principio: el estado FINAL es la base (todo legible sin esperar y sin JS);
+   las animaciones solo existen si el usuario NO pide movimiento reducido,
+   y solo tocan transform/opacity (60fps, cero reflow).
+   ———————————————————————————————————————————————————————————————— */
+
+/* Desvanece el campo de demanda hacia arriba para fundirlo con el fondo */
+.lp-mascara-arriba {
+  -webkit-mask-image: linear-gradient(to top, black 52%, transparent 100%);
+  mask-image: linear-gradient(to top, black 52%, transparent 100%);
+}
+
+.lp-palabra {
+  display: inline-block;
+}
+
+/* Tachado en ámbar de la palabra clave ("adivinar") */
+.lp-tachado {
+  position: relative;
+}
+.lp-tachado::after {
+  content: '';
+  position: absolute;
+  left: -0.04em;
+  right: -0.04em;
+  top: 55%;
+  height: 0.05em;
+  min-height: 2px;
+  border-radius: 2px;
+  background: #e07a5f;
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+/* Línea del indicador de scroll */
+.lp-linea-scroll {
+  display: block;
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, #5d5e63, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lp-palabra {
+    opacity: 0;
+    transform: translateY(0.55em);
+    animation: lp-entra 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  .lp-sube {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: lp-entra 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  .lp-tachado::after {
+    transform: scaleX(0);
+    animation: lp-tachar 0.55s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+    animation-delay: 1.3s;
+  }
+  .lp-linea-scroll {
+    animation: lp-gotea 2.4s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  }
+
+  @keyframes lp-entra {
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes lp-tachar {
+    to { transform: scaleX(1); }
+  }
+  @keyframes lp-gotea {
+    0% { transform: translateY(-10px); opacity: 0; }
+    35% { opacity: 1; }
+    100% { transform: translateY(12px); opacity: 0; }
+  }
 }
