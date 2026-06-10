@@ -494,7 +494,7 @@ export default function SalesDashboard({ headers, rows }) {
           <button
             type="button"
             onClick={limpiarFiltros}
-            className="h-10 px-4 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+            className="btn-sheen h-10 px-4 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
           >
             Limpiar filtros
           </button>

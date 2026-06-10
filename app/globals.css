@@ -285,9 +285,6 @@ details[open] .acc-body {
 
 /* Revelado al hacer scroll (landing): estado final visible para quien pide
    movimiento reducido; con movimiento, entra con fade + desplazamiento. */
-.lp-barra {
-  transform-origin: bottom;
-}
 @media (prefers-reduced-motion: no-preference) {
   .lp-revela {
     opacity: 0;
@@ -301,13 +298,309 @@ details[open] .acc-body {
     opacity: 1;
     transform: none;
   }
-  /* Las barras de los glifos crecen escalonadas al revelarse su tarjeta */
-  .lp-revela .lp-barra {
-    transform: scaleY(0.12);
-    transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-    transition-delay: calc(var(--rd, 0s) + var(--bd, 0s) + 0.25s);
+}
+
+/* [02] El problema — el almacén que se llena (bucle sutil) y los huecos
+   fantasma que parpadean. Estado base: todo visible (movimiento reducido). */
+.lp-caja {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: rgba(245, 245, 247, 0.16);
+}
+@media (min-width: 768px) {
+  .lp-caja {
+    width: 17px;
+    height: 17px;
   }
-  .lp-revela.lp-vis .lp-barra {
-    transform: scaleY(1);
+}
+.lp-caja-exceso {
+  position: relative;
+  background: rgba(224, 122, 95, 0.38);
+}
+.lp-caja-exceso::after {
+  content: '';
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 50%;
+  height: 1.5px;
+  background: rgba(224, 122, 95, 0.85);
+  transform: rotate(-32deg);
+}
+.lp-fantasma {
+  background: transparent;
+  border: 1px dashed rgba(245, 245, 247, 0.3);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lp-caja {
+    animation: lp-almacen 16s linear infinite;
+    animation-delay: calc(var(--i, 0) * 0.45s);
+  }
+  .lp-fantasma {
+    animation: lp-parpadeo 3.8s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 0.21s);
+  }
+  .lp-agotado {
+    animation: lp-etiqueta 4.2s ease-in-out infinite;
+  }
+  @keyframes lp-almacen {
+    0% { opacity: 0; }
+    2.5% { opacity: 1; }
+    96% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes lp-parpadeo {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.75; }
+  }
+  @keyframes lp-etiqueta {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+}
+
+/* ————— Reflejo metálico de botones de ACCIÓN (patrón global Wefty) —————
+   Uso: añadir .btn-sheen a botones de acción CON superficie (fondo o borde).
+   Franja de luz diagonal que barre el botón al hacer hover (~0,7 s), una vez
+   por entrada y repetible limpio; micro-elevación con sombra suave vía filter
+   (no pisa los box-shadow/glow propios de cada botón) y el overflow:hidden no
+   recorta sombras (las sombras viven fuera del clip de overflow).
+   · Táctil (sin hover real): no hay barrido ni elevación — nada que se quede
+     "pegado" tras un toque.
+   · prefers-reduced-motion: solo un cambio de brillo, sin barrido.
+   · Fondos muy claros: añadir también .btn-sheen-claro (franja más marcada). */
+.btn-sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.35s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+.btn-sheen::after {
+  content: '';
+  position: absolute;
+  top: -25%;
+  bottom: -25%;
+  left: 0;
+  width: 55%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255, 255, 255, var(--sheen-alpha, 0.26)) 50%,
+    transparent 100%
+  );
+  transform: translateX(-140%) skewX(-18deg);
+  pointer-events: none;
+}
+.btn-sheen-claro {
+  --sheen-alpha: 0.5;
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .btn-sheen:hover {
+    transform: translateY(-1.5px);
+    filter: brightness(1.04) drop-shadow(0 7px 14px rgba(0, 0, 0, 0.35));
+  }
+  .btn-sheen:hover::after {
+    animation: btn-sheen-barrido 0.7s cubic-bezier(0.33, 1, 0.5, 1);
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .btn-sheen:hover {
+    filter: brightness(1.08);
+  }
+}
+@keyframes btn-sheen-barrido {
+  to {
+    transform: translateX(260%) skewX(-18deg);
+  }
+}
+
+/* ————— Botón primario «cromo» (espejo líquido, guiño cyberpunk) —————
+   Para las acciones PRIMARIAS del ecosistema. Cromo de verdad: bandas de
+   alto contraste con un HORIZONTE oscuro a media altura (el truco clásico del
+   metal espejado) que fluye despacio en bucle, halo cian/violeta y barrido de
+   luz encima (.btn-sheen .btn-sheen-claro). El flujo solo mueve
+   background-position en un elemento pequeño (coste de pintado mínimo) y se
+   desactiva con prefers-reduced-motion. */
+.btn-cromo {
+  color: #07080c;
+  background: linear-gradient(
+    178deg,
+    #ffffff 0%,
+    #f0f3fa 10%,
+    #cdd4e6 24%,
+    #aeb7cf 36%,
+    #566180 48%,
+    #8d96b0 53%,
+    #dde2ef 68%,
+    #ffffff 84%,
+    #b6bed4 100%
+  );
+  background-size: 100% 165%;
+  background-position: 50% 22%;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 0 32px -8px rgba(125, 163, 240, 0.8),
+    0 0 14px -6px rgba(56, 189, 248, 0.4),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 6px rgba(16, 22, 44, 0.5),
+    inset 0 -14px 18px rgba(27, 45, 107, 0.22);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn-cromo {
+    animation: cromo-flujo 7s ease-in-out infinite alternate;
+  }
+}
+@keyframes cromo-flujo {
+  from {
+    background-position: 50% 14%;
+  }
+  to {
+    background-position: 50% 56%;
+  }
+}
+@media (hover: hover) {
+  .btn-cromo:hover {
+    box-shadow:
+      0 0 42px -6px rgba(56, 189, 248, 0.7),
+      0 0 30px -8px rgba(167, 139, 250, 0.6),
+      0 0 18px -4px rgba(125, 163, 240, 0.5),
+      inset 0 1.5px 0 rgba(255, 255, 255, 1),
+      inset 0 -2px 6px rgba(16, 22, 44, 0.45),
+      inset 0 -14px 18px rgba(27, 45, 107, 0.2);
+  }
+}
+
+/* [02] Titular «del caos al golpe» — estado base = frase asentada con su
+   trazo rojo (visible sin JS y con movimiento reducido). Los estados
+   iniciales solo existen bajo .lp-tit-listo (lo añade JS antes de entrar en
+   pantalla) y la coreografía se dispara una única vez con .lp-tit-anim. */
+.lp-tit-golpe {
+  position: relative;
+}
+.lp-tit-golpe::after {
+  content: '';
+  position: absolute;
+  left: -0.03em;
+  right: -0.03em;
+  bottom: 0.04em;
+  height: 0.055em;
+  min-height: 2.5px;
+  border-radius: 2px;
+  background: #e07a5f;
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* — estados iniciales (solo con JS presente) — */
+  .lp-tit-listo .lp-tit-letra {
+    opacity: 0;
+    transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--rot, 0deg));
+    filter: blur(3px);
+  }
+  .lp-tit-listo .lp-tit-palabra {
+    opacity: 0;
+    transform: translateY(0.5em);
+  }
+  .lp-tit-listo .lp-tit-golpe {
+    opacity: 0;
+    transform: translateY(-0.55em);
+  }
+  .lp-tit-listo .lp-tit-golpe::after {
+    transform: scaleX(0);
+  }
+
+  /* — coreografía (~1,2 s + el trazo) — */
+  .lp-tit-anim .lp-tit-letra {
+    animation: lp-tit-recoloca 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  .lp-tit-anim .lp-tit-palabra {
+    animation: lp-tit-recoloca 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: var(--d, 0s);
+  }
+  .lp-tit-anim .lp-tit-golpe {
+    animation: lp-tit-cae 0.5s cubic-bezier(0.3, 0.7, 0.3, 1) forwards;
+    animation-delay: 0.8s;
+  }
+  .lp-tit-anim .lp-tit-golpe::after {
+    animation: lp-tit-traza 0.45s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+    animation-delay: 1.28s;
+  }
+  /* la sacudida de toda la línea al impactar el sello */
+  h2.lp-tit-anim {
+    animation: lp-tit-sacudida 0.45s cubic-bezier(0.25, 0.6, 0.3, 1) 1.1s;
+  }
+  /* la firma: temblor casi imperceptible de "Adivinar" tras asentarse */
+  .lp-tit-anim .lp-tit-adivinar {
+    animation: lp-tit-temblor 7s ease-in-out 2.2s infinite;
+  }
+
+  @keyframes lp-tit-recoloca {
+    to {
+      opacity: 1;
+      transform: translate(0, 0) rotate(0deg);
+      filter: blur(0);
+    }
+  }
+  @keyframes lp-tit-cae {
+    0% {
+      opacity: 0;
+      transform: translateY(-0.55em) scale(1.04);
+    }
+    55% {
+      opacity: 1;
+      transform: translateY(0.05em) scale(0.99);
+    }
+    78% {
+      transform: translateY(-0.02em) scale(1);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes lp-tit-traza {
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @keyframes lp-tit-sacudida {
+    0% {
+      transform: translateY(0);
+    }
+    35% {
+      transform: translateY(0.045em);
+    }
+    65% {
+      transform: translateY(-0.018em);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+  @keyframes lp-tit-temblor {
+    0%, 100% {
+      transform: translate(0, 0) rotate(0deg);
+    }
+    25% {
+      transform: translate(0.4px, -0.5px) rotate(0.08deg);
+    }
+    50% {
+      transform: translate(-0.4px, 0.4px) rotate(-0.06deg);
+    }
+    75% {
+      transform: translate(0.3px, 0.5px) rotate(0.05deg);
+    }
   }
 }

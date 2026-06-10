@@ -211,11 +211,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleSignIn}
                     disabled={busy}
-                    className="relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] text-white rounded-lg cursor-pointer select-none transition-all duration-300 hover:brightness-110 disabled:opacity-60 disabled:cursor-default"
-                    style={{
-                      background: 'linear-gradient(135deg, #3F7BEC 0%, #2D6BE4 100%)',
-                      boxShadow: '0 0 40px -12px rgba(45,107,228,0.85)',
-                    }}
+                    className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 disabled:opacity-60 disabled:cursor-default"
                   >
                     {busy ? 'Procesando…' : 'Iniciar sesión'}
                   </button>
@@ -223,7 +219,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleSignUp}
                     disabled={busy}
-                    className="relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 border border-[#3a3c42] text-[#F5F5F7] hover:border-[#5d5e63] disabled:opacity-60 disabled:cursor-default"
+                    className="btn-sheen relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 border border-[#3a3c42] text-[#F5F5F7] hover:border-[#5d5e63] disabled:opacity-60 disabled:cursor-default"
                   >
                     Crear cuenta
                   </button>

@@ -16,11 +16,10 @@ export default function EnterAppButton({ children, tone = 'ink', className = '' 
   const href = useProductHref();
   const ref = useMagnetic(8, 120);
   const base =
-    'relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] magnetic select-none';
-  const styles =
-    tone === 'bone'
-      ? 'bg-bone text-ink hover:bg-electric hover:text-bone'
-      : 'bg-ink text-bone hover:bg-electric';
+    'relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] magnetic select-none btn-sheen';
+  // Acción primaria del ecosistema: acabado cromo (el tono se conserva en la
+  // firma por compatibilidad, pero el cromo es el único acabado actual).
+  const styles = 'btn-cromo btn-sheen-claro';
   return (
     <a
       ref={ref}

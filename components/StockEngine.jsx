@@ -814,7 +814,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   <button
                     type="button"
                     onClick={copiarLanzamiento}
-                    className="h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                    className="btn-sheen h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
                     style={{ background: copiadoLan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoLan ? `${VERDE}66` : undefined, color: copiadoLan ? VERDE : undefined }}
                   >
                     {copiadoLan ? 'Copiado ✓' : 'Copiar pedido'}
@@ -1151,7 +1151,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   <button
                     type="button"
                     onClick={copiarPedido}
-                    className="h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                    className="btn-sheen h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
                     style={{ background: copiado ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiado ? `${VERDE}66` : undefined, color: copiado ? VERDE : undefined }}
                   >
                     {copiado ? 'Copiado ✓' : 'Copiar pedido'}

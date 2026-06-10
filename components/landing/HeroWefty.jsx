@@ -39,7 +39,7 @@ export default function HeroWefty() {
   const href = useProductHref();
 
   return (
-    <header className="relative min-h-[100svh] flex flex-col overflow-hidden">
+    <header className="relative min-h-[82svh] md:min-h-[86svh] flex flex-col overflow-hidden">
       {/* Nav mínima */}
       <nav className="relative z-20 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-7 flex items-baseline justify-between">
         <span className="font-serif text-[24px] tracking-[-0.02em] text-[#F5F5F7] select-none">Wefty</span>
@@ -48,11 +48,10 @@ export default function HeroWefty() {
         </a>
       </nav>
 
-      {/* El campo de demanda lo pinta el lienzo fijo (HiloDemanda), detrás */}
-
-      {/* Contenido */}
+      {/* Contenido — centrado de verdad: sin el colchón inferior que
+          reservaba sitio para la onda */}
       <div className="relative z-10 flex-1 flex items-center">
-        <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12 pb-[16vh] md:pb-[14vh]">
+        <div className="w-full max-w-[1440px] mx-auto px-6 md:px-12">
           <p className={`${MONO} lp-sube`} style={{ '--d': '0.05s', color: '#9db4ec' }}>
             Predicción de stock · marcas de moda
           </p>

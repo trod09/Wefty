@@ -533,11 +533,7 @@ export default function UploadPage() {
                 <div className="mt-6">
                   <label
                     htmlFor="csv-input"
-                    className="relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] text-white rounded-lg cursor-pointer select-none transition-all duration-300 hover:brightness-110"
-                    style={{
-                      background: 'linear-gradient(135deg, #3F7BEC 0%, #2D6BE4 100%)',
-                      boxShadow: '0 0 40px -12px rgba(45,107,228,0.85)',
-                    }}
+                    className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300"
                   >
                     <span className="relative z-10">Seleccionar archivo CSV</span>
                     <span className="relative z-10 w-3 h-3 flex items-center justify-center">
@@ -595,11 +591,7 @@ export default function UploadPage() {
                   type="button"
                   onClick={handleSave}
                   disabled={saveState === 'saving'}
-                  className="relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] text-white rounded-lg cursor-pointer select-none transition-all duration-300 hover:brightness-110 disabled:opacity-60 disabled:cursor-default"
-                  style={{
-                    background: 'linear-gradient(135deg, #3F7BEC 0%, #2D6BE4 100%)',
-                    boxShadow: '0 0 40px -12px rgba(45,107,228,0.85)',
-                  }}
+                  className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 disabled:opacity-60 disabled:cursor-default"
                 >
                   <span className="relative z-10">
                     {saveState === 'saving' ? 'Guardando…' : 'Guardar en la base de datos'}

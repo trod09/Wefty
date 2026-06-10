@@ -7,7 +7,8 @@
 import HeroWefty from './HeroWefty';
 import HiloDemanda from './HiloDemanda';
 import BrujulaFases from './BrujulaFases';
-import { Problema, ComoFunciona, LaRed, CierreCta } from './Secciones';
+import { Problema } from './Problema';
+import { ComoFunciona, LaRed, CierreCta } from './Secciones';
 
 export default function LandingWefty() {
   return (

@@ -37,10 +37,12 @@ Requires Node 18.18+ (20+ recommended). JavaScript only (`.jsx`) — no TypeScri
 
 **Landing (`/`)**: `app/page.jsx` → `components/landing/LandingWefty.jsx` → secciones. Piezas:
 
-- `HiloDemanda.jsx` — LA pieza: lienzo fijo a pantalla completa conducido por el scroll (con inercia) que narra el producto en 5 fases: caos de barras → errores (tapas ámbar + huecos fantasma) → la curva del modelo dibujándose → malla de la red → curva de tallas perfecta. Lee los límites de cada `div[data-fase]` de `LandingWefty`.
+- `HiloDemanda.jsx` — lienzo fijo de fondo conducido por el scroll (con inercia): hero y El problema descansan limpios; en Cómo funciona nacen barras ordenándose con la curva del modelo dibujándose; retirada en La Red (cede a la esfera); campana de tallas perfecta en el cierre. Lee los límites de cada `div[data-fase]` de `LandingWefty`.
+- `EsferaRed.jsx` — protagonista de la sección La Red: esfera-constelación 3D (Fibonacci + proyección a mano, sin three.js) que rota y hace zoom con el progreso de scroll; marcas en azul, pulsos viajando por las conexiones.
 - `BrujulaFases.jsx` — raíl fijo derecho (solo escritorio) que marca la fase activa.
 - `HeroWefty.jsx` — nav mínima + titular palabra a palabra (con "adivinar" tachado) + CTA.
-- `Secciones.jsx` — Problema, ComoFunciona, LaRed y CierreCta.
+- `Problema.jsx` — escenario dividido "los dos destinos": −33% con contador vs «Agotado.», almacén/huecos animados, convergencia ligada al scroll y titular «del caos al golpe» (TitularCaos).
+- `Secciones.jsx` — ComoFunciona, LaRed y CierreCta.
 - `RevelarLp.jsx` — reveals al hacer scroll (IntersectionObserver → clases `lp-revela`/`lp-vis`).
 
 Reglas de animación de la landing: clases con prefijo `lp-` en `globals.css`; solo `transform`/`opacity`; el estado FINAL es la base CSS y las animaciones viven dentro de `@media (prefers-reduced-motion: no-preference)`; los canvas pintan un fotograma estático con movimiento reducido y pausan su bucle fuera de pantalla.
