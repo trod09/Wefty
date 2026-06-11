@@ -28,6 +28,7 @@ module.exports = {
       },
       fontFamily: {
         serif: ['var(--font-fraunces)', 'ui-serif', 'Georgia', 'serif'],
+        display: ['var(--font-display)', 'system-ui', 'sans-serif'],
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['var(--font-jetbrains)', 'ui-monospace', 'monospace'],
       },

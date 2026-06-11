@@ -24,15 +24,15 @@ import { fmtFecha } from '@/lib/engine/datos.mjs';
 const EMBER = '#E07A5F';
 const VERDE = '#6BCB9A';
 const AMBAR = '#E3C04B';
-const CIELO = '#9db4ec';
+const CIELO = '#f0a987';
 const TXT = '#F5F5F7';
 const TXT2 = '#8A8A8F';
 const TXT3 = '#5d5e63';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const CARD_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
+const CARD_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
 // Inputs: 16px en móvil (iOS hace zoom forzado con cualquier input menor) y
 // 44px de alto táctil; en escritorio, el tamaño compacto de siempre.
-const INPUT_CLS = 'h-11 md:h-10 rounded-lg border border-[#232428] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC]';
+const INPUT_CLS = 'h-11 md:h-10 rounded-lg border border-[#1d2330] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#F08C56]';
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
 const fmt1 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -61,7 +61,7 @@ function Campo({ etiqueta, children, hint }) {
 // Control segmentado (escenarios de demanda).
 function Segmentos({ valor, onChange, opciones }) {
   return (
-    <div className="inline-flex rounded-lg border border-[#232428] overflow-hidden">
+    <div className="inline-flex rounded-lg border border-[#1d2330] overflow-hidden">
       {opciones.map((o) => (
         <button
           key={o.v}
@@ -70,7 +70,7 @@ function Segmentos({ valor, onChange, opciones }) {
           className={`h-11 md:h-10 px-3.5 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors ${
             valor === o.v ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
           }`}
-          style={{ background: valor === o.v ? 'rgba(45,107,228,0.28)' : '#0E0F12' }}
+          style={{ background: valor === o.v ? 'rgba(240,140,86,0.22)' : '#090c12' }}
         >
           {o.t}
         </button>
@@ -218,7 +218,7 @@ function MatrizTallaColor({ matriz }) {
 function Explicacion({ pasos }) {
   if (!pasos?.length) return null;
   return (
-    <details className="mt-5 group rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+    <details className="mt-5 group rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
           ¿Por qué esta recomendación?
@@ -513,7 +513,7 @@ export default function StockEngine({ records, hayFiltros }) {
 
   if (motor.almacen.vacio) {
     return (
-      <div className="rounded-xl border border-[#232428] p-8 text-center" style={{ background: CARD_BG }}>
+      <div className="rounded-xl border border-[#1d2330] p-8 text-center" style={{ background: CARD_BG }}>
         <div className={LABEL} style={{ color: TXT2 }}>Motor de stock</div>
         <p className="mt-3 text-[15px]" style={{ color: TXT2 }}>
           Para recomendar pedidos necesitamos ventas con fecha válida. Revisa la columna de fechas de tu CSV.
@@ -547,7 +547,7 @@ export default function StockEngine({ records, hayFiltros }) {
   // Pestañas con área táctil ≥44px en móvil (padding extra solo ahí).
   const tabCls = (activa) =>
     `pt-3 pb-3.5 md:pt-0 md:pb-2.5 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors border-b-2 ${
-      activa ? 'border-[#2D6BE4] text-[#F5F5F7]' : 'border-transparent text-[#8A8A8F] hover:text-[#F5F5F7]'
+      activa ? 'border-[#F08C56] text-[#F5F5F7]' : 'border-transparent text-[#8A8A8F] hover:text-[#F5F5F7]'
     }`;
 
   return (
@@ -555,7 +555,7 @@ export default function StockEngine({ records, hayFiltros }) {
       {/* Cabecera de la sección */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className={`${LABEL} flex items-center gap-2`} style={{ color: TXT2 }}>
-          <span className="w-1.5 h-1.5 rounded-full bg-electric live-dot" />
+          <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: '#F08C56' }} />
           Motor de stock · cuánto pedir
         </div>
         <span className={LABEL} style={{ color: calculando ? CIELO : TXT3 }}>
@@ -565,7 +565,7 @@ export default function StockEngine({ records, hayFiltros }) {
         </span>
       </div>
 
-      <div className="mt-3 rounded-xl border border-[#232428] p-6 md:p-8" style={{ background: CARD_BG }}>
+      <div className="mt-3 rounded-xl border border-[#1d2330] p-6 md:p-8" style={{ background: CARD_BG }}>
         {/* Pestañas */}
         <div className="flex gap-7 border-b border-white/10">
           <button type="button" className={tabCls(pestana === 'reposicion')} onClick={() => setPestana('reposicion')}>
@@ -585,7 +585,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   value={lanCategoriaEf}
                   onChange={(e) => setLanCategoria(e.target.value)}
                   className={`${INPUT_CLS} min-w-[190px] cursor-pointer`}
-                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
                 >
                   {categoriasLan.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -600,7 +600,7 @@ export default function StockEngine({ records, hayFiltros }) {
                     value={lanPos}
                     onChange={(e) => setLanPos(e.target.value)}
                     className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                    style={{ background: '#090c12', colorScheme: 'dark' }}
                   >
                     <option value="">Sin preferencia</option>
                     {posiciones.opciones.map((o) => <option key={o.clave} value={o.clave}>{o.etiqueta}</option>)}
@@ -612,7 +612,7 @@ export default function StockEngine({ records, hayFiltros }) {
                     value={String(lanBandaIdx)}
                     onChange={(e) => setLanBanda(e.target.value)}
                     className={`${INPUT_CLS} min-w-[170px] cursor-pointer`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                    style={{ background: '#090c12', colorScheme: 'dark' }}
                   >
                     {bandas.map((b, i) => <option key={i} value={String(i)}>{b.etiqueta}</option>)}
                   </select>
@@ -627,7 +627,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   value={lanMes}
                   onChange={(e) => setLanMes(e.target.value)}
                   className={`${INPUT_CLS} min-w-[160px] cursor-pointer`}
-                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
                 >
                   <option value="">Sin definir</option>
                   {MESES_LANZAMIENTO.map((m, i) => (
@@ -654,7 +654,7 @@ export default function StockEngine({ records, hayFiltros }) {
                       type="number" inputMode="numeric" min="3" max="12" step="1"
                       value={lanSemanasTxt} onChange={(e) => setLanSemanasTxt(e.target.value)}
                       className={`${INPUT_CLS} w-[90px] tnum`}
-                      style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                      style={{ background: '#090c12', colorScheme: 'dark' }}
                     />
                     <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
                   </div>
@@ -670,7 +670,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
                   value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[150px] tnum`}
-                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
                 />
               </Campo>
 
@@ -679,13 +679,13 @@ export default function StockEngine({ records, hayFiltros }) {
                   type="number" inputMode="numeric" min="1" step="1" placeholder="todos"
                   value={lanColoresTxt} onChange={(e) => setLanColoresTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[110px] tnum`}
-                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
                 />
               </Campo>
             </div>
 
             {resultadoLan && !resultadoLan.ok ? (
-              <div className="mt-8 rounded-xl border border-[#232428] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #101114 0%, #0c0d10 100%)' }}>
+              <div className="mt-8 rounded-xl border border-[#1d2330] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
                 <div className={LABEL} style={{ color: EMBER }}>Sin análogos suficientes</div>
                 <p className="mt-4 text-[15px] leading-relaxed max-w-[58ch]" style={{ color: TXT2 }}>
                   Ningún producto de tu catálogo tiene aún el histórico mínimo ({resultadoLan.minimo ?? 20} uds y 6 semanas)
@@ -700,10 +700,10 @@ export default function StockEngine({ records, hayFiltros }) {
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
                   {/* Total propuesto */}
                   <div
-                    className="lg:col-span-4 relative rounded-xl border border-[#2a3654] p-7 md:p-8 overflow-hidden flex flex-col"
+                    className="lg:col-span-4 relative rounded-xl border border-[#3a2b20] p-7 md:p-8 overflow-hidden flex flex-col"
                     style={{
-                      background: 'linear-gradient(150deg, rgba(45,107,228,0.16) 0%, rgba(45,107,228,0.04) 40%, #141518 100%)',
-                      boxShadow: '0 0 60px -26px rgba(45,107,228,0.7)',
+                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, #0b0e14 100%)',
+                      boxShadow: '0 0 60px -26px rgba(240,140,86,0.5)',
                     }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -717,7 +717,7 @@ export default function StockEngine({ records, hayFiltros }) {
                         </span>
                       ) : null}
                     </div>
-                    <div className="mt-5 font-serif text-[58px] md:text-[68px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
+                    <div className="mt-5 font-display text-[58px] md:text-[68px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
                       {fmtInt(resultadoLan.total)}
                       <span className="font-mono text-[13px] tracking-[0.1em] uppercase ml-3" style={{ color: TXT2 }}>uds</span>
                     </div>
@@ -750,7 +750,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   </div>
 
                   {/* Curva de lanzamiento con banda P25–P75 */}
-                  <div className="lg:col-span-8 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                  <div className="lg:col-span-8 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className="flex items-baseline justify-between gap-4 mb-4">
                       <span className={LABEL} style={{ color: TXT2 }}>Curva de lanzamiento esperada</span>
                       <span className={LABEL} style={{ color: TXT3 }}>uds/semana · banda P25–P75</span>
@@ -770,7 +770,7 @@ export default function StockEngine({ records, hayFiltros }) {
                               if (!active || !payload?.length) return null;
                               const d = payload[0].payload;
                               return (
-                                <div className="rounded-lg border border-[#2a2c31] px-3.5 py-2.5" style={{ background: 'rgba(25,26,30,0.97)' }}>
+                                <div className="rounded-lg border border-[#232a3a] px-3.5 py-2.5" style={{ background: 'rgba(25,26,30,0.97)' }}>
                                   <div className="font-mono text-[11px]" style={{ color: TXT }}>{label}</div>
                                   <div className="font-mono text-[11px] tnum" style={{ color: TXT2 }}>media {fmt1(d.media)} uds · banda {fmt1(d.rango[0])}–{fmt1(d.rango[1])}</div>
                                 </div>
@@ -785,7 +785,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   </div>
 
                   {/* Análogos con score transparente */}
-                  <div className="lg:col-span-6 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                  <div className="lg:col-span-6 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Basado en tus análogos · score transparente</div>
                     <ul className="space-y-3">
                       {resultadoLan.analogos.map((a) => (
@@ -800,7 +800,7 @@ export default function StockEngine({ records, hayFiltros }) {
                           </div>
                           <span
                             className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] h-8 rounded-lg border font-mono text-[13px] tnum"
-                            style={{ color: CIELO, borderColor: '#2a3654', background: 'rgba(45,107,228,0.10)' }}
+                            style={{ color: '#9db4ec', borderColor: '#2a3654', background: 'rgba(45,107,228,0.10)' }}
                           >
                             {a.score}
                           </span>
@@ -810,7 +810,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   </div>
 
                   {/* Reparto por talla y color */}
-                  <div className="lg:col-span-6 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                  <div className="lg:col-span-6 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Reparto propuesto</div>
                     {!resultadoLan.reparto ? (
                       <p className="text-[14px]" style={{ color: TXT2 }}>Tus análogos no traen tallas: te damos solo el total.</p>
@@ -841,7 +841,7 @@ export default function StockEngine({ records, hayFiltros }) {
                 </div>
 
                 {resultadoLan.avisos.length > 0 ? (
-                  <div className="mt-5 rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                  <div className="mt-5 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className={LABEL} style={{ color: AMBAR }}>Avisos · {resultadoLan.avisos.length}</div>
                     <ul className="mt-3 space-y-2">
                       {resultadoLan.avisos.map((texto, i) => (
@@ -860,7 +860,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   <button
                     type="button"
                     onClick={copiarLanzamiento}
-                    className="btn-sheen h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                    className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
                     style={{ background: copiadoLan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoLan ? `${VERDE}66` : undefined, color: copiadoLan ? VERDE : undefined }}
                   >
                     {copiadoLan ? 'Copiado ✓' : 'Copiar pedido'}
@@ -881,7 +881,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   value={producto}
                   onChange={(e) => setProdSel(e.target.value)}
                   className={`${INPUT_CLS} min-w-[230px] cursor-pointer`}
-                  style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
                 >
                   {productos.map((p) => (
                     <option key={p.nombre} value={p.nombre}>
@@ -905,7 +905,7 @@ export default function StockEngine({ records, hayFiltros }) {
                     value={leadTxt}
                     onChange={(e) => setLeadTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[90px] tnum`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: leadValido ? undefined : EMBER }}
+                    style={{ background: '#090c12', colorScheme: 'dark', borderColor: leadValido ? undefined : EMBER }}
                   />
                   <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
                 </div>
@@ -920,7 +920,7 @@ export default function StockEngine({ records, hayFiltros }) {
                     value={nivel}
                     onChange={(e) => setNivel(e.target.value)}
                     className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                    style={{ background: '#090c12', colorScheme: 'dark' }}
                   >
                     <option value="90">90% — ajustado</option>
                     <option value="95">95% — equilibrado</option>
@@ -961,19 +961,19 @@ export default function StockEngine({ records, hayFiltros }) {
                     type="number" inputMode="decimal" min="0" step="0.01" placeholder="coste €"
                     value={costeTxt} onChange={(e) => setCosteTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[92px] tnum`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                    style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
                   />
                   <input
                     type="number" inputMode="decimal" min="0" step="0.01" placeholder="PVP €"
                     value={pvpTxt} onChange={(e) => setPvpTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[92px] tnum`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                    style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
                   />
                   <input
                     type="number" inputMode="decimal" min="0" max="90" step="1" placeholder="liq. 30%"
                     value={liqTxt} onChange={(e) => setLiqTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[92px] tnum`}
-                    style={{ background: '#0E0F12', colorScheme: 'dark' }}
+                    style={{ background: '#090c12', colorScheme: 'dark' }}
                   />
                 </div>
               </Campo>
@@ -981,7 +981,7 @@ export default function StockEngine({ records, hayFiltros }) {
 
             {/* Resultado */}
             {resultado && !resultado.ok && resultado.motivo === 'pocos-datos' ? (
-              <div className="mt-8 rounded-xl border border-[#232428] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #101114 0%, #0c0d10 100%)' }}>
+              <div className="mt-8 rounded-xl border border-[#1d2330] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
                 <div className={LABEL} style={{ color: EMBER }}>Datos insuficientes</div>
                 <p className="mt-4 text-[16px] leading-relaxed max-w-[58ch]" style={{ color: TXT }}>
                   <span className="font-medium">{resultado.producto}</span> acumula {fmtInt(resultado.unidades)} unidades
@@ -999,17 +999,17 @@ export default function StockEngine({ records, hayFiltros }) {
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
                   {/* Pedido recomendado — tarjeta protagonista */}
                   <div
-                    className="lg:col-span-5 relative rounded-xl border border-[#2a3654] p-7 md:p-8 overflow-hidden flex flex-col"
+                    className="lg:col-span-5 relative rounded-xl border border-[#3a2b20] p-7 md:p-8 overflow-hidden flex flex-col"
                     style={{
-                      background: 'linear-gradient(150deg, rgba(45,107,228,0.16) 0%, rgba(45,107,228,0.04) 40%, #141518 100%)',
-                      boxShadow: '0 0 60px -26px rgba(45,107,228,0.7)',
+                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, #0b0e14 100%)',
+                      boxShadow: '0 0 60px -26px rgba(240,140,86,0.5)',
                     }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className={LABEL} style={{ color: CIELO }}>Pedido recomendado</span>
                       <BadgeCiclo ciclo={resultado.ciclo} />
                     </div>
-                    <div className="mt-5 font-serif text-[64px] md:text-[78px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
+                    <div className="mt-5 font-display text-[64px] md:text-[78px] leading-[0.9] tracking-[-0.025em] tnum" style={{ color: TXT }}>
                       {fmtInt(resultado.recomendado)}
                       <span className="font-mono text-[13px] tracking-[0.1em] uppercase ml-3" style={{ color: TXT2 }}>uds</span>
                     </div>
@@ -1082,7 +1082,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   </div>
 
                   {/* Reparto por talla */}
-                  <div className="lg:col-span-7 rounded-xl border border-[#232428] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                  <div className="lg:col-span-7 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className="flex items-baseline justify-between gap-4 mb-5">
                       <span className={LABEL} style={{ color: TXT2 }}>Reparto por talla</span>
                       <span className={LABEL} style={{ color: TXT3 }}>{resultado.categoria}</span>
@@ -1130,30 +1130,30 @@ export default function StockEngine({ records, hayFiltros }) {
 
                 {/* Economía del pedido en euros (cuando hay costes) */}
                 {resultado.economia ? (
-                  <div className="mt-5 rounded-xl border border-[#2a3654] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(45,107,228,0.10) 0%, #121316 70%)' }}>
+                  <div className="mt-5 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
                     <div className={LABEL} style={{ color: CIELO }}>Economía del pedido · newsvendor</div>
                     <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
                         <div className={LABEL} style={{ color: TXT3 }}>Margen esperado</div>
-                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: TXT }}>
+                        <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: TXT }}>
                           {fmtEur(resultado.economia.evaluacion.margenEsperado)}
                         </div>
                       </div>
                       <div>
                         <div className={LABEL} style={{ color: TXT3 }}>vs pedir la media ({fmtInt(resultado.economia.pedidoMedia)} uds)</div>
-                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: resultado.economia.ventajaVsMedia >= 1 ? VERDE : TXT }}>
+                        <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: resultado.economia.ventajaVsMedia >= 1 ? VERDE : TXT }}>
                           {resultado.economia.ventajaVsMedia >= 1 ? `+${fmtEur(resultado.economia.ventajaVsMedia)}` : '≈ igual'}
                         </div>
                       </div>
                       <div>
                         <div className={LABEL} style={{ color: TXT3 }}>Pérdida esperada por rebajas</div>
-                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: AMBAR }}>
+                        <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: AMBAR }}>
                           {fmtEur(resultado.economia.evaluacion.perdidaRebajas)}
                         </div>
                       </div>
                       <div>
                         <div className={LABEL} style={{ color: TXT3 }}>Venta perdida esperada</div>
-                        <div className="mt-1.5 font-serif text-[26px] leading-none tnum" style={{ color: AMBAR }}>
+                        <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: AMBAR }}>
                           {fmtEur(resultado.economia.evaluacion.ventaPerdida)}
                         </div>
                       </div>
@@ -1170,7 +1170,7 @@ export default function StockEngine({ records, hayFiltros }) {
 
                 {/* Avisos: limpieza estadística + notas del cálculo */}
                 {resultado.flags.length > 0 || resultado.avisos.length > 0 ? (
-                  <div className="mt-5 rounded-xl border border-[#232428] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}>
+                  <div className="mt-5 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className={LABEL} style={{ color: AMBAR }}>
                       Avisos del motor · {resultado.flags.length + resultado.avisos.length}
                     </div>
@@ -1198,7 +1198,7 @@ export default function StockEngine({ records, hayFiltros }) {
                   <button
                     type="button"
                     onClick={copiarPedido}
-                    className="btn-sheen h-11 px-6 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                    className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
                     style={{ background: copiado ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiado ? `${VERDE}66` : undefined, color: copiado ? VERDE : undefined }}
                   >
                     {copiado ? 'Copiado ✓' : 'Copiar pedido'}

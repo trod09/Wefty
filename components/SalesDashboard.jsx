@@ -17,7 +17,7 @@ import StockEngine from '@/components/StockEngine';
 const ELECTRIC = '#2D6BE4';
 const EMBER = '#E07A5F';        // único acento de apoyo
 const MUTED = '#43464D';        // barras "que apenas rotan" (gris apagado sobre oscuro)
-const SURFACE = '#141518';      // fondo de tarjeta (para separar slices del donut)
+const SURFACE = '#0b0e14';      // fondo de tarjeta (para separar slices del donut)
 const TXT = '#F5F5F7';          // títulos
 const TXT2 = '#8A8A8F';         // secundario
 const PIE_PALETTE = ['#2D6BE4', '#C85A3F', '#1B2D6B', '#E07A5F', '#7CA3F0', '#E8A07F', '#34488A', '#B5734E'];
@@ -88,7 +88,7 @@ function groupSum(records, keyFn, valFn) {
 // Tooltip oscuro personalizado: título con muestra de color + líneas de dato.
 function tip(title, accent, lines) {
   return (
-    <div className="rounded-lg border border-[#2a2c31] px-3.5 py-2.5 shadow-2xl" style={{ background: 'rgba(25,26,30,0.97)' }}>
+    <div className="rounded-lg border border-[#232a3a] px-3.5 py-2.5 shadow-2xl" style={{ background: 'rgba(25,26,30,0.97)' }}>
       <div className="flex items-center gap-2 mb-1.5">
         <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: accent }} />
         <span className="font-mono text-[11px] tracking-[0.06em]" style={{ color: TXT }}>{title}</span>
@@ -104,8 +104,8 @@ function tip(title, accent, lines) {
 function ChartCard({ title, subtitle, children, className = '' }) {
   return (
     <div
-      className={`group relative rounded-xl border border-[#232428] p-6 md:p-7 transition-all duration-300 hover:border-[#3a3c42] ${className}`}
-      style={{ background: 'linear-gradient(150deg, #16171b 0%, #121316 100%)' }}
+      className={`group relative rounded-xl border border-[#1d2330] p-6 md:p-7 transition-all duration-300 hover:border-[#2e3850] ${className}`}
+      style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
     >
       <div className="flex items-baseline justify-between gap-4 mb-5">
         <span className={LABEL} style={{ color: TXT2 }}>{title}</span>
@@ -120,14 +120,14 @@ function Kpi({ label, value, principal = false }) {
   if (principal) {
     return (
       <div
-        className="relative col-span-2 lg:row-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between overflow-hidden border border-[#2a3654] transition-all duration-300"
+        className="relative col-span-2 lg:row-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between overflow-hidden border border-[#3a2b20] transition-all duration-300"
         style={{
-          background: 'linear-gradient(150deg, rgba(45,107,228,0.18) 0%, rgba(45,107,228,0.04) 38%, #141518 100%)',
-          boxShadow: '0 0 60px -26px rgba(45,107,228,0.75)',
+          background: 'linear-gradient(150deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 38%, #0b0e14 100%)',
+          boxShadow: '0 0 60px -26px rgba(240,140,86,0.55)',
         }}
       >
-        <div className={LABEL} style={{ color: '#9db4ec' }}>{label}</div>
-        <div className="mt-6 font-serif text-[48px] md:text-[68px] leading-[0.92] tracking-[-0.025em] tnum break-words" style={{ color: TXT }}>
+        <div className={LABEL} style={{ color: '#f0a987' }}>{label}</div>
+        <div className="mt-6 font-display text-[48px] md:text-[68px] leading-[0.92] tracking-[-0.025em] tnum break-words" style={{ color: TXT }}>
           {value}
         </div>
       </div>
@@ -135,11 +135,11 @@ function Kpi({ label, value, principal = false }) {
   }
   return (
     <div
-      className="relative rounded-xl border border-[#232428] p-5 md:p-6 transition-all duration-300 hover:border-[#3a3c42]"
-      style={{ background: 'linear-gradient(150deg, #16171b 0%, #121316 100%)' }}
+      className="relative rounded-xl border border-[#1d2330] p-5 md:p-6 transition-all duration-300 hover:border-[#2e3850]"
+      style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
     >
       <div className={LABEL} style={{ color: TXT2 }}>{label}</div>
-      <div className="mt-3 font-serif text-[28px] md:text-[36px] leading-none tracking-[-0.02em] tnum break-words" style={{ color: TXT }}>
+      <div className="mt-3 font-display text-[28px] md:text-[36px] leading-none tracking-[-0.02em] tnum break-words" style={{ color: TXT }}>
         {value}
       </div>
     </div>
@@ -156,8 +156,8 @@ function FilterSelect({ label, value, onChange, options, allLabel }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 md:h-10 min-w-[170px] rounded-lg border border-[#232428] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#3F7BEC] cursor-pointer"
-        style={{ background: '#0E0F12', colorScheme: 'dark' }}
+        className="h-11 md:h-10 min-w-[170px] rounded-lg border border-[#1d2330] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#F08C56] cursor-pointer"
+        style={{ background: '#090c12', colorScheme: 'dark' }}
       >
         <option value="">{allLabel}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -485,13 +485,13 @@ export default function SalesDashboard({ headers, rows }) {
 
   return (
     <div
-      className="rounded-2xl border border-[#1b1c20] p-4 md:p-6 space-y-4 md:space-y-5"
-      style={{ background: 'radial-gradient(120% 80% at 50% 0%, #0E0F12 0%, #0A0A0B 60%)' }}
+      className="rounded-2xl border border-[#161b26] p-4 md:p-6 space-y-4 md:space-y-5"
+      style={{ background: 'radial-gradient(120% 80% at 50% 0%, #090c12 0%, #05060a 60%)' }}
     >
       {/* 0 · FILTROS — recalculan todo el dashboard al instante */}
       <div
-        className="flex flex-wrap items-end gap-4 rounded-xl border border-[#1b1c20] p-4 md:p-5"
-        style={{ background: 'linear-gradient(150deg, #131418 0%, #0f1013 100%)' }}
+        className="flex flex-wrap items-end gap-4 rounded-xl border border-[#161b26] p-4 md:p-5"
+        style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}
       >
         <FilterSelect
           label="Categoría" value={fCategoria} onChange={setFCategoria}
@@ -505,7 +505,7 @@ export default function SalesDashboard({ headers, rows }) {
           <button
             type="button"
             onClick={limpiarFiltros}
-            className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-[#3a3c42] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+            className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
           >
             Limpiar filtros
           </button>
@@ -514,11 +514,11 @@ export default function SalesDashboard({ headers, rows }) {
 
       {filtered.length === 0 ? (
         <div
-          className="rounded-xl border border-[#232428] p-12 md:p-16 text-center"
-          style={{ background: 'linear-gradient(150deg, #16171b 0%, #121316 100%)' }}
+          className="rounded-xl border border-[#1d2330] p-12 md:p-16 text-center"
+          style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
         >
           <div className={LABEL} style={{ color: EMBER }}>Sin resultados</div>
-          <p className="mt-4 font-serif text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
+          <p className="mt-4 font-display text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
             No hay ventas con estos filtros.
           </p>
           <p className="mt-3 text-[14px]" style={{ color: TXT2 }}>
@@ -530,21 +530,21 @@ export default function SalesDashboard({ headers, rows }) {
       {/* 1 · TITULAR — insight destacado, a lo ancho, con glow */}
       {insight ? (
         <div
-          className="relative rounded-xl border border-[#243049] p-10 md:p-14 overflow-hidden"
+          className="relative rounded-xl border border-[#33261d] p-10 md:p-14 overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #11151f 0%, #0c0d12 55%)',
-            boxShadow: '0 0 80px -30px rgba(45,107,228,0.55)',
+            background: 'linear-gradient(135deg, #0c1018 0%, #070910 55%)',
+            boxShadow: '0 0 80px -30px rgba(240,140,86,0.4)',
           }}
         >
           <div
             className="absolute -top-24 -right-16 w-[420px] h-[420px] pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(45,107,228,0.22) 0%, transparent 60%)' }}
+            style={{ background: 'radial-gradient(circle, rgba(240,140,86,0.16) 0%, transparent 60%)' }}
           />
           <div className={`${LABEL} flex items-center gap-2 relative`} style={{ color: ELECTRIC }}>
-            <span className="w-1.5 h-1.5 rounded-full bg-electric live-dot" />
+            <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: '#F08C56' }} />
             Insight automático · patrón de tallas
           </div>
-          <p className="relative mt-6 font-serif font-light text-[34px] md:text-[60px] leading-[1.08] tracking-[-0.025em] max-w-[24ch]" style={{ color: TXT }}>
+          <p className="relative mt-6 font-display font-light text-[34px] md:text-[60px] leading-[1.08] tracking-[-0.025em] max-w-[24ch]" style={{ color: TXT }}>
             Las tallas <span style={{ color: ELECTRIC }}>{insight.a}</span> y{' '}
             <span style={{ color: ELECTRIC }}>{insight.b}</span> concentran el{' '}
             <span style={{ color: EMBER }}>{insight.topPct}%</span> de las unidades vendidas
@@ -563,8 +563,8 @@ export default function SalesDashboard({ headers, rows }) {
             {insightsApoyo.map((it) => (
               <div
                 key={it.key}
-                className="rounded-xl border border-[#1b1c20] p-5 md:p-6"
-                style={{ background: 'linear-gradient(150deg, #101114 0%, #0c0d10 100%)' }}
+                className="rounded-xl border border-[#161b26] p-5 md:p-6"
+                style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}
               >
                 <div className={`${LABEL} flex items-center gap-2`} style={{ color: it.accent }}>
                   <span className="w-1.5 h-1.5 rounded-full" style={{ background: it.accent }} />
@@ -613,7 +613,7 @@ export default function SalesDashboard({ headers, rows }) {
                   <CartesianGrid vertical={false} stroke="#FFFFFF" strokeOpacity={0.06} />
                   <XAxis dataKey="talla" tick={tickMono} axisLine={false} tickLine={false} />
                   <YAxis tick={tickMono} axisLine={false} tickLine={false} width={40} />
-                  <Tooltip cursor={{ fill: 'rgba(45,107,228,0.08)' }} content={<TallaTip />} />
+                  <Tooltip cursor={{ fill: 'rgba(240,140,86,0.06)' }} content={<TallaTip />} />
                   <ReferenceLine
                     y={avgTalla} stroke="#F5F5F7" strokeOpacity={0.32} strokeDasharray="4 4"
                     label={{ value: `media ${fmtInt(avgTalla)}`, position: 'right', fontSize: 10, fill: TXT2 }}
@@ -640,7 +640,7 @@ export default function SalesDashboard({ headers, rows }) {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="font-serif text-[34px] leading-none tnum" style={{ color: TXT }}>{top3ColorPct}%</div>
+                <div className="font-display text-[34px] leading-none tnum" style={{ color: TXT }}>{top3ColorPct}%</div>
                 <div className={`${LABEL} mt-1 text-center px-6`} style={{ color: TXT2 }}>Top 3 colores</div>
               </div>
             </div>

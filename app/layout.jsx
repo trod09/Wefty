@@ -1,5 +1,5 @@
 import './globals.css';
-import { Fraunces, Inter, JetBrains_Mono } from 'next/font/google';
+import { Fraunces, Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -21,6 +21,14 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
+// La display de la landing, compartida con el producto para la sintonía visual.
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
 export const metadata = {
   title: {
     default: 'Wefty — Predicción de stock para marcas de moda',
@@ -34,7 +42,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="es"
-      className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable}`}
+      className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
     >
       <body className="font-sans">{children}</body>
     </html>

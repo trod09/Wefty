@@ -11,7 +11,7 @@ import { CornerCrosshairs } from '@/components/decor';
 import { supabase } from '@/lib/supabase';
 
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const SURFACE_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
+const SURFACE_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -108,17 +108,17 @@ export default function LoginPage() {
   return (
     <main
       className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
-      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
       <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-16 md:pt-32 pb-24">
         {/* Top bar */}
         <div className="flex items-baseline justify-between">
-          <UnderlineLink href="/" dark className="font-serif text-[22px] tracking-[-0.02em]">
+          <UnderlineLink href="/" dark className="font-display text-[22px] tracking-[-0.02em]">
             Wefty
           </UnderlineLink>
-          <span className={MONO} style={{ color: '#8A8A8F' }}>Loop · acceso</span>
+          <span className={MONO} style={{ color: '#8A8A8F' }}>Wefty · acceso</span>
         </div>
 
         <Hairline dark className="mt-6" />
@@ -126,15 +126,15 @@ export default function LoginPage() {
         {/* Section label row */}
         <div className="grid grid-cols-12 gap-6 mt-10 md:mt-20">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
-            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>[00]</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>00 //</span>
             <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
-              Acceso — Tu cuenta de Loop.
+              Acceso — Tu cuenta de Wefty.
             </span>
           </div>
         </div>
 
         {/* Title */}
-        <h1 className="mt-8 font-serif font-light leading-[0.94] tracking-[-0.035em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch]">
+        <h1 className="mt-8 font-display font-light leading-[0.94] tracking-[-0.035em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch]">
           Entra en tu cuenta.
         </h1>
 
@@ -159,7 +159,7 @@ export default function LoginPage() {
               ) : (
                 <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: '#8A8A8F' }}>
                   Crea una cuenta o inicia sesión con tu email y contraseña para
-                  acceder a Loop.
+                  acceder a Wefty.
                 </p>
               )}
             </Reveal>
@@ -169,7 +169,7 @@ export default function LoginPage() {
           <div className="col-span-12 md:col-span-6 md:col-start-7">
             <Reveal delay={150}>
               <div
-                className="relative rounded-xl border border-[#232428] p-8 md:p-10"
+                className="relative rounded-xl border border-[#1d2330] p-8 md:p-10"
                 style={{ background: SURFACE_BG }}
               >
                 <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
@@ -187,7 +187,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="tu@email.com"
-                      className="w-full h-12 px-4 rounded-lg bg-[#0E0F12] border border-[#232428] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#3F7BEC]"
+                      className="w-full h-12 px-4 rounded-lg bg-[#090c12] border border-[#1d2330] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#F08C56]"
                     />
                   </div>
                   <div>
@@ -201,7 +201,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-12 px-4 rounded-lg bg-[#0E0F12] border border-[#232428] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#3F7BEC]"
+                      className="w-full h-12 px-4 rounded-lg bg-[#090c12] border border-[#1d2330] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#F08C56]"
                     />
                   </div>
                 </div>
@@ -219,7 +219,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleSignUp}
                     disabled={busy}
-                    className="btn-sheen relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 border border-[#3a3c42] text-[#F5F5F7] hover:border-[#5d5e63] disabled:opacity-60 disabled:cursor-default"
+                    className="btn-sheen relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 border border-[#2e3850] text-[#F5F5F7] hover:border-[#5d5e63] disabled:opacity-60 disabled:cursor-default"
                   >
                     Crear cuenta
                   </button>
@@ -238,7 +238,7 @@ export default function LoginPage() {
         <div className="mt-24 md:mt-32">
           <Hairline dark />
           <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
-            Loop · acceso seguro con Supabase Auth
+            Acceso seguro con Supabase Auth
           </p>
         </div>
       </div>
