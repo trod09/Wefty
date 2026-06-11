@@ -100,7 +100,7 @@ function TitularCaos() {
 
 // Contador que anima UNA sola vez al entrar en viewport (con movimiento
 // reducido, salta directamente a la cifra final).
-function ContadorLp({ hasta, prefijo = '', sufijo = '', duracion = 1.6 }) {
+function ContadorLp({ hasta, prefijo = '', sufijo = '', duracion = 1.15 }) {
   const ref = useRef(null);
   const [valor, setValor] = useState(0);
 
@@ -149,17 +149,29 @@ function Convergencia({ children, className = '' }) {
       el.style.setProperty('--conv', '1');
       return;
     }
+    // Inercia: el objetivo lo marca el scroll, pero el valor aplicado lo
+    // persigue con un lerp — mismo lenguaje de movimiento que el hilo y la
+    // esfera (ligar valores en crudo al scroll se siente artificial).
     let raf = 0;
+    let objetivo = 0;
+    let actual = 0;
     const leer = () => {
       const rect = el.getBoundingClientRect();
-      const p = clamp01((window.innerHeight - rect.top) / (window.innerHeight * 0.75));
-      el.style.setProperty('--conv', p.toFixed(3));
+      objetivo = clamp01((window.innerHeight - rect.top) / (window.innerHeight * 0.75));
+    };
+    const tick = () => {
+      actual += (objetivo - actual) * 0.12;
+      if (Math.abs(objetivo - actual) < 0.001) actual = objetivo;
+      el.style.setProperty('--conv', actual.toFixed(4));
+      raf = actual === objetivo ? 0 : requestAnimationFrame(tick);
     };
     const alScroll = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => { raf = 0; leer(); });
+      leer();
+      if (!raf) raf = requestAnimationFrame(tick);
     };
     leer();
+    actual = objetivo; // si se aterriza a mitad de página, sin barrido inicial
+    el.style.setProperty('--conv', actual.toFixed(4));
     window.addEventListener('scroll', alScroll, { passive: true });
     window.addEventListener('resize', alScroll);
     return () => {
@@ -183,6 +195,25 @@ const COLS = 6;
 const FILAS = 5;
 
 function Almacen({ tipo }) {
+  const ref = useRef(null);
+
+  // El llenado se dispara UNA vez al entrar en viewport; sin JS o con
+  // movimiento reducido, el almacén está lleno y quieto desde el principio.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.classList.add('lp-almacen-js');
+    const observador = new IntersectionObserver(([entrada]) => {
+      if (entrada.isIntersecting) {
+        el.classList.add('lp-lleno');
+        observador.disconnect();
+      }
+    }, { threshold: 0.4 });
+    observador.observe(el);
+    return () => observador.disconnect();
+  }, []);
+
   const celdas = [];
   for (let fila = 0; fila < FILAS; fila++) {
     for (let col = 0; col < COLS; col++) {
@@ -203,6 +234,7 @@ function Almacen({ tipo }) {
   }
   return (
     <div
+      ref={ref}
       className="grid gap-1.5 md:gap-2 w-fit"
       style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }}
       aria-hidden="true"
@@ -302,7 +334,7 @@ export function Problema() {
             Dos caras del mismo error: pedir a ojo.
           </p>
         </RevelarLp>
-        <RevelarLp retardo={0.3}>
+        <RevelarLp retardo={0.12}>
           <p className="mt-5 font-serif font-light italic text-[clamp(20px,2.6vw,32px)] leading-[1.2] tracking-[-0.015em]" style={{ color: '#7da3f0' }}>
             Y la decisión más difícil es la del producto que aún no has lanzado.
           </p>

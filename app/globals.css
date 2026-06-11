@@ -264,7 +264,7 @@ details[open] .acc-body {
   .lp-tachado::after {
     transform: scaleX(0);
     animation: lp-tachar 0.55s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
-    animation-delay: 1.3s;
+    animation-delay: 1.15s;
   }
   .lp-linea-scroll {
     animation: lp-gotea 2.4s cubic-bezier(0.45, 0, 0.2, 1) infinite;
@@ -288,10 +288,10 @@ details[open] .acc-body {
 @media (prefers-reduced-motion: no-preference) {
   .lp-revela {
     opacity: 0;
-    transform: translateY(26px);
+    transform: translateY(18px);
     transition:
-      opacity 0.95s cubic-bezier(0.22, 1, 0.36, 1),
-      transform 0.95s cubic-bezier(0.22, 1, 0.36, 1);
+      opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
     transition-delay: var(--rd, 0s);
   }
   .lp-revela.lp-vis {
@@ -334,26 +334,46 @@ details[open] .acc-body {
   border: 1px dashed rgba(245, 245, 247, 0.3);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .lp-caja {
-    animation: lp-almacen 16s linear infinite;
-    animation-delay: calc(var(--i, 0) * 0.45s);
+  /* Con JS (clase lp-almacen-js) las cajas esperan ocultas y se llenan UNA
+     sola vez al entrar en viewport (lp-lleno), de abajo arriba con stagger
+     corto. El relato se cuenta una vez; después solo respiran el sobrante
+     ámbar y los huecos fantasma. Sin JS o con movimiento reducido: todo
+     visible y quieto desde el principio. */
+  .lp-almacen-js .lp-caja {
+    opacity: 0;
   }
-  .lp-fantasma {
-    animation: lp-parpadeo 3.8s ease-in-out infinite;
-    animation-delay: calc(var(--i, 0) * 0.21s);
+  .lp-lleno .lp-caja {
+    animation: lp-llena 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 0.05s);
+  }
+  .lp-lleno .lp-caja-exceso {
+    animation:
+      lp-llena 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+      lp-pulso-exceso 5s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 0.05s), 2.4s;
+  }
+  .lp-lleno .lp-fantasma {
+    animation:
+      lp-llena-hueco 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards,
+      lp-parpadeo 4.5s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 0.05s), 2.2s;
   }
   .lp-agotado {
     animation: lp-etiqueta 4.2s ease-in-out infinite;
   }
-  @keyframes lp-almacen {
-    0% { opacity: 0; }
-    2.5% { opacity: 1; }
-    96% { opacity: 1; }
-    100% { opacity: 0; }
+  @keyframes lp-llena {
+    to { opacity: 1; }
+  }
+  @keyframes lp-llena-hueco {
+    to { opacity: 0.6; }
+  }
+  @keyframes lp-pulso-exceso {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.78; }
   }
   @keyframes lp-parpadeo {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.75; }
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.35; }
   }
   @keyframes lp-etiqueta {
     0%, 100% { opacity: 1; }
@@ -401,6 +421,12 @@ details[open] .acc-body {
 }
 .btn-sheen-claro {
   --sheen-alpha: 0.5;
+}
+/* Feedback de pulsación (regla nº1 de la skill): el botón se encoge al
+   instante al presionarlo — también en táctil, donde no hay hover. */
+.btn-sheen:active {
+  transform: scale(0.97);
+  transition: transform 0.14s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
@@ -543,7 +569,7 @@ details[open] .acc-body {
   }
   /* la firma: temblor casi imperceptible de "Adivinar" tras asentarse */
   .lp-tit-anim .lp-tit-adivinar {
-    animation: lp-tit-temblor 7s ease-in-out 2.2s infinite;
+    animation: lp-tit-temblor 7s ease-in-out 2.2s 3;
   }
 
   @keyframes lp-tit-recoloca {

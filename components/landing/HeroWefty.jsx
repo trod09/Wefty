@@ -28,7 +28,7 @@ const LINEA_2 = [
 
 function Palabras({ palabras, desde }) {
   return palabras.map((p, i) => (
-    <span key={p.texto} className="lp-palabra" style={{ '--d': `${desde + i * 0.085}s` }}>
+    <span key={p.texto} className="lp-palabra" style={{ '--d': `${desde + i * 0.065}s` }}>
       {p.tachada ? <span className="lp-tachado">{p.texto}</span> : p.texto}
       {i < palabras.length - 1 ? ' ' : ''}
     </span>
@@ -59,18 +59,18 @@ export default function HeroWefty() {
           <h1 className="mt-6 font-serif font-light leading-[0.97] tracking-[-0.035em] text-[#F5F5F7] text-[clamp(46px,9.2vw,116px)] max-w-[12ch]">
             <Palabras palabras={LINEA_1} desde={0.2} />
             <br />
-            <Palabras palabras={LINEA_2} desde={0.46} />
+            <Palabras palabras={LINEA_2} desde={0.42} />
           </h1>
 
           <p
             className="mt-7 text-[17px] md:text-[20px] leading-[1.5] max-w-[46ch] lp-sube"
-            style={{ '--d': '0.95s', color: '#8A8A8F' }}
+            style={{ '--d': '0.5s', color: '#8A8A8F' }}
           >
             Wefty predice cuántas unidades fabricar de cada producto, talla y color —
             incluso de los que aún no has lanzado.
           </p>
 
-          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4 lp-sube" style={{ '--d': '1.1s' }}>
+          <div className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-4 lp-sube" style={{ '--d': '0.55s' }}>
             <EnterAppButton tone="bone">Probar Wefty</EnterAppButton>
             <span className="font-mono text-[11px] tracking-[0.14em] uppercase" style={{ color: '#5d5e63' }}>
               Con un simple CSV de ventas
@@ -80,7 +80,7 @@ export default function HeroWefty() {
       </div>
 
       {/* Indicador de scroll */}
-      <div className="relative z-10 pb-9 md:pb-7 flex justify-center lp-sube" style={{ '--d': '1.6s' }}>
+      <div className="relative z-10 pb-9 md:pb-7 flex justify-center lp-sube" style={{ '--d': '0.9s' }}>
         <span className="flex flex-col items-center gap-2.5 font-mono text-[10px] tracking-[0.22em] uppercase" style={{ color: '#5d5e63' }}>
           Desliza
           <span className="lp-linea-scroll" />

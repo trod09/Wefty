@@ -56,7 +56,7 @@ export function ComoFunciona() {
 
         <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-12">
           {PASOS.map((p, i) => (
-            <RevelarLp key={p.n} retardo={0.12 + i * 0.16}>
+            <RevelarLp key={p.n} retardo={0.06 + i * 0.07}>
               <div className="border-t border-white/15 pt-6">
                 <span className={`${MONO} tnum`} style={{ color: '#9db4ec' }}>[{p.n}]</span>
                 <h3 className="mt-4 font-serif text-[26px] md:text-[30px] leading-tight tracking-[-0.015em] text-[#F5F5F7]">
@@ -87,14 +87,14 @@ export function LaRed() {
             <RevelarLp>
               <CabeceraSeccion n="04" titulo="La red" />
             </RevelarLp>
-            <RevelarLp retardo={0.1}>
+            <RevelarLp retardo={0.06}>
               <h2 className="mt-9 font-serif font-light text-[clamp(34px,5.6vw,72px)] leading-[1.04] tracking-[-0.03em] max-w-[15ch]">
                 Tus datos solos valen poco.
                 <br />
                 <span style={{ color: '#7da3f0' }}>La inteligencia de cientos de marcas vale mucho.</span>
               </h2>
             </RevelarLp>
-            <RevelarLp retardo={0.25}>
+            <RevelarLp retardo={0.12}>
               <p className="mt-8 text-[16px] md:text-[18px] leading-[1.55] max-w-[46ch]" style={{ color: TXT2 }}>
                 Cada marca que se une afina las predicciones de todas las demás — con datos
                 anonimizados y agregados. Nadie ve nada tuyo; todas piden mejor.
@@ -103,7 +103,7 @@ export function LaRed() {
           </div>
 
           <div className="lg:col-span-6 order-1 lg:order-2">
-            <RevelarLp retardo={0.1}>
+            <RevelarLp retardo={0.06}>
               <EsferaRed className="block w-full aspect-square max-w-[420px] sm:max-w-[520px] lg:max-w-none mx-auto" />
             </RevelarLp>
           </div>
@@ -124,7 +124,7 @@ export function CierreCta() {
             Tu próximo pedido, sin adivinar.
           </h2>
         </RevelarLp>
-        <RevelarLp retardo={0.18}>
+        <RevelarLp retardo={0.1}>
           <div className="mt-11 flex flex-col items-center gap-5">
             <EnterAppButton tone="bone">Probar Wefty</EnterAppButton>
             <span className="font-mono text-[11px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>

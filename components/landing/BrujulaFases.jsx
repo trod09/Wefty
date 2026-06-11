@@ -37,19 +37,19 @@ export default function BrujulaFases() {
         return (
           <div key={nombre} className="flex items-center gap-3">
             <span
-              className="font-mono text-[10px] tracking-[0.18em] uppercase transition-opacity duration-500"
+              className="font-mono text-[10px] tracking-[0.18em] uppercase transition-opacity duration-200"
               style={{ color: '#9db4ec', opacity: esActiva ? 1 : 0 }}
             >
               {nombre}
             </span>
             <span
-              className="font-mono text-[10px] tnum transition-colors duration-500"
+              className="font-mono text-[10px] tnum transition-colors duration-200"
               style={{ color: esActiva ? '#9db4ec' : '#3a3c42' }}
             >
               0{i + 1}
             </span>
             <span
-              className="block h-px w-9 origin-right transition-all duration-500"
+              className="block h-px w-9 origin-right transition-[transform,background-color] duration-200 ease-out"
               style={{
                 background: esActiva ? '#7da3f0' : 'rgba(245,245,247,0.18)',
                 transform: esActiva ? 'scaleX(1)' : 'scaleX(0.45)',
