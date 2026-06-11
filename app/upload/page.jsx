@@ -14,6 +14,7 @@ import { CornerCrosshairs, Fn } from '@/components/decor';
 import SalesDashboard from '@/components/SalesDashboard';
 import SessionBadge from '@/components/SessionBadge';
 import UploadWelcome from '@/components/UploadWelcome';
+import TituloDecodificado from '@/components/TituloDecodificado';
 import { supabase } from '@/lib/supabase';
 
 // Columnas de la tabla "ventas" en Supabase y cómo convertir cada valor.
@@ -161,7 +162,7 @@ function castValue(raw, kind) {
 
 // Clases de etiqueta mono reutilizadas
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const SURFACE_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
+const SURFACE_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
 
 // Tamaño máximo del CSV: leerlo entero en memoria más allá de esto puede
 // congelar la pestaña. 15 MB dan para varios años de ventas línea a línea.
@@ -439,7 +440,7 @@ export default function UploadPage() {
     return (
       <main
         className="relative min-h-screen flex items-center justify-center text-[#F5F5F7]"
-        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
       >
         <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
         <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
@@ -455,7 +456,7 @@ export default function UploadPage() {
     return (
       <main
         className="relative min-h-screen flex items-center justify-center text-[#F5F5F7]"
-        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
       >
         <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
         <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
@@ -474,7 +475,7 @@ export default function UploadPage() {
   return (
     <main
       className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
-      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
@@ -483,10 +484,10 @@ export default function UploadPage() {
       <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-24 md:pt-32 pb-24">
         {/* Top bar */}
         <div className="flex items-baseline justify-between">
-          <UnderlineLink href="/" dark className="font-serif text-[22px] tracking-[-0.02em]">
+          <UnderlineLink href="/" dark className="font-display text-[22px] tracking-[-0.02em]">
             Wefty
           </UnderlineLink>
-          <span className={MONO} style={{ color: '#8A8A8F' }}>Loop · subir datos</span>
+          <span className={MONO} style={{ color: '#8A8A8F' }}>Wefty · datos de venta</span>
         </div>
 
         <Hairline dark className="mt-6" />
@@ -494,7 +495,7 @@ export default function UploadPage() {
         {/* Section label row */}
         <div className="grid grid-cols-12 gap-6 mt-16 md:mt-20">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
-            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>[00]</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>00 //</span>
             <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
               Upload — Tus datos de ventas.
             </span>
@@ -505,8 +506,8 @@ export default function UploadPage() {
         </div>
 
         {/* Title */}
-        <h1 className="mt-8 font-serif font-light leading-[0.94] tracking-[-0.035em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch]">
-          Sube tu archivo de ventas.
+        <h1 className="mt-8 font-display font-bold leading-[1.02] tracking-[-0.03em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch] [text-wrap:balance]">
+          <TituloDecodificado texto="Sube tu archivo" acento="de ventas." />
         </h1>
 
         {/* Description + upload card */}
@@ -524,19 +525,16 @@ export default function UploadPage() {
           <div className="col-span-12 md:col-span-6 md:col-start-7">
             <Reveal delay={150}>
               <div
-                className="relative rounded-xl border border-[#232428] p-8 md:p-10 transition-all duration-300 hover:border-[#3a3c42]"
+                className="relative rounded-xl border border-[#1d2330] p-8 md:p-10 transition-all duration-300 hover:border-[#2e3850]"
                 style={{ background: SURFACE_BG }}
               >
                 <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
                 <span className={MONO} style={{ color: '#8A8A8F' }}>Archivo CSV</span>
 
                 <div className="mt-6">
-                  <label
-                    htmlFor="csv-input"
-                    className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300"
-                  >
-                    <span className="relative z-10">Seleccionar archivo CSV</span>
-                    <span className="relative z-10 w-3 h-3 flex items-center justify-center">
+                  <label htmlFor="csv-input" className="btn-neon select-none">
+                    Seleccionar archivo CSV
+                    <span className="btn-neon-flecha w-3 h-3 flex items-center justify-center" aria-hidden="true">
                       <svg viewBox="0 0 12 12" className="w-3 h-3">
                         <path d="M2 6 H10 M7 3 L10 6 L7 9" stroke="currentColor" strokeWidth="1.25" fill="none" strokeLinecap="square" />
                       </svg>
@@ -574,7 +572,7 @@ export default function UploadPage() {
                 <span className={MONO} style={{ color: '#8A8A8F' }}>
                   {result.source === 'db' ? 'Datos guardados' : 'Archivo analizado'}
                 </span>
-                <div className="mt-2 font-serif text-[24px] md:text-[32px] leading-tight tracking-[-0.01em] break-all">
+                <div className="mt-2 font-display text-[24px] md:text-[32px] leading-tight tracking-[-0.01em] break-all">
                   {result.name}
                 </div>
               </div>

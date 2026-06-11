@@ -14,9 +14,10 @@ import { Reveal } from '@/components/hooks';
 import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import SessionBadge from '@/components/SessionBadge';
+import TituloDecodificado from '@/components/TituloDecodificado';
 
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const SURFACE_BG = 'linear-gradient(150deg, #16171b 0%, #121316 100%)';
+const SURFACE_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
 
 export default function UploadWelcome({ onFile, error }) {
   // Pasos para empezar — en lenguaje claro, con numeración mono al estilo Loop.
@@ -35,7 +36,7 @@ export default function UploadWelcome({ onFile, error }) {
   return (
     <main
       className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
-      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0F1014 0%, #0A0A0B 55%)' }}
+      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
@@ -44,10 +45,10 @@ export default function UploadWelcome({ onFile, error }) {
       <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-24 md:pt-32 pb-24">
         {/* Top bar */}
         <div className="flex items-baseline justify-between">
-          <UnderlineLink href="/" dark className="font-serif text-[22px] tracking-[-0.02em]">
+          <UnderlineLink href="/" dark className="font-display text-[22px] tracking-[-0.02em]">
             Wefty
           </UnderlineLink>
-          <span className={MONO} style={{ color: '#8A8A8F' }}>Loop · bienvenida</span>
+          <span className={MONO} style={{ color: '#8A8A8F' }}>Wefty · bienvenida</span>
         </div>
 
         <Hairline dark className="mt-6" />
@@ -55,7 +56,7 @@ export default function UploadWelcome({ onFile, error }) {
         {/* Section label row */}
         <div className="grid grid-cols-12 gap-6 mt-16 md:mt-20">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
-            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>[00]</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>00 //</span>
             <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
               Bienvenida — Empieza aquí.
             </span>
@@ -66,8 +67,8 @@ export default function UploadWelcome({ onFile, error }) {
         </div>
 
         {/* Title */}
-        <h1 className="mt-8 font-serif font-light leading-[0.94] tracking-[-0.035em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch]">
-          Bienvenido a Wefty.
+        <h1 className="mt-8 font-display font-bold leading-[1.02] tracking-[-0.03em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch] [text-wrap:balance]">
+          <TituloDecodificado texto="Bienvenido a" acento="Wefty." />
         </h1>
 
         {/* Subtitle — qué hace Wefty, en una frase */}
@@ -98,14 +99,14 @@ export default function UploadWelcome({ onFile, error }) {
           <div className="col-span-12 md:col-span-6 md:col-start-7">
             <Reveal delay={150}>
               <div
-                className="relative rounded-xl border border-[#2a3654] p-8 md:p-10 transition-all duration-300 hover:border-[#3a4d7a]"
+                className="relative rounded-xl border border-[#3a2b20] p-8 md:p-10 transition-all duration-300 hover:border-[#5a4030]"
                 style={{
                   background: SURFACE_BG,
-                  boxShadow: '0 0 80px -30px rgba(45,107,228,0.55)',
+                  boxShadow: '0 0 80px -30px rgba(240,140,86,0.4)',
                 }}
               >
                 <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
-                <span className={MONO} style={{ color: '#9db4ec' }}>Sube tu CSV de ventas</span>
+                <span className={MONO} style={{ color: '#f0a987' }}>Sube tu CSV de ventas</span>
 
                 <p className="mt-4 text-[15px] leading-relaxed" style={{ color: '#b9b9be' }}>
                   Elige tu archivo. La primera fila debe ser el encabezado con los
@@ -113,12 +114,9 @@ export default function UploadWelcome({ onFile, error }) {
                 </p>
 
                 <div className="mt-7">
-                  <label
-                    htmlFor="csv-welcome-input"
-                    className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300"
-                  >
-                    <span className="relative z-10">Seleccionar archivo CSV</span>
-                    <span className="relative z-10 w-3 h-3 flex items-center justify-center">
+                  <label htmlFor="csv-welcome-input" className="btn-neon select-none">
+                    Seleccionar archivo CSV
+                    <span className="btn-neon-flecha w-3 h-3 flex items-center justify-center" aria-hidden="true">
                       <svg viewBox="0 0 12 12" className="w-3 h-3">
                         <path d="M2 6 H10 M7 3 L10 6 L7 9" stroke="currentColor" strokeWidth="1.25" fill="none" strokeLinecap="square" />
                       </svg>
