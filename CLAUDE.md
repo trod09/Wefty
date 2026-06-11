@@ -17,7 +17,7 @@ Ante la duda, mejor hacer una pregunta corta que adivinar.
 
 Wefty — predicción de stock para marcas de moda (mercado: España, todo en español). App Next.js 14 (App Router) con dos mundos que comparten la misma estética "dark editorial premium":
 
-- **Landing de marketing** (`/`): 5 secciones (hero, problema, cómo funciona, la red, cierre) en `components/landing/`.
+- **Landing de marketing** (`/`): estilo cyberpunk con CSS propio aislado, en `app/_landing/`.
 - **Producto "Loop"** (`/login`, `/upload`): subida de CSV de ventas, dashboard y el motor de stock (ver "Producto y Motor de stock" más abajo). Backend: Supabase (auth + tabla `ventas` con RLS).
 
 Las pruebas del motor viven en `scripts/test-engine.mjs` (Node puro, sin framework).
@@ -35,17 +35,14 @@ Requires Node 18.18+ (20+ recommended). JavaScript only (`.jsx`) — no TypeScri
 
 ## Architecture
 
-**Landing (`/`)**: `app/page.jsx` → `components/landing/LandingWefty.jsx` → secciones. Piezas:
+**Landing (`/`)**: `app/page.jsx` (server component con los metadatos) → `app/_landing/`:
 
-- `HiloDemanda.jsx` — lienzo fijo de fondo conducido por el scroll (con inercia): hero y El problema descansan limpios; en Cómo funciona nacen barras ordenándose con la curva del modelo dibujándose; retirada en La Red (cede a la esfera); campana de tallas perfecta en el cierre. Lee los límites de cada `div[data-fase]` de `LandingWefty`.
-- `EsferaRed.jsx` — protagonista de la sección La Red: esfera-constelación 3D (Fibonacci + proyección a mano, sin three.js) que rota y hace zoom con el progreso de scroll; marcas en azul, pulsos viajando por las conexiones.
-- `BrujulaFases.jsx` — raíl fijo derecho (solo escritorio) que marca la fase activa.
-- `HeroWefty.jsx` — nav mínima + titular palabra a palabra (con "adivinar" tachado) + CTA.
-- `Problema.jsx` — escenario dividido "los dos destinos": −33% con contador vs «Agotado.», almacén/huecos animados, convergencia ligada al scroll y titular «del caos al golpe» (TitularCaos).
-- `Secciones.jsx` — ComoFunciona, LaRed y CierreCta.
-- `RevelarLp.jsx` — reveals al hacer scroll (IntersectionObserver → clases `lp-revela`/`lp-vis`).
+- `Landing.jsx` — todo el marcado (client). Carga sus propias fuentes vía `next/font` (Space Grotesk + JetBrains Mono) como variables CSS locales.
+- `CtaLink.jsx` — los CTA con lógica de sesión: por defecto `/login`, con sesión Supabase → `/upload` (usa la instancia de `lib/supabase.js`). No romper ese contrato.
+- `effects.js` — `initLanding(root)` arranca las animaciones (terminal, canvas del hero, esfera de la red, glitch, cursor/HUD) y devuelve una función de **cleanup** que desmonta todo (rAF, observers, timers, nodos inyectados) al navegar.
+- `landing.css` — TODO el CSS de la landing, aislado bajo `.wefty-root` (más 5 reglas `html:has(.wefty-root)` para scroll/scrollbar que se autodesactivan fuera). La landing NO usa Tailwind; no añadir reglas globales aquí.
 
-Reglas de animación de la landing: clases con prefijo `lp-` en `globals.css`; solo `transform`/`opacity`; el estado FINAL es la base CSS y las animaciones viven dentro de `@media (prefers-reduced-motion: no-preference)`; los canvas pintan un fotograma estático con movimiento reducido y pausan su bucle fuera de pantalla.
+Los canvas pintan fotograma estático con `prefers-reduced-motion` y pausan fuera de pantalla. La landing v1 anterior (componentes `components/landing/` + clases `lp-*`) fue retirada; vive en el historial (commit `1d1eeaa`).
 
 Módulos compartidos (los usa también el producto — tocar con cuidado):
 

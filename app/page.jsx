@@ -1,21 +1,19 @@
-import LandingWefty from '@/components/landing/LandingWefty';
+import Landing from "./_landing/Landing";
 
-// Metadatos de la landing en español (el title se completa con la plantilla
-// del layout en el resto de páginas; aquí va el titular completo).
 export const metadata = {
-  title: 'Wefty — Deja de adivinar cuánto stock pedir',
+  title: "Wefty — Deja de adivinar cuánto stock pedir",
   description:
-    'Wefty predice cuántas unidades fabricar de cada producto, talla y color — incluso de los que aún no has lanzado. Sube un CSV de ventas y recibe tu pedido óptimo.',
+    "Wefty predice cuántas unidades producir de cada producto, talla y color — incluso de los que aún no has lanzado. Funciona con un simple CSV de ventas.",
   openGraph: {
-    title: 'Wefty — Deja de adivinar cuánto stock pedir',
+    title: "Wefty — Deja de adivinar cuánto stock pedir",
     description:
-      'Predicción de stock para marcas de moda: unidades por producto, talla y color, a partir de tus ventas y de la inteligencia de la red.',
-    siteName: 'Wefty',
-    locale: 'es_ES',
-    type: 'website',
+      "Predicción de stock para marcas de moda que venden online. Tu pedido óptimo por talla y color, con un simple CSV de ventas.",
+    locale: "es_ES",
+    type: "website",
+    siteName: "Wefty",
   },
 };
 
 export default function Page() {
-  return <LandingWefty />;
+  return <Landing />;
 }
