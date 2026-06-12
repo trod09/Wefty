@@ -22,6 +22,9 @@ import { clasificarCiclo, aplicarCiclo, pendienteRelativa } from '../lib/engine/
 import {
   bandasDePrecio, buscarAnalogos, recomendarLanzamiento, posicionamientosDePrecio,
 } from '../lib/engine/lanzamiento.mjs';
+import {
+  supervivencia, margenMarginal, asignarPresupuesto, margenDePedido, generarPlanCompra,
+} from '../lib/engine/plan.mjs';
 
 let fallos = 0;
 function caso(nombre, ok, detalle = '') {
@@ -575,6 +578,84 @@ console.log('\n— Matriz talla × color con IPF (parte 6) —');
       conjunta: new Map(), repartoTallas: [{ talla: 'S', unidades: 5 }],
       pesosColores: new Map([['Rojo', 1]]),
     }) === null);
+}
+
+console.log('\n— Plan de compra: asignación greedy verificada a mano (parte 1) —');
+{
+  // Tres productos de juguete con demanda conocida:
+  //  A: vende 10 SEGURO   · coste 40 € · margen 60 € · pérdida 10 €
+  //  B: vende 5 seguro y 10 la mitad de las veces · coste 20 € · margen 30 € · pérdida 5 €
+  //  C: vende 2 SEGURO    · coste 80 € · margen 120 € · pérdida 20 €
+  const mk = (ordenadas, margen, perdida) => (n) => margenMarginal(supervivencia(ordenadas, n), margen, perdida);
+  const A = { nombre: 'A', coste: 40, marginal: mk([10], 60, 10) };
+  const B = { nombre: 'B', coste: 20, marginal: mk([5, 10], 30, 5) };
+  const C = { nombre: 'C', coste: 80, marginal: mk([2], 120, 20) };
+
+  caso('supervivencia: P(D≥6) con sims {5,10} es exactamente 0,5', cerca(supervivencia([5, 10], 6), 0.5));
+  caso('marginal de B en la unidad 6: 0,5·30 − 0,5·5 = 12,5 €', cerca(B.marginal(6), 12.5));
+  caso('marginal de A en la unidad 11 (ya no se vende): −10 €', cerca(A.marginal(11), -10));
+
+  // A MANO con 700 €: las unidades seguras de los tres rinden igual por euro
+  // (1,5 €/€) y cuestan 400+100+160 = 660 €; con los 40 € restantes entran las
+  // unidades 6 y 7 de B (12,5 € cada una, 0,625 €/€) → A=10 · B=7 · C=2,
+  // gastado 700 €, margen esperado 600+150+240+25 = 1.015 €.
+  const r700 = asignarPresupuesto([A, B, C], 700);
+  caso('greedy con 700 €: compra A=10, B=7, C=2',
+    r700.unidades.get('A') === 10 && r700.unidades.get('B') === 7 && r700.unidades.get('C') === 2,
+    JSON.stringify([...r700.unidades]));
+  caso('…gastando los 700 € exactos', cerca(r700.gastado, 700));
+  caso('…con margen esperado de 1.015 € clavado a mano', cerca(r700.margenTotal, 1015));
+  caso('…última comprada: unidad incierta de B a 12,5 € de margen',
+    r700.ultimaComprada.nombre === 'B' && cerca(r700.ultimaComprada.margen, 12.5));
+  caso('…primera descartada: la siguiente de B (12,5 €) que ya no cabía',
+    r700.primeraDescartada && r700.primeraDescartada.nombre === 'B' && cerca(r700.primeraDescartada.margen, 12.5));
+
+  // Con 2.000 €: compra todo lo rentable (A=10, B=10, C=2 → 760 €) y PARA —
+  // ninguna unidad más tiene margen positivo. Sobran 1.240 € a propósito.
+  const r2000 = asignarPresupuesto([A, B, C], 2000);
+  caso('con 2.000 €: para en A=10, B=10, C=2 (760 €) — comprar más destruiría margen',
+    r2000.unidades.get('B') === 10 && cerca(r2000.gastado, 760) && r2000.primeraDescartada === null);
+  caso('…margen esperado 1.052,5 € (incluye las 5 uds inciertas de B a 12,5 €)',
+    cerca(r2000.margenTotal, 1052.5));
+
+  caso('con 15 € (menos que la unidad más barata) no se compra nada',
+    asignarPresupuesto([A, B, C], 15).gastado === 0);
+  caso('margenDePedido(B, 7) = 5×30 + 2×12,5 = 175 €', cerca(margenDePedido(B.marginal, 7), 175));
+}
+
+console.log('\n— Plan de compra: integración con el pipeline real —');
+{
+  const records = [];
+  for (let i = 0; i < 60; i++) {
+    records.push({ ...fila(i, 'Polo Estable', 'M', 6, 'Polos'), precio: 30 });
+    records.push({ ...fila(i, 'Polo Estable', 'L', 4, 'Polos'), precio: 30 });
+    records.push({ ...fila(i, 'Gorra Basica', 'U', 5, 'Gorras'), precio: 20 });
+  }
+  for (let i = 0; i < 5; i++) records.push({ ...fila(i, 'Mini Serie', 'M', 3, 'Polos'), precio: 50 });
+  const motor = prepararMotor(records);
+
+  const plan = generarPlanCompra(motor, { presupuesto: 2000, horizonte: 12 });
+  caso('el plan se genera sobre el catálogo real', plan.ok === true, JSON.stringify(plan.motivo));
+  caso('no gasta más del presupuesto y las inversiones suman lo gastado',
+    plan.gastado <= 2000 + 1e-6
+    && cerca(plan.filas.reduce((s, f) => s + f.inversion, 0), plan.gastado, 0.01));
+  caso('las unidades del plan cuadran con el total',
+    plan.filas.reduce((s, f) => s + f.unidades, 0) === plan.unidadesTotales && plan.unidadesTotales > 0);
+  caso('la tabla viene ordenada por inversión descendente',
+    plan.filas.every((f, i) => i === 0 || f.inversion <= plan.filas[i - 1].inversion));
+  caso('margen esperado positivo y riesgos acotados 0..1',
+    plan.margenEsperado > 0
+    && plan.filas.every((f) => f.riesgoRotura >= 0 && f.riesgoRotura <= 1 && f.riesgoRebaja >= 0 && f.riesgoRebaja <= 1));
+  caso('Mini Serie (15 uds) queda FUERA del plan con su motivo',
+    plan.excluidos.some((e) => e.producto === 'Mini Serie' && e.motivo.includes('mínimo')));
+  caso('la demanda por producto queda memoizada (2 productos cacheados)',
+    motor.cacheDemanda.size === 2);
+  const plan2 = generarPlanCompra(motor, { presupuesto: 500, horizonte: 12 });
+  caso('regenerar con otro presupuesto reutiliza la caché (sigue en 2)',
+    plan2.ok && motor.cacheDemanda.size === 2);
+  caso('con presupuesto de 1 € no llega ni para una unidad → aviso amable',
+    generarPlanCompra(motor, { presupuesto: 1 }).motivo === 'presupuesto-insuficiente');
+  caso('presupuesto inválido → error amable', generarPlanCompra(motor, { presupuesto: 'abc' }).motivo === 'presupuesto-invalido');
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');

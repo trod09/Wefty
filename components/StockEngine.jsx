@@ -19,6 +19,7 @@ import {
 import {
   bandasDePrecio, recomendarLanzamiento, posicionamientosDePrecio, MESES_LANZAMIENTO,
 } from '@/lib/engine/lanzamiento.mjs';
+import { generarPlanCompra } from '@/lib/engine/plan.mjs';
 import { fmtFecha } from '@/lib/engine/datos.mjs';
 
 const EMBER = '#E07A5F';
@@ -425,6 +426,14 @@ export default function StockEngine({ records, hayFiltros }) {
   const [lanTotalTxt, setLanTotalTxt] = useState('');
   const [lanColoresTxt, setLanColoresTxt] = useState('');
   const [copiadoLan, setCopiadoLan] = useState(false);
+  // Plan de compra global (open-to-buy): NO reactivo — solo al pulsar Generar
+  // (recorre todo el catálogo; la demanda por producto queda memoizada en el motor).
+  const [planPresuTxt, setPlanPresuTxt] = useState('');
+  const [planHorizTxt, setPlanHorizTxt] = useState('12');
+  const [planMargenTxt, setPlanMargenTxt] = useState('60');
+  const [planEsc, setPlanEsc] = useState('esperado');
+  const [plan, setPlan] = useState(null);
+  const [calculandoPlan, setCalculandoPlan] = useState(false);
 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
   // catálogo, operaciones baratas). El pronóstico se calcula solo para el
@@ -544,6 +553,21 @@ export default function StockEngine({ records, hayFiltros }) {
     }
   }
 
+  function generarPlan() {
+    if (calculandoPlan) return;
+    setCalculandoPlan(true);
+    // setTimeout: deja pintar "Calculando plan…" antes del cálculo pesado.
+    setTimeout(() => {
+      setPlan(generarPlanCompra(motor, {
+        presupuesto: Number(planPresuTxt),
+        horizonte: Number(planHorizTxt) || 12,
+        margenPct: Number(planMargenTxt) || 60,
+        escenario: planEsc,
+      }));
+      setCalculandoPlan(false);
+    }, 30);
+  }
+
   // Pestañas con área táctil ≥44px en móvil (padding extra solo ahí).
   const tabCls = (activa) =>
     `pt-3 pb-3.5 md:pt-0 md:pb-2.5 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors border-b-2 ${
@@ -574,9 +598,165 @@ export default function StockEngine({ records, hayFiltros }) {
           <button type="button" className={tabCls(pestana === 'lanzamiento')} onClick={() => setPestana('lanzamiento')}>
             Lanzamiento
           </button>
+          <button type="button" className={tabCls(pestana === 'plan')} onClick={() => setPestana('plan')}>
+            Plan de compra
+          </button>
         </div>
 
-        {pestana === 'lanzamiento' ? (
+        {pestana === 'plan' ? (
+          <>
+            {/* Entradas del plan de compra */}
+            <div className="mt-6 flex flex-wrap items-start gap-5">
+              <Campo etiqueta="Presupuesto de compra (€)" hint="Lo que vas a invertir en stock para este horizonte.">
+                <input
+                  type="number" inputMode="decimal" min="1" step="1" placeholder="p. ej. 20000"
+                  value={planPresuTxt} onChange={(e) => setPlanPresuTxt(e.target.value)}
+                  className={`${INPUT_CLS} w-[170px] tnum`}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                />
+              </Campo>
+              <Campo etiqueta="Horizonte (semanas)" hint="Cuántas semanas de venta debe cubrir la compra.">
+                <input
+                  type="number" inputMode="numeric" min="4" max="26" step="1"
+                  value={planHorizTxt} onChange={(e) => setPlanHorizTxt(e.target.value)}
+                  className={`${INPUT_CLS} w-[90px] tnum`}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                />
+              </Campo>
+              <Campo
+                etiqueta="Margen bruto (%)"
+                hint={`Coste estimado = ${Math.max(10, 100 - (Number(planMargenTxt) || 60))}% del PVP medio de cada producto (de tus datos).`}
+              >
+                <input
+                  type="number" inputMode="numeric" min="20" max="90" step="1"
+                  value={planMargenTxt} onChange={(e) => setPlanMargenTxt(e.target.value)}
+                  className={`${INPUT_CLS} w-[90px] tnum`}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                />
+              </Campo>
+              <Campo etiqueta="Escenario de demanda" hint="Conservador reparte contra demanda floja (P25); agresivo, contra fuerte (P75).">
+                <Segmentos
+                  valor={planEsc}
+                  onChange={setPlanEsc}
+                  opciones={[
+                    { v: 'conservador', t: 'Conserv.' },
+                    { v: 'esperado', t: 'Esperado' },
+                    { v: 'agresivo', t: 'Agresivo' },
+                  ]}
+                />
+              </Campo>
+            </div>
+
+            <div className="mt-6 flex flex-wrap items-center gap-5">
+              <button
+                type="button"
+                onClick={generarPlan}
+                disabled={calculandoPlan}
+                className="btn-sheen h-11 px-6 rounded-lg border border-[#3a2b20] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] transition-colors disabled:opacity-60"
+                style={{ background: 'rgba(240,140,86,0.10)' }}
+              >
+                {calculandoPlan ? 'Calculando plan…' : 'Generar plan'}
+              </button>
+              <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
+                recorre todo el catálogo — se calcula al pulsar, no a cada tecla
+              </span>
+            </div>
+
+            {/* Errores amables */}
+            {plan && !plan.ok ? (
+              <div className="mt-6 rounded-xl border border-[#1d2330] p-6" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
+                <p className="text-[14px] leading-relaxed" style={{ color: TXT2 }}>
+                  {plan.motivo === 'presupuesto-invalido'
+                    ? 'Escribe un presupuesto válido (un número mayor que 0).'
+                    : plan.motivo === 'presupuesto-insuficiente'
+                      ? `Con ese presupuesto no llega ni para una unidad: la más barata de tu catálogo cuesta ≈${fmt1(plan.minimo)} €.`
+                      : 'Ningún producto de tu catálogo tiene datos suficientes para planificar la compra.'}
+                </p>
+                {plan.excluidos?.length ? (
+                  <p className="mt-2 font-mono text-[11px] leading-relaxed" style={{ color: TXT3 }}>
+                    fuera del plan: {plan.excluidos.map((e) => `${e.producto} (${e.motivo})`).join(' · ')}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {plan?.ok ? (
+              <>
+                {/* Totales (las tarjetas del resumen llegan en la parte 2) */}
+                <p className="mt-6 font-mono text-[11px] tracking-[0.04em] leading-relaxed" style={{ color: TXT2 }}>
+                  asignado <span style={{ color: TXT }}>{fmtEur(plan.gastado)}</span> de {fmtEur(plan.presupuesto)} ·{' '}
+                  <span style={{ color: TXT }}>{fmtInt(plan.unidadesTotales)}</span> uds en {plan.filas.length} productos ·{' '}
+                  margen esperado <span style={{ color: VERDE }}>{fmtEur(plan.margenEsperado)}</span>
+                  {plan.sobrante > 0.5 ? <> · sobrante {fmtEur(plan.sobrante)}</> : null}
+                </p>
+
+                {/* Tabla del plan, ordenada por inversión */}
+                <div className="mt-4 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 pb-2 border-b border-white/10">
+                    {['Producto', 'Uds', 'Inversión', 'Margen esp.', '%', 'Riesgo (rotura · rebaja)'].map((h, i) => (
+                      <span key={h} className={`${LABEL} ${i >= 1 && i <= 4 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
+                    ))}
+                  </div>
+                  <ul>
+                    {plan.filas.map((f) => (
+                      <li key={f.producto} className="border-b border-white/[0.06]">
+                        {/* Móvil: tarjeta apilada */}
+                        <div className="md:hidden py-3">
+                          <div className="flex items-baseline justify-between gap-3">
+                            <span className="text-[13px]" style={{ color: TXT }}>{f.producto}</span>
+                            <span className="font-mono text-[12px] tnum flex-shrink-0" style={{ color: TXT }}>{fmtInt(f.unidades)} uds</span>
+                          </div>
+                          <p className="mt-1 font-mono text-[11px] leading-relaxed" style={{ color: TXT2 }}>
+                            {fmtEur(f.inversion)} ({pct0(f.pctPresupuesto)}) · margen {fmtEur(f.margenEsperado)} ·{' '}
+                            <span style={{ color: colorRiesgo(f.riesgoRotura) }}>rotura {pct0(f.riesgoRotura)}</span> ·{' '}
+                            <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>rebaja {pct0(f.riesgoRebaja)}</span>
+                          </p>
+                          <div className="mt-1.5"><BadgeCiclo ciclo={f.ciclo} /></div>
+                        </div>
+                        {/* Escritorio: rejilla */}
+                        <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 items-center py-2.5">
+                          <span className="flex items-center gap-2.5 min-w-0">
+                            <span className="text-[13px] truncate" style={{ color: TXT }}>{f.producto}</span>
+                            <BadgeCiclo ciclo={f.ciclo} />
+                          </span>
+                          <span className="font-mono text-[13px] tnum text-right" style={{ color: TXT }}>{fmtInt(f.unidades)}</span>
+                          <span className="font-mono text-[12px] tnum text-right" style={{ color: TXT }}>{fmtEur(f.inversion)}</span>
+                          <span className="font-mono text-[12px] tnum text-right" style={{ color: VERDE }}>{fmtEur(f.margenEsperado)}</span>
+                          <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>{pct0(f.pctPresupuesto)}</span>
+                          <span className="font-mono text-[11px] tnum">
+                            <span style={{ color: colorRiesgo(f.riesgoRotura) }}>{pct0(f.riesgoRotura)}</span>
+                            <span style={{ color: TXT3 }}> · </span>
+                            <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>{pct0(f.riesgoRebaja)}</span>
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Excluidos y avisos */}
+                {plan.excluidos.length > 0 ? (
+                  <p className="mt-4 font-mono text-[11px] leading-relaxed" style={{ color: TXT3 }}>
+                    fuera del plan: {plan.excluidos.map((e) => `${e.producto} (${e.motivo})`).join(' · ')}
+                  </p>
+                ) : null}
+                {plan.avisos.length > 0 ? (
+                  <div className="mt-4 rounded-xl border border-[#1d2330] p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                    <div className={LABEL} style={{ color: AMBAR }}>Avisos del plan · {plan.avisos.length}</div>
+                    <ul className="mt-3 space-y-2">
+                      {plan.avisos.map((texto, i) => (
+                        <li key={i} className="flex gap-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
+                          <span className="mt-[7px] w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: AMBAR }} />
+                          <span>{texto}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </>
+        ) : pestana === 'lanzamiento' ? (
           <>
             {/* Entradas del lanzamiento */}
             <div className="mt-6 flex flex-wrap items-start gap-5">
