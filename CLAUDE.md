@@ -67,7 +67,11 @@ Tailwind + a large block of hand-written CSS in **`app/globals.css`** (~270 line
 Además de la landing (`/`), existe el producto: `/login` (Supabase auth) y `/upload`
 (subida de CSV de ventas + dashboard `components/SalesDashboard.jsx`, estética "dark
 editorial premium"). Los datos viajan como `records` ya parseados: `{fecha, producto,
-categoria, talla, color, unidades, precio, ingresos}`.
+categoria, talla, color, unidades, precio, ingresos}`. Tablas Supabase: `ventas`
+(RLS por user_id) y `costes_producto` (coste unitario real por producto, único
+por user_id+producto, RLS select/insert/update/delete; la edita el panel
+`components/CostesProducto.jsx` dentro del Motor de stock y la consumen el plan
+de compra y el prellenado del modo economía de Reposición).
 
 El **motor de recomendación de stock** vive en `lib/engine/` (módulos `.mjs` de
 matemática pura, sin React — ejecutables desde Node) y su pantalla es
@@ -93,7 +97,10 @@ matemática pura, sin React — ejecutables desde Node) y su pantalla es
   `demandaProducto(motor, nombre, horizonte)` (pipeline completo memoizado en
   `motor.cacheDemanda`, lo usa el plan de compra).
 - `plan.mjs` — plan de compra global (open-to-buy): curva de valor marginal
-  newsvendor por unidad y asignación greedy del presupuesto por margen POR EURO;
+  newsvendor por unidad y asignación por NIVELES de rentabilidad (margen POR
+  EURO, tolerancia 1e-9; el nivel que no cabe se raciona proporcionalmente —
+  invariante al orden del CSV); acepta `costesReales` (Map nombre → €/ud, del
+  panel de costes) y usa la estimación por margen global donde no haya;
   baseline "proporcional al histórico" para la comparación honesta; frontera
   (última unidad comprada / primera descartada); desglose talla×color por fila
   con las mismas curvas de `curvas.mjs`. Solo recalcula al pulsar "Generar plan".
@@ -103,7 +110,7 @@ Reglas del motor: todo determinista; el motor usa SIEMPRE el dataset completo
 datos suficientes se desactiva CON AVISO); cada resultado lleva su explicación
 ("¿Por qué esta recomendación?") cuyos números cuadran con el resultado final.
 
-**Pruebas del motor**: `node scripts/test-engine.mjs` (173 casos con resultados
+**Pruebas del motor**: `node scripts/test-engine.mjs` (181 casos con resultados
 calculados a mano + extremo a extremo con `ventas_ejemplo_loop.csv`). Ejecútalas
 tras tocar cualquier fichero de `lib/engine/`.
 

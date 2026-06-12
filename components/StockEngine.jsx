@@ -440,6 +440,11 @@ export default function StockEngine({ records, hayFiltros }) {
   // Costes reales por producto (panel "Costes de producto"; Map nombre → €/ud).
   const [costesReales, setCostesReales] = useState(() => new Map());
   const onCostes = useCallback((mapa) => setCostesReales(mapa), []);
+  // Huella estable de los costes: detecta que el plan generado quedó caduco.
+  const huellaCostes = useMemo(
+    () => [...costesReales].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, v]) => `${k}:${v}`).join('|'),
+    [costesReales]
+  );
 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
   // catálogo, operaciones baratas). El pronóstico se calcula solo para el
@@ -606,7 +611,7 @@ export default function StockEngine({ records, hayFiltros }) {
         escenario: planEsc,
         costesReales,
       }));
-      setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc });
+      setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc, costes: huellaCostes });
       setCalculandoPlan(false);
     }, 30);
   }
@@ -668,7 +673,7 @@ export default function StockEngine({ records, hayFiltros }) {
               </Campo>
               <Campo
                 etiqueta="Margen bruto (%)"
-                hint={`Coste estimado = ${Math.max(10, 100 - (Number(planMargenTxt) || 60))}% del PVP medio de cada producto (de tus datos).`}
+                hint={`Coste estimado = ${Math.max(10, 100 - (Number(planMargenTxt) || 60))}% del PVP medio de cada producto (de tus datos).${costesReales.size > 0 ? ` ${costesReales.size} producto${costesReales.size === 1 ? ' usa' : 's usan'} su coste real y lo ignoran.` : ''}`}
               >
                 <input
                   type="number" inputMode="numeric" min="20" max="90" step="1"
@@ -705,9 +710,10 @@ export default function StockEngine({ records, hayFiltros }) {
               </span>
               {plan && planParams
                 && (planParams.presu !== planPresuTxt || planParams.horiz !== planHorizTxt
-                  || planParams.margen !== planMargenTxt || planParams.esc !== planEsc) ? (
+                  || planParams.margen !== planMargenTxt || planParams.esc !== planEsc
+                  || planParams.costes !== huellaCostes) ? (
                 <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: AMBAR }}>
-                  has cambiado los parámetros — el plan de abajo es el anterior
+                  has cambiado los parámetros o los costes — el plan de abajo es el anterior
                 </span>
               ) : null}
             </div>

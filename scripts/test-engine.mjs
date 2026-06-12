@@ -810,6 +810,14 @@ console.log('\n— Plan de compra: costes reales por producto (verificado a mano
   const pSin = generarPlanCompra(motor, { presupuesto: 400, horizonte: 12 });
   caso('sin costes reales el plan es el de siempre (todos estimados)',
     pSin.ok && pSin.costes.reales === 0 && pSin.filas.every((f) => f.origenCoste === 'estimado'));
+
+  // Invarianza al orden del CSV también con costes mixtos reales/estimados.
+  const motorR = prepararMotor([...records].reverse());
+  const p400R = generarPlanCompra(motorR, { presupuesto: 400, horizonte: 12, costesReales: costes });
+  caso('con costes mixtos el plan sigue siendo invariante al orden del CSV',
+    p400R.ok && p400R.filas.length === p400.filas.length
+    && p400.filas.every((f) => p400R.filas.find((g) => g.producto === f.producto)?.unidades === f.unidades)
+    && cerca(p400R.margenEsperado, p400.margenEsperado, 0.01));
 }
 
 console.log('\n— Plan de compra: la lista de sin-inversión va completa (sin recortar) —');
