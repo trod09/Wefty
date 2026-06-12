@@ -515,16 +515,16 @@ export function initLanding(root) {
       statusText.textContent = SEARCH;
       dots.style.display = '';
       nEl.textContent = '0';
-      later(() => runningCycle && lz.classList.add('p1'), 400);
-      later(() => runningCycle && lz.classList.add('p2'), 1700);
+      later(() => runningCycle && lz.classList.add('p1'), 250);
+      later(() => runningCycle && lz.classList.add('p2'), 950);
       later(() => {
         if (!runningCycle) return;
         lz.classList.add('p3');
         statusText.textContent = FOUND;
         dots.style.display = 'none';
-        countTo(TOTAL, 800);
-      }, 3500);
-      later(cycle, 9500);
+        countTo(TOTAL, 550);
+      }, 1800);
+      later(cycle, 7000);
     }
     addIO(new IntersectionObserver((entries) => {
       entries.forEach((e) => {
