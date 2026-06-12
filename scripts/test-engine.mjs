@@ -758,6 +758,60 @@ console.log('\n— Plan de compra: integración con el pipeline real —');
     !plan.avisos.some((a) => a.includes('casi seguro')));
 }
 
+console.log('\n— Plan de compra: costes reales por producto (verificado a mano) —');
+{
+  const records = [];
+  for (let i = 0; i < 60; i++) {
+    records.push({ ...fila(i, 'Polo Estable', 'M', 6, 'Polos'), precio: 30 });
+    records.push({ ...fila(i, 'Polo Estable', 'L', 4, 'Polos'), precio: 30 });
+    records.push({ ...fila(i, 'Gorra Basica', 'U', 5, 'Gorras'), precio: 20 });
+  }
+  const motor = prepararMotor(records);
+
+  // A MANO — Polo con coste REAL 6 € (pvp 30): margen 24, pérdida máx(0, 6−9)=0
+  // → densidad 24/6 = 4. Gorra ESTIMADA (margen 60%): coste 8, margen 12,
+  // pérdida 2 → densidad 1,5. La serie es constante (10 y 5 uds/sem exactas),
+  // así que la demanda simulada a 12 semanas es 120 y 60 clavada.
+  const costes = new Map([['Polo Estable', 6]]);
+
+  // 400 €: el nivel del Polo (120 uds × 6 = 720 €) no cabe → racionamiento:
+  // f = 400/720 → base = floor(66,6) = 66 uds = 396 €; la unidad 67 (6 €) ya
+  // no cabe con 4 € restantes, y la Gorra (8 €) tampoco. Gorra: 0 uds.
+  const p400 = generarPlanCompra(motor, { presupuesto: 400, horizonte: 12, costesReales: costes });
+  const polo400 = p400.filas.find((f) => f.producto === 'Polo Estable');
+  caso('400 €: el coste real manda — Polo 66 uds (396 €) y Gorra 0',
+    polo400?.unidades === 66 && cerca(p400.gastado, 396) && !p400.filas.some((f) => f.producto === 'Gorra Basica'),
+    JSON.stringify(p400.filas?.map((f) => [f.producto, f.unidades])));
+  caso('…margen esperado 66 × 24 = 1.584 € clavado', cerca(p400.margenEsperado, 1584));
+  caso('…la fila del Polo queda marcada como coste real y el recuento es 1/1',
+    polo400?.origenCoste === 'real' && p400.costes.reales === 1 && p400.costes.estimados === 1);
+
+  // 1.500 €: Polo entero (120 × 6 = 720 €) y después Gorra entera (60 × 8 =
+  // 480 €) = 1.200 €; las siguientes unidades destruyen margen → para solo.
+  const p1500 = generarPlanCompra(motor, { presupuesto: 1500, horizonte: 12, costesReales: costes });
+  caso('1.500 €: Polo 120 + Gorra 60, gastado 1.200 € y margen 2.880+720 = 3.600 €',
+    p1500.filas.find((f) => f.producto === 'Polo Estable')?.unidades === 120
+    && p1500.filas.find((f) => f.producto === 'Gorra Basica')?.unidades === 60
+    && cerca(p1500.gastado, 1200) && cerca(p1500.margenEsperado, 3600),
+    `gastado=${p1500.gastado} margen=${p1500.margenEsperado}`);
+
+  // Coste real ≥ PVP: margen negativo → aviso claro y 0 unidades.
+  const pNeg = generarPlanCompra(motor, { presupuesto: 400, horizonte: 12, costesReales: new Map([['Polo Estable', 31]]) });
+  caso('coste real 31 € sobre PVP 30 €: aviso de margen negativo y Polo sin inversión',
+    pNeg.avisos.some((a) => a.includes('margen es negativo')) && !pNeg.filas.some((f) => f.producto === 'Polo Estable'),
+    JSON.stringify(pNeg.avisos));
+
+  // Coste huérfano (producto renombrado/desaparecido): se ignora sin ruido.
+  const pHuer = generarPlanCompra(motor, { presupuesto: 400, horizonte: 12, costesReales: new Map([['Producto Fantasma', 5]]) });
+  caso('un coste de un producto que ya no existe se ignora (todo estimado)',
+    pHuer.ok && pHuer.costes.reales === 0 && pHuer.costes.estimados === 2);
+
+  // Sin costes: comportamiento EXACTO de siempre (estimación por margen global).
+  const pSin = generarPlanCompra(motor, { presupuesto: 400, horizonte: 12 });
+  caso('sin costes reales el plan es el de siempre (todos estimados)',
+    pSin.ok && pSin.costes.reales === 0 && pSin.filas.every((f) => f.origenCoste === 'estimado'));
+}
+
 console.log('\n— Plan de compra: la lista de sin-inversión va completa (sin recortar) —');
 {
   const records = [];

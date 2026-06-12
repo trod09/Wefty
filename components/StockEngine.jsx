@@ -8,7 +8,7 @@
 // Importante: el motor usa SIEMPRE el dataset completo, aunque el dashboard
 // tenga filtros activos — pronosticar sobre datos filtrados daría pedidos
 // sesgados. Se indica con una nota sutil cuando hay filtros puestos.
-import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
@@ -474,6 +474,24 @@ export default function StockEngine({ records, hayFiltros }) {
 
   const economiaActiva = Boolean(resultado?.ok && resultado.modoCantidad === 'economia');
 
+  // Prellenar el coste del modo economía con el coste real guardado del
+  // producto seleccionado. Lo escrito A MANO se respeta hasta cambiar de
+  // producto; el prellenado sí se actualiza si cambian los costes del panel.
+  const costeGuardado = costesReales.get(producto);
+  const ultimoPrefill = useRef({ producto: null, valor: null });
+  useEffect(() => {
+    const nuevo = costeGuardado != null ? String(costeGuardado) : '';
+    setCosteTxt((prev) => {
+      const cambioProducto = ultimoPrefill.current.producto !== producto;
+      const eraPrefill = prev === ultimoPrefill.current.valor;
+      if (cambioProducto || eraPrefill || prev === '') {
+        ultimoPrefill.current = { producto, valor: nuevo };
+        return nuevo;
+      }
+      return prev;
+    });
+  }, [producto, costeGuardado]);
+
   // — Modo B: lanzamiento. Solo se calcula con la pestaña abierta (bajo demanda). —
   const categoriasLan = useMemo(
     () => [...motor.almacen.categorias.keys()].sort((a, b) => a.localeCompare(b, 'es')),
@@ -586,6 +604,7 @@ export default function StockEngine({ records, hayFiltros }) {
         horizonte: Number(planHorizTxt) || 12,
         margenPct: Number(planMargenTxt) || 60,
         escenario: planEsc,
+        costesReales,
       }));
       setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc });
       setCalculandoPlan(false);
@@ -716,6 +735,11 @@ export default function StockEngine({ records, hayFiltros }) {
                 {/* Resumen global del plan */}
                 <div className="mt-6 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
                   <div className={LABEL} style={{ color: '#f0a987' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
+                  {plan.costes ? (
+                    <p className="mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>
+                      calculado con <span style={{ color: plan.costes.reales > 0 ? VERDE : TXT3 }}>{plan.costes.reales} coste{plan.costes.reales === 1 ? '' : 's'} real{plan.costes.reales === 1 ? '' : 'es'}</span> y {plan.costes.estimados} estimado{plan.costes.estimados === 1 ? '' : 's'}
+                    </p>
+                  ) : null}
                   <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <div className={LABEL} style={{ color: TXT3 }}>Presupuesto asignado</div>
@@ -769,7 +793,8 @@ export default function StockEngine({ records, hayFiltros }) {
                               <p className="mt-1 font-mono text-[11px] leading-relaxed" style={{ color: TXT2 }}>
                                 {fmtEur(f.inversion)} ({pct0(f.pctPresupuesto)}) · margen {fmtEur(f.margenEsperado)} ·{' '}
                                 <span style={{ color: colorRiesgo(f.riesgoRotura) }}>rotura {pct0(f.riesgoRotura)}</span> ·{' '}
-                                <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>rebaja {pct0(f.riesgoRebaja)}</span>
+                                <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>rebaja {pct0(f.riesgoRebaja)}</span> ·{' '}
+                                <span style={{ color: f.origenCoste === 'real' ? VERDE : TXT3 }}>coste {f.origenCoste === 'real' ? 'real' : 'est.'}</span>
                               </p>
                               <div className="mt-1.5"><BadgeCiclo ciclo={f.ciclo} /></div>
                             </div>
@@ -777,6 +802,11 @@ export default function StockEngine({ records, hayFiltros }) {
                             <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 items-center py-2.5">
                               <span className="flex items-center gap-2.5 min-w-0">
                                 <span className="font-mono text-[10px] flex-shrink-0 transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+                                <span
+                                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                  style={{ background: f.origenCoste === 'real' ? VERDE : '#2e3850' }}
+                                  title={f.origenCoste === 'real' ? 'coste real (tu panel de costes)' : 'coste estimado por margen global'}
+                                />
                                 <span className="text-[13px] truncate" style={{ color: TXT }}>{f.producto}</span>
                                 <BadgeCiclo ciclo={f.ciclo} />
                               </span>
@@ -793,7 +823,7 @@ export default function StockEngine({ records, hayFiltros }) {
                           </summary>
                           <div className="acc-body pb-4 pl-0 md:pl-5">
                             <p className="font-mono text-[11px] leading-relaxed" style={{ color: TXT3 }}>
-                              PVP medio {fmt1(f.pvp)} € · coste estimado {fmt1(f.coste)} €/ud · modelo: {f.modelo.nombre}
+                              PVP medio {fmt1(f.pvp)} € · coste {f.origenCoste === 'real' ? 'real' : 'estimado'} {fmt1(f.coste)} €/ud · modelo: {f.modelo.nombre}
                             </p>
                             {f.tallaUnica ? (
                               <p className="mt-2 text-[12px]" style={{ color: TXT3 }}>Talla única: las {fmtInt(f.unidades)} unidades van a un solo código.</p>
