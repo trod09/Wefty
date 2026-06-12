@@ -589,7 +589,7 @@ export default function UploadPage() {
                   type="button"
                   onClick={handleSave}
                   disabled={saveState === 'saving'}
-                  className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center gap-3 px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 disabled:opacity-60 disabled:cursor-default"
+                  className="btn-neon select-none"
                 >
                   <span className="relative z-10">
                     {saveState === 'saving' ? 'Guardando…' : 'Guardar en la base de datos'}

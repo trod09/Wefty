@@ -9,6 +9,7 @@ import { Reveal } from '@/components/hooks';
 import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs } from '@/components/decor';
 import { supabase } from '@/lib/supabase';
+import TituloDecodificado from '@/components/TituloDecodificado';
 
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 const SURFACE_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
@@ -134,8 +135,8 @@ export default function LoginPage() {
         </div>
 
         {/* Title */}
-        <h1 className="mt-8 font-display font-light leading-[0.94] tracking-[-0.035em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch]">
-          Entra en tu cuenta.
+        <h1 className="mt-8 font-display font-bold leading-[1.02] tracking-[-0.03em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch] [text-wrap:balance]">
+          <TituloDecodificado texto="Entra en" acento="tu cuenta." />
         </h1>
 
         <div className="grid grid-cols-12 gap-6 mt-9 md:mt-16">
@@ -211,7 +212,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleSignIn}
                     disabled={busy}
-                    className="btn-sheen btn-sheen-claro btn-cromo relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 disabled:opacity-60 disabled:cursor-default"
+                    className="btn-neon select-none"
                   >
                     {busy ? 'Procesando…' : 'Iniciar sesión'}
                   </button>
@@ -219,7 +220,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={handleSignUp}
                     disabled={busy}
-                    className="btn-sheen relative inline-flex items-center justify-center px-7 h-12 font-medium text-[14px] tracking-[-0.005em] rounded-lg cursor-pointer select-none transition-all duration-300 border border-[#2e3850] text-[#F5F5F7] hover:border-[#5d5e63] disabled:opacity-60 disabled:cursor-default"
+                    className="btn-neon-borde select-none"
                   >
                     Crear cuenta
                   </button>

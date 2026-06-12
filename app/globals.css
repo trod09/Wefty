@@ -407,3 +407,55 @@ details[open] .acc-body {
     100% { transform: none; clip-path: inset(0 0 100% 0); }
   }
 }
+
+/* Variante fantasma del botón neón (el .btn-ghost de la landing): borde en
+   chaflán que se rellena con el degradado al hacer hover. */
+.btn-neon-borde {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-jetbrains), ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 15px 30px;
+  color: #F5F5F7;
+  cursor: pointer;
+  overflow: hidden;
+  background: transparent;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  transition: color 0.25s ease, transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1.2);
+}
+.btn-neon-borde::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid #f08c56;
+  clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  pointer-events: none;
+}
+.btn-neon-borde::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(95deg, #f08c56, #ecd5f2);
+  transform: translateX(-101%);
+  transition: transform 0.35s cubic-bezier(0.6, 0, 0.2, 1);
+  z-index: -1;
+}
+@media (hover: hover) {
+  .btn-neon-borde:hover { color: #000; }
+  .btn-neon-borde:hover::after { transform: none; }
+}
+.btn-neon-borde:active { transform: scale(0.97); }
+
+/* Estado deshabilitado de ambos botones neón */
+.btn-neon:disabled,
+.btn-neon-borde:disabled {
+  opacity: 0.6;
+  cursor: default;
+  filter: none;
+  transform: none;
+}
