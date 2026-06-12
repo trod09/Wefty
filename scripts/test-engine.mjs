@@ -684,6 +684,24 @@ console.log('\n— Plan de compra: integración con el pipeline real —');
     `plan=${plan.margenEsperado?.toFixed(0)} base=${plan.baseline?.margen?.toFixed(0)}`);
   caso('la frontera existe: última comprada con su margen por unidad',
     plan.frontera.ultimaComprada && plan.frontera.ultimaComprada.margen > 0);
+
+  // — Parte 3: desglose por tallas y explicación —
+  const polo = plan.filas.find((f) => f.producto === 'Polo Estable');
+  caso('cada fila trae su reparto por tallas y suma exacto',
+    plan.filas.every((f) => f.tallaUnica || (f.reparto && f.reparto.reduce((s, x) => s + x.unidades, 0) === f.unidades)));
+  // Curva jerárquica A MANO: Polo vende M:L 6:4 (peso producto 600/800=0,75)
+  // y el residuo de categoría/marca en su dominio es solo M (Mini Serie) →
+  // curva M = 0,75×0,6 + 0,25×1,0 = 0,70. El mismo encogimiento que Reposición.
+  const m = polo.reparto?.find((x) => x.talla === 'M');
+  caso('Polo Estable reparte el 70% a la M (jerárquica a mano: 0,75×0,6+0,25×1)',
+    m && Math.abs(m.unidades - 0.7 * polo.unidades) <= 1,
+    `M=${m?.unidades} de ${polo.unidades}`);
+  const gorra = plan.filas.find((f) => f.producto === 'Gorra Basica');
+  caso('Gorra Basica (solo talla U) queda marcada como talla única',
+    !gorra || gorra.tallaUnica === true);
+  caso('el plan trae su explicación paso a paso (7 pasos, frontera con números)',
+    plan.explicacion.length === 7
+    && plan.explicacion.some((p) => p.titulo === 'Dónde se corta' && /\d/.test(p.detalle)));
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');

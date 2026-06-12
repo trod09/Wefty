@@ -89,14 +89,21 @@ matemática pura, sin React — ejecutables desde Node) y su pantalla es
   por mayor resto (suma exacta); matriz talla×color por IPF.
 - `lanzamiento.mjs` — modo B: análogos con score transparente y curva de lanzamiento.
 - `motor.mjs` — orquestador: `prepararMotor(records)` una vez por dataset,
-  `recomendarReposicion(...)` por producto bajo demanda, `validacionGlobal(...)`.
+  `recomendarReposicion(...)` por producto bajo demanda, `validacionGlobal(...)`,
+  `demandaProducto(motor, nombre, horizonte)` (pipeline completo memoizado en
+  `motor.cacheDemanda`, lo usa el plan de compra).
+- `plan.mjs` — plan de compra global (open-to-buy): curva de valor marginal
+  newsvendor por unidad y asignación greedy del presupuesto por margen POR EURO;
+  baseline "proporcional al histórico" para la comparación honesta; frontera
+  (última unidad comprada / primera descartada); desglose talla×color por fila
+  con las mismas curvas de `curvas.mjs`. Solo recalcula al pulsar "Generar plan".
 
 Reglas del motor: todo determinista; el motor usa SIEMPRE el dataset completo
 (ignora los filtros del dashboard); honestidad configurable (si una técnica no tiene
 datos suficientes se desactiva CON AVISO); cada resultado lleva su explicación
 ("¿Por qué esta recomendación?") cuyos números cuadran con el resultado final.
 
-**Pruebas del motor**: `node scripts/test-engine.mjs` (112 casos con resultados
+**Pruebas del motor**: `node scripts/test-engine.mjs` (163 casos con resultados
 calculados a mano + extremo a extremo con `ventas_ejemplo_loop.csv`). Ejecútalas
 tras tocar cualquier fichero de `lib/engine/`.
 

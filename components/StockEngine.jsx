@@ -216,13 +216,13 @@ function MatrizTallaColor({ matriz }) {
 }
 
 // "¿Por qué esta recomendación?" — MÓDULO 8: el porqué paso a paso, sin jerga.
-function Explicacion({ pasos }) {
+function Explicacion({ pasos, titulo = '¿Por qué esta recomendación?' }) {
   if (!pasos?.length) return null;
   return (
     <details className="mt-5 group rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
-          ¿Por qué esta recomendación?
+          {titulo}
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
       </summary>
@@ -434,6 +434,8 @@ export default function StockEngine({ records, hayFiltros }) {
   const [planEsc, setPlanEsc] = useState('esperado');
   const [plan, setPlan] = useState(null);
   const [calculandoPlan, setCalculandoPlan] = useState(false);
+  const [copiadoPlan, setCopiadoPlan] = useState(false);
+  const [planParams, setPlanParams] = useState(null);
 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
   // catálogo, operaciones baratas). El pronóstico se calcula solo para el
@@ -553,6 +555,23 @@ export default function StockEngine({ records, hayFiltros }) {
     }
   }
 
+  async function copiarPlan() {
+    if (!plan?.ok) return;
+    const lineas = [
+      `Plan de compra — ${plan.horizonte} semanas · escenario ${plan.escenario} · presupuesto ${Math.round(plan.presupuesto).toLocaleString('es-ES')} €`,
+      'Producto\tUnidades\tInversión (€)',
+      ...plan.filas.map((f) => `${textoSeguro(f.producto)}\t${f.unidades}\t${f.inversion.toFixed(2)}`),
+      `Total\t${plan.unidadesTotales}\t${plan.gastado.toFixed(2)}`,
+    ];
+    try {
+      await navigator.clipboard.writeText(lineas.join('\n'));
+      setCopiadoPlan(true);
+      setTimeout(() => setCopiadoPlan(false), 2000);
+    } catch {
+      /* sin permiso de portapapeles: no rompemos nada */
+    }
+  }
+
   function generarPlan() {
     if (calculandoPlan) return;
     setCalculandoPlan(true);
@@ -564,6 +583,7 @@ export default function StockEngine({ records, hayFiltros }) {
         margenPct: Number(planMargenTxt) || 60,
         escenario: planEsc,
       }));
+      setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc });
       setCalculandoPlan(false);
     }, 30);
   }
@@ -660,6 +680,13 @@ export default function StockEngine({ records, hayFiltros }) {
               <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
                 recorre todo el catálogo — se calcula al pulsar, no a cada tecla
               </span>
+              {plan && planParams
+                && (planParams.presu !== planPresuTxt || planParams.horiz !== planHorizTxt
+                  || planParams.margen !== planMargenTxt || planParams.esc !== planEsc) ? (
+                <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: AMBAR }}>
+                  has cambiado los parámetros — el plan de abajo es el anterior
+                </span>
+              ) : null}
             </div>
 
             {/* Errores amables */}
@@ -724,35 +751,56 @@ export default function StockEngine({ records, hayFiltros }) {
                   <ul>
                     {plan.filas.map((f) => (
                       <li key={f.producto} className="border-b border-white/[0.06]">
-                        {/* Móvil: tarjeta apilada */}
-                        <div className="md:hidden py-3">
-                          <div className="flex items-baseline justify-between gap-3">
-                            <span className="text-[13px]" style={{ color: TXT }}>{f.producto}</span>
-                            <span className="font-mono text-[12px] tnum flex-shrink-0" style={{ color: TXT }}>{fmtInt(f.unidades)} uds</span>
+                        <details className="group">
+                          <summary className="cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+                            {/* Móvil: tarjeta apilada */}
+                            <div className="md:hidden py-3">
+                              <div className="flex items-baseline justify-between gap-3">
+                                <span className="text-[13px]" style={{ color: TXT }}>
+                                  <span className="font-mono text-[10px] mr-1.5 inline-block transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+                                  {f.producto}
+                                </span>
+                                <span className="font-mono text-[12px] tnum flex-shrink-0" style={{ color: TXT }}>{fmtInt(f.unidades)} uds</span>
+                              </div>
+                              <p className="mt-1 font-mono text-[11px] leading-relaxed" style={{ color: TXT2 }}>
+                                {fmtEur(f.inversion)} ({pct0(f.pctPresupuesto)}) · margen {fmtEur(f.margenEsperado)} ·{' '}
+                                <span style={{ color: colorRiesgo(f.riesgoRotura) }}>rotura {pct0(f.riesgoRotura)}</span> ·{' '}
+                                <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>rebaja {pct0(f.riesgoRebaja)}</span>
+                              </p>
+                              <div className="mt-1.5"><BadgeCiclo ciclo={f.ciclo} /></div>
+                            </div>
+                            {/* Escritorio: rejilla */}
+                            <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 items-center py-2.5">
+                              <span className="flex items-center gap-2.5 min-w-0">
+                                <span className="font-mono text-[10px] flex-shrink-0 transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+                                <span className="text-[13px] truncate" style={{ color: TXT }}>{f.producto}</span>
+                                <BadgeCiclo ciclo={f.ciclo} />
+                              </span>
+                              <span className="font-mono text-[13px] tnum text-right" style={{ color: TXT }}>{fmtInt(f.unidades)}</span>
+                              <span className="font-mono text-[12px] tnum text-right" style={{ color: TXT }}>{fmtEur(f.inversion)}</span>
+                              <span className="font-mono text-[12px] tnum text-right" style={{ color: VERDE }}>{fmtEur(f.margenEsperado)}</span>
+                              <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>{pct0(f.pctPresupuesto)}</span>
+                              <span className="font-mono text-[11px] tnum">
+                                <span style={{ color: colorRiesgo(f.riesgoRotura) }}>{pct0(f.riesgoRotura)}</span>
+                                <span style={{ color: TXT3 }}> · </span>
+                                <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>{pct0(f.riesgoRebaja)}</span>
+                              </span>
+                            </div>
+                          </summary>
+                          <div className="acc-body pb-4 pl-0 md:pl-5">
+                            <p className="font-mono text-[11px] leading-relaxed" style={{ color: TXT3 }}>
+                              PVP medio {fmt1(f.pvp)} € · coste estimado {fmt1(f.coste)} €/ud · modelo: {f.modelo.nombre}
+                            </p>
+                            {f.tallaUnica ? (
+                              <p className="mt-2 text-[12px]" style={{ color: TXT3 }}>Talla única: las {fmtInt(f.unidades)} unidades van a un solo código.</p>
+                            ) : f.reparto ? (
+                              <div className="mt-3 max-w-[520px]"><TablaTallas reparto={f.reparto} recomendado={f.unidades} /></div>
+                            ) : (
+                              <p className="mt-2 text-[12px]" style={{ color: TXT3 }}>Sin datos de talla en tu histórico para este producto.</p>
+                            )}
+                            <MatrizTallaColor matriz={f.matriz} />
                           </div>
-                          <p className="mt-1 font-mono text-[11px] leading-relaxed" style={{ color: TXT2 }}>
-                            {fmtEur(f.inversion)} ({pct0(f.pctPresupuesto)}) · margen {fmtEur(f.margenEsperado)} ·{' '}
-                            <span style={{ color: colorRiesgo(f.riesgoRotura) }}>rotura {pct0(f.riesgoRotura)}</span> ·{' '}
-                            <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>rebaja {pct0(f.riesgoRebaja)}</span>
-                          </p>
-                          <div className="mt-1.5"><BadgeCiclo ciclo={f.ciclo} /></div>
-                        </div>
-                        {/* Escritorio: rejilla */}
-                        <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 items-center py-2.5">
-                          <span className="flex items-center gap-2.5 min-w-0">
-                            <span className="text-[13px] truncate" style={{ color: TXT }}>{f.producto}</span>
-                            <BadgeCiclo ciclo={f.ciclo} />
-                          </span>
-                          <span className="font-mono text-[13px] tnum text-right" style={{ color: TXT }}>{fmtInt(f.unidades)}</span>
-                          <span className="font-mono text-[12px] tnum text-right" style={{ color: TXT }}>{fmtEur(f.inversion)}</span>
-                          <span className="font-mono text-[12px] tnum text-right" style={{ color: VERDE }}>{fmtEur(f.margenEsperado)}</span>
-                          <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT2 }}>{pct0(f.pctPresupuesto)}</span>
-                          <span className="font-mono text-[11px] tnum">
-                            <span style={{ color: colorRiesgo(f.riesgoRotura) }}>{pct0(f.riesgoRotura)}</span>
-                            <span style={{ color: TXT3 }}> · </span>
-                            <span style={{ color: colorRiesgo(f.riesgoRebaja) }}>{pct0(f.riesgoRebaja)}</span>
-                          </span>
-                        </div>
+                        </details>
                       </li>
                     ))}
                   </ul>
@@ -775,6 +823,22 @@ export default function StockEngine({ records, hayFiltros }) {
                     </p>
                   </div>
                 ) : null}
+
+                {/* ¿Por qué este reparto? + copiar */}
+                <Explicacion pasos={plan.explicacion} titulo="¿Por qué este reparto?" />
+                <div className="mt-5 flex flex-wrap items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={copiarPlan}
+                    className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                    style={{ background: copiadoPlan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoPlan ? `${VERDE}66` : undefined, color: copiadoPlan ? VERDE : undefined }}
+                  >
+                    {copiadoPlan ? 'Copiado ✓' : 'Copiar plan'}
+                  </button>
+                  <span className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: TXT3 }}>
+                    producto · unidades · inversión — listo para pegar en una hoja de cálculo
+                  </span>
+                </div>
 
                 {/* Excluidos y avisos */}
                 {plan.excluidos.length > 0 ? (
