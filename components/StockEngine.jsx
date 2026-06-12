@@ -682,13 +682,37 @@ export default function StockEngine({ records, hayFiltros }) {
 
             {plan?.ok ? (
               <>
-                {/* Totales (las tarjetas del resumen llegan en la parte 2) */}
-                <p className="mt-6 font-mono text-[11px] tracking-[0.04em] leading-relaxed" style={{ color: TXT2 }}>
-                  asignado <span style={{ color: TXT }}>{fmtEur(plan.gastado)}</span> de {fmtEur(plan.presupuesto)} ·{' '}
-                  <span style={{ color: TXT }}>{fmtInt(plan.unidadesTotales)}</span> uds en {plan.filas.length} productos ·{' '}
-                  margen esperado <span style={{ color: VERDE }}>{fmtEur(plan.margenEsperado)}</span>
-                  {plan.sobrante > 0.5 ? <> · sobrante {fmtEur(plan.sobrante)}</> : null}
-                </p>
+                {/* Resumen global del plan */}
+                <div className="mt-6 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
+                  <div className={LABEL} style={{ color: '#f0a987' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
+                  <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <div className={LABEL} style={{ color: TXT3 }}>Presupuesto asignado</div>
+                      <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: TXT }}>{fmtEur(plan.gastado)}</div>
+                      <div className="mt-1 font-mono text-[10px]" style={{ color: TXT3 }}>
+                        de {fmtEur(plan.presupuesto)}{plan.sobrante > 0.5 ? ` · sobran ${fmtEur(plan.sobrante)}` : ''}
+                      </div>
+                    </div>
+                    <div>
+                      <div className={LABEL} style={{ color: TXT3 }}>Unidades</div>
+                      <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: TXT }}>{fmtInt(plan.unidadesTotales)}</div>
+                      <div className="mt-1 font-mono text-[10px]" style={{ color: TXT3 }}>en {plan.filas.length} productos</div>
+                    </div>
+                    <div>
+                      <div className={LABEL} style={{ color: TXT3 }}>Margen esperado</div>
+                      <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: VERDE }}>{fmtEur(plan.margenEsperado)}</div>
+                    </div>
+                    <div>
+                      <div className={LABEL} style={{ color: TXT3 }}>vs repartir como vendiste</div>
+                      <div className="mt-1.5 font-display text-[26px] leading-none tnum" style={{ color: plan.baseline.ventaja >= 1 ? VERDE : TXT }}>
+                        {plan.baseline.ventaja >= 1 ? `+${fmtEur(plan.baseline.ventaja)}` : '≈ igual'}
+                      </div>
+                      <div className="mt-1 font-mono text-[10px]" style={{ color: TXT3 }}>
+                        proporcional al histórico: {fmtEur(plan.baseline.margen)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Tabla del plan, ordenada por inversión */}
                 <div className="mt-4 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
@@ -733,6 +757,24 @@ export default function StockEngine({ records, hayFiltros }) {
                     ))}
                   </ul>
                 </div>
+
+                {/* La frontera: la última unidad que entra y la primera que se queda fuera */}
+                {plan.frontera.ultimaComprada ? (
+                  <div className="mt-4 rounded-xl border border-[#1d2330] p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                    <div className={LABEL} style={{ color: TXT2 }}>La frontera del presupuesto</div>
+                    <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
+                      La última unidad comprada (<span style={{ color: TXT }}>{plan.frontera.ultimaComprada.nombre}</span>) rinde{' '}
+                      <span style={{ color: VERDE }}>{fmt1(plan.frontera.ultimaComprada.margen)} €</span> de margen esperado
+                      ({fmt1(plan.frontera.ultimaComprada.margen / plan.frontera.ultimaComprada.coste)} € por € invertido).{' '}
+                      {plan.frontera.primeraDescartada ? (
+                        <>La primera descartada (<span style={{ color: TXT }}>{plan.frontera.primeraDescartada.nombre}</span>) rendiría{' '}
+                        <span style={{ color: AMBAR }}>{fmt1(plan.frontera.primeraDescartada.margen)} €</span> — ahí se acabó el presupuesto.</>
+                      ) : (
+                        <>No quedó fuera ninguna unidad rentable: el plan paró solo, antes de destruir margen.</>
+                      )}
+                    </p>
+                  </div>
+                ) : null}
 
                 {/* Excluidos y avisos */}
                 {plan.excluidos.length > 0 ? (

@@ -24,6 +24,7 @@ import {
 } from '../lib/engine/lanzamiento.mjs';
 import {
   supervivencia, margenMarginal, asignarPresupuesto, margenDePedido, generarPlanCompra,
+  repartoProporcional,
 } from '../lib/engine/plan.mjs';
 
 let fallos = 0;
@@ -623,6 +624,28 @@ console.log('\n— Plan de compra: asignación greedy verificada a mano (parte 1
   caso('margenDePedido(B, 7) = 5×30 + 2×12,5 = 175 €', cerca(margenDePedido(B.marginal, 7), 175));
 }
 
+console.log('\n— Plan de compra: baseline proporcional verificado a mano (parte 2) —');
+{
+  // Mismos juguetes A/B/C + ventas históricas 200/100/100 (Σ400). Con 700 €:
+  //  A: cuota 350 € → 8 uds (margen 480 €) · B: 175 € → 8 uds (5×30 + 3×12,5
+  //  = 187,5 €) · C: 175 € → 2 uds (240 €). Baseline = 907,5 € de margen.
+  //  El greedy daba 1.015 € → ventaja = 107,5 € exactos.
+  const mk = (ordenadas, margen, perdida) => (n) => margenMarginal(supervivencia(ordenadas, n), margen, perdida);
+  const productos = [
+    { nombre: 'A', coste: 40, marginal: mk([10], 60, 10), historicas: 200 },
+    { nombre: 'B', coste: 20, marginal: mk([5, 10], 30, 5), historicas: 100 },
+    { nombre: 'C', coste: 80, marginal: mk([2], 120, 20), historicas: 100 },
+  ];
+  const base = repartoProporcional(productos, 700);
+  caso('baseline proporcional: A=8, B=8, C=2 unidades',
+    base.unidades.get('A') === 8 && base.unidades.get('B') === 8 && base.unidades.get('C') === 2,
+    JSON.stringify([...base.unidades]));
+  caso('…con margen esperado 907,5 € clavado a mano', cerca(base.margen, 907.5));
+  const greedy = asignarPresupuesto(productos, 700);
+  caso('ventaja del plan sobre el baseline: 1.015 − 907,5 = 107,5 €',
+    cerca(greedy.margenTotal - base.margen, 107.5));
+}
+
 console.log('\n— Plan de compra: integración con el pipeline real —');
 {
   const records = [];
@@ -656,6 +679,11 @@ console.log('\n— Plan de compra: integración con el pipeline real —');
   caso('con presupuesto de 1 € no llega ni para una unidad → aviso amable',
     generarPlanCompra(motor, { presupuesto: 1 }).motivo === 'presupuesto-insuficiente');
   caso('presupuesto inválido → error amable', generarPlanCompra(motor, { presupuesto: 'abc' }).motivo === 'presupuesto-invalido');
+  caso('el plan trae su baseline y nunca rinde menos que repartir "como vendiste"',
+    plan.baseline && plan.margenEsperado >= plan.baseline.margen - 1e-6,
+    `plan=${plan.margenEsperado?.toFixed(0)} base=${plan.baseline?.margen?.toFixed(0)}`);
+  caso('la frontera existe: última comprada con su margen por unidad',
+    plan.frontera.ultimaComprada && plan.frontera.ultimaComprada.margen > 0);
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
