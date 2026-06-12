@@ -8,7 +8,7 @@
 // Importante: el motor usa SIEMPRE el dataset completo, aunque el dashboard
 // tenga filtros activos — pronosticar sobre datos filtrados daría pedidos
 // sesgados. Se indica con una nota sutil cuando hay filtros puestos.
-import React, { useDeferredValue, useMemo, useState } from 'react';
+import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
@@ -21,6 +21,7 @@ import {
 } from '@/lib/engine/lanzamiento.mjs';
 import { generarPlanCompra } from '@/lib/engine/plan.mjs';
 import { fmtFecha } from '@/lib/engine/datos.mjs';
+import CostesProducto from '@/components/CostesProducto';
 
 const EMBER = '#E07A5F';
 const VERDE = '#6BCB9A';
@@ -436,6 +437,9 @@ export default function StockEngine({ records, hayFiltros }) {
   const [calculandoPlan, setCalculandoPlan] = useState(false);
   const [copiadoPlan, setCopiadoPlan] = useState(false);
   const [planParams, setPlanParams] = useState(null);
+  // Costes reales por producto (panel "Costes de producto"; Map nombre → €/ud).
+  const [costesReales, setCostesReales] = useState(() => new Map());
+  const onCostes = useCallback((mapa) => setCostesReales(mapa), []);
 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
   // catálogo, operaciones baratas). El pronóstico se calcula solo para el
@@ -1498,6 +1502,12 @@ export default function StockEngine({ records, hayFiltros }) {
           </>
         )}
 
+        <CostesProducto
+          motor={motor}
+          margenTxt={planMargenTxt}
+          onMargenTxt={setPlanMargenTxt}
+          onCostes={onCostes}
+        />
         <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} />
         <PanelValidacion motor={motor} />
       </div>
