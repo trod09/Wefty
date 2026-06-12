@@ -37,12 +37,12 @@ function Icono({ id }) {
 }
 
 const SECCIONES = [
-  { id: 'resumen', etiqueta: 'Resumen' },
-  { id: 'insights', etiqueta: 'Insights' },
-  { id: 'reposicion', etiqueta: 'Reposición' },
-  { id: 'lanzamiento', etiqueta: 'Lanzamiento' },
-  { id: 'plan', etiqueta: 'Plan de compra' },
-  { id: 'datos', etiqueta: 'Datos y ajustes' },
+  { id: 'resumen', etiqueta: 'Resumen', corta: 'Resumen' },
+  { id: 'insights', etiqueta: 'Insights', corta: 'Insights' },
+  { id: 'reposicion', etiqueta: 'Reposición', corta: 'Repos.' },
+  { id: 'lanzamiento', etiqueta: 'Lanzamiento', corta: 'Lanz.' },
+  { id: 'plan', etiqueta: 'Plan de compra', corta: 'Plan' },
+  { id: 'datos', etiqueta: 'Datos y ajustes', corta: 'Datos' },
 ];
 
 // Estado vacío amable para secciones que aún no tienen datos.
@@ -101,9 +101,12 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
     return () => { activo = false; sub.subscription.unsubscribe(); };
   }, []);
 
-  // Al des-ocultar una sección, recharts debe re-medir su contenedor: el
-  // evento resize lo garantiza en todos los navegadores.
-  useEffect(() => { window.dispatchEvent(new Event('resize')); }, [seccion]);
+  // Al des-ocultar una sección: recharts re-mide su contenedor (el resize lo
+  // garantiza) y la vista vuelve arriba (cada sección empieza por su titular).
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+    window.scrollTo(0, 0);
+  }, [seccion]);
 
   const esDashboard = seccion === 'resumen' || seccion === 'insights';
   const esMotor = seccion === 'reposicion' || seccion === 'lanzamiento' || seccion === 'plan';
@@ -114,7 +117,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
   const irADatos = () => setSeccion('datos');
 
   const itemCls = (activa) =>
-    `w-full flex items-center gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
+    `w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
       activa ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
     }`;
 
@@ -122,17 +125,18 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
     <div className="relative flex min-h-screen">
       {/* ——— Sidebar (escritorio) ——— */}
       <aside
-        className="hidden md:flex flex-col fixed inset-y-0 left-0 w-[220px] z-40 border-r border-[#161b26]"
+        className="hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[220px] z-40 border-r border-[#161b26]"
         style={{ background: 'linear-gradient(180deg, #0a0d14 0%, #07090e 100%)' }}
       >
-        <div className="px-6 pt-7">
+        <div className="px-0 lg:px-6 pt-7 text-center lg:text-left">
           <Link href="/" className="font-display text-[22px] tracking-[-0.02em] text-[#F5F5F7]">
-            Wefty
+            <span className="lg:hidden" aria-hidden="true">W</span>
+            <span className="hidden lg:inline">Wefty</span>
           </Link>
-          <div className={`${MONO} mt-1.5`} style={{ color: TXT3 }}>panel de stock</div>
+          <div className={`${MONO} mt-1.5 hidden lg:block`} style={{ color: TXT3 }}>panel de stock</div>
         </div>
 
-        <nav className="mt-8 flex-1 px-3 space-y-1" aria-label="Secciones">
+        <nav className="mt-8 flex-1 px-2 lg:px-3 space-y-1" aria-label="Secciones">
           {SECCIONES.map((sec) => {
             const activa = seccion === sec.id;
             return (
@@ -147,28 +151,33 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
                   color: activa ? '#F5F5F7' : undefined,
                 }}
                 aria-current={activa ? 'page' : undefined}
+                title={sec.etiqueta}
               >
                 <span style={{ color: activa ? '#F08C56' : 'currentColor' }}><Icono id={sec.id} /></span>
-                {sec.etiqueta}
+                <span className="hidden lg:inline">{sec.etiqueta}</span>
               </button>
             );
           })}
         </nav>
 
-        <div className="px-6 py-5 border-t border-[#161b26]">
+        <div className="px-3 lg:px-6 py-5 border-t border-[#161b26]">
           {email ? (
             <>
-              <div className="flex items-center gap-2">
+              <div className="hidden lg:flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#6BCB9A' }} />
                 <span className="text-[12px] truncate" style={{ color: TXT2 }} title={email}>{email}</span>
               </div>
               <button
                 type="button"
                 onClick={() => supabase.auth.signOut()}
-                className={`${MONO} mt-2.5 transition-colors hover:text-[#F5F5F7]`}
+                className={`${MONO} lg:mt-2.5 w-full flex items-center justify-center lg:justify-start transition-colors hover:text-[#F5F5F7]`}
                 style={{ color: TXT3 }}
+                title={`Cerrar sesión (${email})`}
               >
-                Cerrar sesión
+                <svg viewBox="0 0 14 14" className="w-4 h-4 lg:hidden" fill="none" stroke="currentColor" strokeWidth="1.1" aria-hidden="true">
+                  <path d="M5.5 2 H2 V12 H5.5 M9.5 4.5 L12 7 L9.5 9.5 M12 7 H5" />
+                </svg>
+                <span className="hidden lg:inline">Cerrar sesión</span>
               </button>
             </>
           ) : (
@@ -179,10 +188,15 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
         </div>
       </aside>
 
-      {/* ——— Nav móvil (provisional: barra superior; en la parte 4, barra inferior) ——— */}
+      {/* ——— Nav móvil: barra inferior fija (área táctil generosa) ——— */}
       <nav
-        className="md:hidden fixed top-0 inset-x-0 z-40 flex gap-1 overflow-x-auto px-3 py-2 border-b border-[#161b26]"
-        style={{ background: 'rgba(7,9,14,0.94)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-6 border-t border-[#161b26]"
+        style={{
+          background: 'rgba(7,9,14,0.96)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
         aria-label="Secciones"
       >
         {SECCIONES.map((sec) => {
@@ -192,21 +206,19 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
               key={sec.id}
               type="button"
               onClick={() => setSeccion(sec.id)}
-              className="flex items-center gap-2 flex-shrink-0 rounded-lg px-3 py-2 font-mono text-[10px] tracking-[0.12em] uppercase transition-colors"
-              style={{
-                color: activa ? '#F5F5F7' : TXT2,
-                background: activa ? 'rgba(240,140,86,0.12)' : 'transparent',
-              }}
+              className="flex flex-col items-center gap-1 pt-2.5 pb-2 transition-colors"
+              style={{ color: activa ? '#F5F5F7' : TXT2 }}
+              aria-current={activa ? 'page' : undefined}
             >
               <span style={{ color: activa ? '#F08C56' : 'currentColor' }}><Icono id={sec.id} /></span>
-              {sec.etiqueta}
+              <span className="font-mono text-[8.5px] tracking-[0.04em] uppercase">{sec.corta}</span>
             </button>
           );
         })}
       </nav>
 
       {/* ——— Contenido ——— */}
-      <div className="flex-1 min-w-0 md:pl-[220px] pt-14 md:pt-0">
+      <div className="flex-1 min-w-0 md:pl-16 lg:pl-[220px] pb-24 md:pb-0">
         <div className="max-w-[1280px] mx-auto px-5 md:px-10 py-8 md:py-12">
           {/* Resumen + Insights: UNA instancia del dashboard (los filtros se comparten) */}
           <section className={`seccion-panel ${esDashboard ? '' : 'hidden'}`}>
