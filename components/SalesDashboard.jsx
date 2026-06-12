@@ -569,6 +569,27 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
 
       </>) : (<>
       {/* RESUMEN — titular + KPIs + gráficos (el motor vive en su sección) */}
+      {hayFiltros ? (
+        <div
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-[#161b26] px-4 py-3"
+          style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}
+        >
+          <span className={LABEL} style={{ color: TXT2 }}>filtrado:</span>
+          <span className="font-mono text-[12px]" style={{ color: TXT }}>
+            {[fCategoria, fProducto].filter(Boolean).join(' · ')}
+          </span>
+          <button
+            type="button"
+            onClick={limpiarFiltros}
+            className="font-mono text-[11px] tracking-[0.1em] uppercase transition-colors text-[#8A8A8F] hover:text-[#F5F5F7]"
+          >
+            ✕ quitar
+          </button>
+          <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: '#5d5e63' }}>
+            se ajusta en Insights
+          </span>
+        </div>
+      ) : null}
       {filtered.length === 0 ? (
         sinResultados
       ) : (

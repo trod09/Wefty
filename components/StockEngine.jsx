@@ -406,8 +406,11 @@ function TablaTallas({ reparto, recomendado }) {
   );
 }
 
-export default function StockEngine({ records, hayFiltros }) {
-  const [pestana, setPestana] = useState('reposicion');
+export default function StockEngine({ records, hayFiltros, pestana: pestanaProp }) {
+  // La pestaña puede venir CONTROLADA desde el sidebar del shell (Reposición /
+  // Lanzamiento / Plan como secciones); sin prop, manda el estado interno.
+  const [pestanaLocal, setPestanaLocal] = useState('reposicion');
+  const pestana = pestanaProp ?? pestanaLocal;
   const [prodSel, setProdSel] = useState('');
   const [leadTxt, setLeadTxt] = useState('4');
   const [nivel, setNivel] = useState('95');
@@ -638,18 +641,20 @@ export default function StockEngine({ records, hayFiltros }) {
       </div>
 
       <div className="mt-3 rounded-xl border border-[#1d2330] p-6 md:p-8" style={{ background: CARD_BG }}>
-        {/* Pestañas */}
-        <div className="flex gap-7 border-b border-white/10">
-          <button type="button" className={tabCls(pestana === 'reposicion')} onClick={() => setPestana('reposicion')}>
-            Reposición
-          </button>
-          <button type="button" className={tabCls(pestana === 'lanzamiento')} onClick={() => setPestana('lanzamiento')}>
-            Lanzamiento
-          </button>
-          <button type="button" className={tabCls(pestana === 'plan')} onClick={() => setPestana('plan')}>
-            Plan de compra
-          </button>
-        </div>
+        {/* Pestañas (ocultas cuando el sidebar hace de pestañas) */}
+        {pestanaProp ? null : (
+          <div className="flex gap-7 border-b border-white/10">
+            <button type="button" className={tabCls(pestana === 'reposicion')} onClick={() => setPestanaLocal('reposicion')}>
+              Reposición
+            </button>
+            <button type="button" className={tabCls(pestana === 'lanzamiento')} onClick={() => setPestanaLocal('lanzamiento')}>
+              Lanzamiento
+            </button>
+            <button type="button" className={tabCls(pestana === 'plan')} onClick={() => setPestanaLocal('plan')}>
+              Plan de compra
+            </button>
+          </div>
+        )}
 
         {pestana === 'plan' ? (
           <>

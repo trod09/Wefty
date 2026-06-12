@@ -95,6 +95,10 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
 
   const esDashboard = seccion === 'resumen' || seccion === 'insights';
   const esMotor = seccion === 'reposicion' || seccion === 'lanzamiento' || seccion === 'plan';
+  // Última pestaña del motor: al salir y volver, el motor no cambia de modo
+  // (y su contenido no se desmonta — el plan generado sigue donde estaba).
+  const [pestanaMotor, setPestanaMotor] = useState('reposicion');
+  useEffect(() => { if (esMotor) setPestanaMotor(seccion); }, [esMotor, seccion]);
   const irADatos = () => setSeccion('datos');
 
   const itemCls = (activa) =>
@@ -210,7 +214,11 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
               sidebar controlará la pestaña activa) */}
           <section className={`seccion-panel ${esMotor ? '' : 'hidden'}`}>
             {hayDatos ? (
-              <StockEngine records={parsed.records} hayFiltros={hayFiltros} />
+              <StockEngine
+                records={parsed.records}
+                hayFiltros={hayFiltros}
+                pestana={esMotor ? seccion : pestanaMotor}
+              />
             ) : (
               <VacioAmable irADatos={irADatos} />
             )}
