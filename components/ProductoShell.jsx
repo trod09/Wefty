@@ -5,11 +5,13 @@
 // montado (las secciones inactivas se ocultan con CSS), así los filtros, el
 // plan generado y los costes sobreviven al navegar — igual que en la página
 // infinita anterior, solo que enseñando un trozo cada vez.
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import SalesDashboard, { parsearVentas } from '@/components/SalesDashboard';
-import StockEngine from '@/components/StockEngine';
+import StockEngine, { PanelConfiguracion, PanelValidacion } from '@/components/StockEngine';
+import CostesProducto from '@/components/CostesProducto';
+import { prepararMotor } from '@/lib/engine/motor.mjs';
 
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 const TXT = '#F5F5F7';
@@ -76,6 +78,16 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
     () => (hayDatos ? parsearVentas(headers, rows) : null),
     [hayDatos, headers, rows]
   );
+
+  // EL motor: una sola instancia por dataset (una sola caché de demanda),
+  // compartida por las secciones del motor y los paneles de Datos y ajustes.
+  const motor = useMemo(() => (parsed ? prepararMotor(parsed.records) : null), [parsed]);
+
+  // Costes reales y margen global por defecto: el panel vive en Datos y
+  // ajustes; el plan de compra y Reposición los consumen en sus secciones.
+  const [costesReales, setCostesReales] = useState(() => new Map());
+  const onCostes = useCallback((mapa) => setCostesReales(mapa), []);
+  const [margenTxt, setMargenTxt] = useState('60');
 
   // Sesión para el pie del sidebar (sustituye al antiguo SessionBadge).
   useEffect(() => {
@@ -216,8 +228,12 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
             {hayDatos ? (
               <StockEngine
                 records={parsed.records}
+                motor={motor}
                 hayFiltros={hayFiltros}
                 pestana={esMotor ? seccion : pestanaMotor}
+                costesReales={costesReales}
+                margenTxt={margenTxt}
+                onMargenTxt={setMargenTxt}
               />
             ) : (
               <VacioAmable irADatos={irADatos} />
@@ -228,6 +244,19 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
               manejadores del CSV no se mueven) y entra aquí como contenido */}
           <section className={`seccion-panel ${seccion === 'datos' ? '' : 'hidden'}`}>
             {seccionDatos}
+            {hayDatos && motor ? (
+              <div className="mt-12 rounded-xl border border-[#1d2330] p-6 md:p-8" style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}>
+                <div className={`${MONO}`} style={{ color: TXT2 }}>Ajustes del motor</div>
+                <CostesProducto
+                  motor={motor}
+                  margenTxt={margenTxt}
+                  onMargenTxt={setMargenTxt}
+                  onCostes={onCostes}
+                />
+                <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} />
+                <PanelValidacion motor={motor} />
+              </div>
+            ) : null}
           </section>
         </div>
       </div>

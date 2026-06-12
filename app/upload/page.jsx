@@ -12,7 +12,6 @@ import { Reveal } from '@/components/hooks';
 import { Hairline } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import ProductoShell from '@/components/ProductoShell';
-import UploadWelcome from '@/components/UploadWelcome';
 import TituloDecodificado from '@/components/TituloDecodificado';
 import { supabase } from '@/lib/supabase';
 
@@ -463,12 +462,6 @@ export default function UploadPage() {
         </span>
       </main>
     );
-  }
-
-  // Usuario nuevo: sin datos guardados y sin CSV subido todavía → pantalla de
-  // bienvenida que lo guía a subir su primer CSV. Reutiliza el mismo handleFile.
-  if (savedState === 'empty' && !result) {
-    return <UploadWelcome onFile={handleFile} error={error} />;
   }
 
   return (

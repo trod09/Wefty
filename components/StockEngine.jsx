@@ -8,7 +8,7 @@
 // Importante: el motor usa SIEMPRE el dataset completo, aunque el dashboard
 // tenga filtros activos — pronosticar sobre datos filtrados daría pedidos
 // sesgados. Se indica con una nota sutil cuando hay filtros puestos.
-import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
@@ -21,7 +21,8 @@ import {
 } from '@/lib/engine/lanzamiento.mjs';
 import { generarPlanCompra } from '@/lib/engine/plan.mjs';
 import { fmtFecha } from '@/lib/engine/datos.mjs';
-import CostesProducto from '@/components/CostesProducto';
+
+const SIN_COSTES = new Map();
 
 const EMBER = '#E07A5F';
 const VERDE = '#6BCB9A';
@@ -119,7 +120,7 @@ function BadgeConfianza({ confianza }) {
 }
 
 // Panel "Configuración del motor": qué técnica está activa, cuál no y POR QUÉ.
-function PanelConfiguracion({ perfil, configuracion }) {
+export function PanelConfiguracion({ perfil, configuracion }) {
   const ESTADO = {
     activa: { color: VERDE, texto: 'activa' },
     desactivada: { color: TXT3, texto: 'desactivada' },
@@ -247,7 +248,7 @@ function Explicacion({ pasos, titulo = '¿Por qué esta recomendación?' }) {
 // Panel "Validación del motor" — MÓDULO 7: la credibilidad. Backtest global y
 // por categoría contra el propio histórico del usuario. Si los datos no dan
 // para una validación robusta, se dice claramente en vez de enseñar números débiles.
-function PanelValidacion({ motor }) {
+export function PanelValidacion({ motor }) {
   const v = useMemo(() => validacionGlobal(motor), [motor]);
 
   // En móvil la rejilla de 5 columnas no cabe (sus mínimos suman ~560px y el
@@ -406,7 +407,10 @@ function TablaTallas({ reparto, recomendado }) {
   );
 }
 
-export default function StockEngine({ records, hayFiltros, pestana: pestanaProp }) {
+export default function StockEngine({
+  records, hayFiltros, pestana: pestanaProp,
+  motor: motorProp, costesReales: costesRealesProp, margenTxt, onMargenTxt,
+}) {
   // La pestaña puede venir CONTROLADA desde el sidebar del shell (Reposición /
   // Lanzamiento / Plan como secciones); sin prop, manda el estado interno.
   const [pestanaLocal, setPestanaLocal] = useState('reposicion');
@@ -434,15 +438,18 @@ export default function StockEngine({ records, hayFiltros, pestana: pestanaProp 
   // (recorre todo el catálogo; la demanda por producto queda memoizada en el motor).
   const [planPresuTxt, setPlanPresuTxt] = useState('');
   const [planHorizTxt, setPlanHorizTxt] = useState('12');
-  const [planMargenTxt, setPlanMargenTxt] = useState('60');
+  const [planMargenLocal, setPlanMargenLocal] = useState('60');
+  // Compartido con el panel de costes (Datos y ajustes) a través del shell.
+  const planMargenTxt = margenTxt ?? planMargenLocal;
+  const setPlanMargenTxt = onMargenTxt ?? setPlanMargenLocal;
   const [planEsc, setPlanEsc] = useState('esperado');
   const [plan, setPlan] = useState(null);
   const [calculandoPlan, setCalculandoPlan] = useState(false);
   const [copiadoPlan, setCopiadoPlan] = useState(false);
   const [planParams, setPlanParams] = useState(null);
-  // Costes reales por producto (panel "Costes de producto"; Map nombre → €/ud).
-  const [costesReales, setCostesReales] = useState(() => new Map());
-  const onCostes = useCallback((mapa) => setCostesReales(mapa), []);
+  // Costes reales por producto: llegan del shell (el panel "Costes de
+  // producto" vive en Datos y ajustes); sin shell, mapa vacío estable.
+  const costesReales = costesRealesProp ?? SIN_COSTES;
   // Huella estable de los costes: detecta que el plan generado quedó caduco.
   const huellaCostes = useMemo(
     () => [...costesReales].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([k, v]) => `${k}:${v}`).join('|'),
@@ -452,7 +459,8 @@ export default function StockEngine({ records, hayFiltros, pestana: pestanaProp 
   // El motor se prepara UNA vez por dataset (perfil + limpieza de todo el
   // catálogo, operaciones baratas). El pronóstico se calcula solo para el
   // producto seleccionado, al cambiar cualquier entrada.
-  const motor = useMemo(() => prepararMotor(records), [records]);
+  const motorLocal = useMemo(() => (motorProp ? null : prepararMotor(records)), [motorProp, records]);
+  const motor = motorProp ?? motorLocal;
   const productos = useMemo(() => productosOrdenados(motor), [motor]);
 
   const producto = motor.almacen.productos.has(prodSel) ? prodSel : (productos[0]?.nombre ?? '');
@@ -1543,14 +1551,7 @@ export default function StockEngine({ records, hayFiltros, pestana: pestanaProp 
           </>
         )}
 
-        <CostesProducto
-          motor={motor}
-          margenTxt={planMargenTxt}
-          onMargenTxt={setPlanMargenTxt}
-          onCostes={onCostes}
-        />
-        <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} />
-        <PanelValidacion motor={motor} />
+
       </div>
     </div>
   );
