@@ -459,3 +459,13 @@ details[open] .acc-body {
   filter: none;
   transform: none;
 }
+
+/* ——— Shell del producto: fundido corto al mostrar una sección ——— */
+@keyframes seccionFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.seccion-panel { animation: seccionFade 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .seccion-panel { animation: none; }
+}

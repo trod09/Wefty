@@ -11,7 +11,6 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Cell, PieChart, Pie, AreaChart, Area, LabelList, ReferenceLine,
 } from 'recharts';
-import StockEngine from '@/components/StockEngine';
 
 // ---- Paleta ------------------------------------------------------------
 const ELECTRIC = '#2D6BE4';
@@ -167,10 +166,10 @@ function FilterSelect({ label, value, onChange, options, allLabel }) {
 }
 
 // ---- Componente principal ----------------------------------------------
-export default function SalesDashboard({ headers, rows }) {
-  // 1) Leemos las filas una sola vez (no depende de los filtros). De aquí salen
-  //    los "records" ya parseados y las opciones para los desplegables.
-  const parsed = useMemo(() => {
+// Parseo de filas → records + opciones de filtros. Exportado: el shell del
+// producto monta el motor de stock fuera de este componente y necesita los
+// mismos records.
+export function parsearVentas(headers, rows) {
     const iFecha = findCol(headers, 'fecha', 'date');
     const iProd = findCol(headers, 'producto', 'product');
     const iCat = findCol(headers, 'categoria', 'category');
@@ -199,7 +198,13 @@ export default function SalesDashboard({ headers, rows }) {
     const productos = [...new Set(records.map((r) => r.producto).filter(Boolean))].sort();
 
     return { records, categorias, productos };
-  }, [headers, rows]);
+}
+
+// seccion: 'resumen' (titular + KPIs + gráficos) o 'insights' (filtros +
+// insights accionables). Una sola instancia montada sirve a ambas secciones
+// del sidebar: los filtros viven aquí y afectan a las dos, como siempre.
+export default function SalesDashboard({ headers, rows, seccion = 'resumen', onHayFiltros }) {
+  const parsed = useMemo(() => parsearVentas(headers, rows), [headers, rows]);
 
   // 2) Estado de los filtros. Valor vacío significa "todos / sin filtrar".
   const [fCategoria, setFCategoria] = useState('');
@@ -237,6 +242,9 @@ export default function SalesDashboard({ headers, rows }) {
     setFCategoria('');
     setFProducto('');
   };
+
+  // El shell necesita saberlo: el motor enseña su nota "ignora los filtros".
+  useEffect(() => { onHayFiltros?.(hayFiltros); }, [hayFiltros, onHayFiltros]);
 
   // 4) Todo el análisis (métricas, insights, gráficos) se calcula sobre los
   //    datos YA filtrados, así que reacciona al instante a cada filtro.
@@ -483,11 +491,28 @@ export default function SalesDashboard({ headers, rows }) {
     );
   };
 
+  // Tarjeta "sin resultados con estos filtros" (sale en la sección activa).
+  const sinResultados = (
+        <div
+          className="rounded-xl border border-[#1d2330] p-12 md:p-16 text-center"
+          style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+        >
+          <div className={LABEL} style={{ color: EMBER }}>Sin resultados</div>
+          <p className="mt-4 font-display text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
+            No hay ventas con estos filtros.
+          </p>
+          <p className="mt-3 text-[14px]" style={{ color: TXT2 }}>
+            Prueba a quitar algún filtro o pulsa «Limpiar filtros».
+          </p>
+        </div>
+  );
+
   return (
     <div
       className="rounded-2xl border border-[#161b26] p-4 md:p-6 space-y-4 md:space-y-5"
       style={{ background: 'radial-gradient(120% 80% at 50% 0%, #090c12 0%, #05060a 60%)' }}
     >
+      {seccion === 'insights' ? (<>
       {/* 0 · FILTROS — recalculan todo el dashboard al instante */}
       <div
         className="flex flex-wrap items-end gap-4 rounded-xl border border-[#161b26] p-4 md:p-5"
@@ -513,18 +538,39 @@ export default function SalesDashboard({ headers, rows }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div
-          className="rounded-xl border border-[#1d2330] p-12 md:p-16 text-center"
-          style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
-        >
-          <div className={LABEL} style={{ color: EMBER }}>Sin resultados</div>
-          <p className="mt-4 font-display text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
-            No hay ventas con estos filtros.
-          </p>
-          <p className="mt-3 text-[14px]" style={{ color: TXT2 }}>
-            Prueba a quitar algún filtro o pulsa «Limpiar filtros».
-          </p>
+        sinResultados
+      ) : (
+        <>
+      {/* 1b · INSIGHTS DE APOYO — accionables, en rejilla, sin saturar */}
+      {insightsApoyo.length ? (
+        <div>
+          <div className={LABEL} style={{ color: TXT2 }}>Insights accionables</div>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
+            {insightsApoyo.map((it) => (
+              <div
+                key={it.key}
+                className="rounded-xl border border-[#161b26] p-5 md:p-6"
+                style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}
+              >
+                <div className={`${LABEL} flex items-center gap-2`} style={{ color: it.accent }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: it.accent }} />
+                  {it.label}
+                </div>
+                <p className="mt-3 text-[15px] md:text-[16px] leading-[1.5]" style={{ color: TXT }}>
+                  {it.body}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
+      ) : null}
+        </>
+      )}
+
+      </>) : (<>
+      {/* RESUMEN — titular + KPIs + gráficos (el motor vive en su sección) */}
+      {filtered.length === 0 ? (
+        sinResultados
       ) : (
         <>
       {/* 1 · TITULAR — insight destacado, a lo ancho, con glow */}
@@ -555,39 +601,6 @@ export default function SalesDashboard({ headers, rows }) {
         </div>
       ) : null}
 
-      {/* 1b · INSIGHTS DE APOYO — accionables, en rejilla, sin saturar */}
-      {insightsApoyo.length ? (
-        <div>
-          <div className={LABEL} style={{ color: TXT2 }}>Insights accionables</div>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
-            {insightsApoyo.map((it) => (
-              <div
-                key={it.key}
-                className="rounded-xl border border-[#161b26] p-5 md:p-6"
-                style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}
-              >
-                <div className={`${LABEL} flex items-center gap-2`} style={{ color: it.accent }}>
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: it.accent }} />
-                  {it.label}
-                </div>
-                <p className="mt-3 text-[15px] md:text-[16px] leading-[1.5]" style={{ color: TXT }}>
-                  {it.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-        </>
-      )}
-
-      {/* 1c · MOTOR DE STOCK — recomienda pedidos. Va FUERA del condicional de
-          filtros porque pronostica siempre sobre el dataset completo: filtrar
-          la demanda histórica sesgaría los pedidos. */}
-      <StockEngine records={parsed.records} hayFiltros={hayFiltros} />
-
-      {filtered.length === 0 ? null : (
-        <>
       {/* 2 · SIGNOS VITALES — KPIs con jerarquía (ingresos protagonista) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         {kpis.map((k, i) => <Kpi key={i} {...k} />)}
@@ -740,6 +753,7 @@ export default function SalesDashboard({ headers, rows }) {
       </div>
         </>
       )}
+      </>)}
     </div>
   );
 }

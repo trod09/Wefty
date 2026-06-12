@@ -9,10 +9,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/hooks';
-import { Hairline, UnderlineLink } from '@/components/primitives';
+import { Hairline } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
-import SalesDashboard from '@/components/SalesDashboard';
-import SessionBadge from '@/components/SessionBadge';
+import ProductoShell from '@/components/ProductoShell';
 import UploadWelcome from '@/components/UploadWelcome';
 import TituloDecodificado from '@/components/TituloDecodificado';
 import { supabase } from '@/lib/supabase';
@@ -479,21 +478,14 @@ export default function UploadPage() {
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
-      <SessionBadge />
-
-      <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-24 md:pt-32 pb-24">
-        {/* Top bar */}
-        <div className="flex items-baseline justify-between">
-          <UnderlineLink href="/" dark className="font-display text-[22px] tracking-[-0.02em]">
-            Wefty
-          </UnderlineLink>
-          <span className={MONO} style={{ color: '#8A8A8F' }}>Wefty · datos de venta</span>
-        </div>
-
-        <Hairline dark className="mt-6" />
-
+      <ProductoShell
+        headers={result?.headers ?? []}
+        rows={result?.rows ?? []}
+        hayDatos={Boolean(result?.headers?.length)}
+        seccionDatos={(
+        <>
         {/* Section label row */}
-        <div className="grid grid-cols-12 gap-6 mt-16 md:mt-20">
+        <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
             <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>00 //</span>
             <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
@@ -632,13 +624,6 @@ export default function UploadPage() {
               </details>
             ) : null}
 
-            {/* Dashboard de análisis */}
-            {result.headers.length > 0 ? (
-              <div className="mt-10 md:mt-12">
-                <SalesDashboard headers={result.headers} rows={result.rows} />
-              </div>
-            ) : null}
-
             {/* Tabla de datos en bruto — plegable, al final */}
             {result.headers.length > 0 ? (
               <details className="mt-16 group">
@@ -699,7 +684,9 @@ export default function UploadPage() {
             <Fn n={1} /> Lectura local · nada sale de tu dispositivo
           </p>
         </div>
-      </div>
+        </>
+        )}
+      />
     </main>
   );
 }
