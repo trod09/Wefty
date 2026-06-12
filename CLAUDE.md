@@ -103,7 +103,7 @@ Reglas del motor: todo determinista; el motor usa SIEMPRE el dataset completo
 datos suficientes se desactiva CON AVISO); cada resultado lleva su explicación
 ("¿Por qué esta recomendación?") cuyos números cuadran con el resultado final.
 
-**Pruebas del motor**: `node scripts/test-engine.mjs` (163 casos con resultados
+**Pruebas del motor**: `node scripts/test-engine.mjs` (173 casos con resultados
 calculados a mano + extremo a extremo con `ventas_ejemplo_loop.csv`). Ejecútalas
 tras tocar cualquier fichero de `lib/engine/`.
 

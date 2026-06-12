@@ -624,6 +624,47 @@ console.log('\n— Plan de compra: asignación greedy verificada a mano (parte 1
   caso('margenDePedido(B, 7) = 5×30 + 2×12,5 = 175 €', cerca(margenDePedido(B.marginal, 7), 175));
 }
 
+console.log('\n— Plan de compra: reparto proporcional por niveles (arreglo del empate) —');
+{
+  const mk = (ordenadas, margen, perdida) => (n) => margenMarginal(supervivencia(ordenadas, n), margen, perdida);
+  // Tres productos cuyas unidades "casi seguras" rinden EXACTAMENTE 1,5 €/€:
+  //  P1: 30 uds seguras a coste 10 · P2: 10 a coste 20 · P3: 20 a coste 5.
+  //  El nivel entero cuesta 600 €.
+  const productos = [
+    { nombre: 'P1', coste: 10, marginal: mk([30], 15, 2.5) },
+    { nombre: 'P2', coste: 20, marginal: mk([10], 30, 5) },
+    { nombre: 'P3', coste: 5,  marginal: mk([20], 7.5, 1.25) },
+  ];
+  // 300 € = la mitad justa del nivel → cada producto recibe la mitad de sus
+  // seguras: P1 15, P2 5, P3 10 (150+100+50 = 300 € exactos).
+  const r1 = asignarPresupuesto(productos, 300);
+  caso('racionamiento a mano (300 € sobre un nivel de 600 €): P1=15, P2=5, P3=10',
+    r1.unidades.get('P1') === 15 && r1.unidades.get('P2') === 5 && r1.unidades.get('P3') === 10,
+    JSON.stringify([...r1.unidades]));
+  caso('…gasta los 300 € exactos con margen 450 € (1,5 € por euro, clavado)',
+    cerca(r1.gastado, 300) && cerca(r1.margenTotal, 450));
+  // 290 €: bases 14/4/9 (265 €); los 25 € restantes van por mayor resto a
+  // P2 (resto 0,83 → 20 €) y P3 (0,67 → 5 €); P1 (0,50) ya no cabe.
+  const r2 = asignarPresupuesto(productos, 290);
+  caso('mayor resto con tope de presupuesto (290 €): P1=14, P2=5, P3=10 y 290 € exactos',
+    r2.unidades.get('P1') === 14 && r2.unidades.get('P2') === 5 && r2.unidades.get('P3') === 10 && cerca(r2.gastado, 290),
+    JSON.stringify([...r2.unidades]) + ` gastado=${r2.gastado}`);
+  caso('…margen 435 € (sigue siendo 1,5 € por euro)', cerca(r2.margenTotal, 435));
+  // El polvo de coma flotante y el orden de la lista ya no deciden nada.
+  const r3 = asignarPresupuesto([...productos].reverse(), 300);
+  caso('reparto idéntico con los productos en orden inverso',
+    ['P1', 'P2', 'P3'].every((p) => r3.unidades.get(p) === r1.unidades.get(p)));
+  // Densidades que solo difieren en polvo flotante (~2e-16) son EL MISMO nivel.
+  const dust = [
+    { nombre: 'D1', coste: 26.92, marginal: mk([100], 40.379999999999995, 6.73) },
+    { nombre: 'D2', coste: 22.00, marginal: mk([100], 33.00, 5.5) },
+  ];
+  const r4 = asignarPresupuesto(dust, 2446); // nivel completo: 100×26,92 + 100×22 = 4.892 → la mitad
+  caso('la tolerancia 1e-9 funde el polvo flotante en un solo nivel: 50 y 50 uds',
+    r4.unidades.get('D1') === 50 && r4.unidades.get('D2') === 50,
+    JSON.stringify([...r4.unidades]));
+}
+
 console.log('\n— Plan de compra: baseline proporcional verificado a mano (parte 2) —');
 {
   // Mismos juguetes A/B/C + ventas históricas 200/100/100 (Σ400). Con 700 €:
@@ -702,6 +743,35 @@ console.log('\n— Plan de compra: integración con el pipeline real —');
   caso('el plan trae su explicación paso a paso (7 pasos, frontera con números)',
     plan.explicacion.length === 7
     && plan.explicacion.some((p) => p.titulo === 'Dónde se corta' && /\d/.test(p.detalle)));
+
+  // — Arreglo del empate: invarianza al orden del CSV y honestidad —
+  const motorR = prepararMotor([...records].reverse());
+  const planR = generarPlanCompra(motorR, { presupuesto: 2000, horizonte: 12 });
+  caso('el plan es INVARIANTE al orden de las filas del CSV (mismas uds y margen)',
+    planR.ok && planR.filas.length === plan.filas.length
+    && plan.filas.every((f) => planR.filas.find((g) => g.producto === f.producto)?.unidades === f.unidades)
+    && cerca(planR.margenEsperado, plan.margenEsperado, 0.01),
+    JSON.stringify(planR.filas?.map((f) => [f.producto, f.unidades])));
+  caso('presupuesto menor que el tramo seguro → aviso de reparto proporcional',
+    plan2.avisos.some((a) => a.includes('casi seguro') && a.includes('proporcionalmente')));
+  caso('presupuesto que cubre el tramo seguro → sin ese aviso',
+    !plan.avisos.some((a) => a.includes('casi seguro')));
+}
+
+console.log('\n— Plan de compra: la lista de sin-inversión va completa (sin recortar) —');
+{
+  const records = [];
+  for (let i = 0; i < 60; i++) {
+    records.push({ ...fila(i, 'Basico Uno', 'M', 5, 'Camisetas'), precio: 25 });
+    records.push({ ...fila(i, 'Caro Uno', 'M', 1, 'Abrigos'), precio: 3000 });
+    records.push({ ...fila(i, 'Caro Dos', 'M', 1, 'Abrigos'), precio: 2500 });
+  }
+  const m = prepararMotor(records);
+  // 200 €: una unidad de los caros cuesta 1.200 € y 1.000 € → 0 uds para ambos.
+  const p = generarPlanCompra(m, { presupuesto: 200, horizonte: 12 });
+  caso('los productos sin presupuesto se listan TODOS en el aviso, sin "…"',
+    p.ok && p.avisos.some((a) => a.includes('Caro Uno') && a.includes('Caro Dos') && !a.includes('…')),
+    JSON.stringify(p.avisos));
 }
 
 console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
