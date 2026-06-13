@@ -612,20 +612,29 @@ export default function StockEngine({
     }
   }
 
+  const refResumenPlan = useRef(null);
+
   function generarPlan() {
     if (calculandoPlan) return;
     setCalculandoPlan(true);
     // setTimeout: deja pintar "Calculando plan…" antes del cálculo pesado.
     setTimeout(() => {
-      setPlan(generarPlanCompra(motor, {
+      const nuevo = generarPlanCompra(motor, {
         presupuesto: Number(planPresuTxt),
         horizonte: Number(planHorizTxt) || 12,
         margenPct: Number(planMargenTxt) || 60,
         escenario: planEsc,
         costesReales,
-      }));
+      });
+      setPlan(nuevo);
       setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc, costes: huellaCostes });
       setCalculandoPlan(false);
+      // El resumen puede quedar fuera de pantalla: lo traemos a la vista.
+      if (nuevo.ok) {
+        requestAnimationFrame(() => {
+          refResumenPlan.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
     }, 30);
   }
 
@@ -672,7 +681,7 @@ export default function StockEngine({
           <>
             {/* Entradas del plan de compra */}
             <div className="mt-6 flex flex-wrap items-start gap-5">
-              <Campo etiqueta="Presupuesto de compra (€)" hint="Lo que vas a invertir en stock para este horizonte.">
+              <Campo etiqueta="Presupuesto de compra (€)" hint="Lo único imprescindible: lo que vas a invertir en stock. El resto ya tiene valores sensatos.">
                 <input
                   type="number" inputMode="decimal" min="1" step="1" placeholder="p. ej. 20000"
                   value={planPresuTxt} onChange={(e) => setPlanPresuTxt(e.target.value)}
@@ -716,11 +725,11 @@ export default function StockEngine({
               <button
                 type="button"
                 onClick={generarPlan}
-                disabled={calculandoPlan}
+                disabled={calculandoPlan || !(Number(planPresuTxt) > 0)}
                 className="btn-sheen h-11 px-6 rounded-lg border border-[#3a2b20] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] transition-colors disabled:opacity-60"
                 style={{ background: 'rgba(240,140,86,0.10)' }}
               >
-                {calculandoPlan ? 'Calculando plan…' : 'Generar plan'}
+                {calculandoPlan ? 'Calculando plan…' : Number(planPresuTxt) > 0 ? 'Generar plan' : 'Escribe tu presupuesto'}
               </button>
               <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
                 recorre todo el catálogo — se calcula al pulsar, no a cada tecla
@@ -756,7 +765,7 @@ export default function StockEngine({
             {plan?.ok ? (
               <>
                 {/* Resumen global del plan */}
-                <div className="mt-6 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
+                <div ref={refResumenPlan} className="mt-6 scroll-mt-6 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
                   <div className={LABEL} style={{ color: '#f0a987' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
                   {plan.costes ? (
                     <p className="mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>
@@ -926,8 +935,11 @@ export default function StockEngine({
           </>
         ) : pestana === 'lanzamiento' ? (
           <>
-            {/* Entradas del lanzamiento */}
-            <div className="mt-6 flex flex-wrap items-start gap-5">
+            {/* Entradas del lanzamiento: lo esencial primero, lo opcional aparte */}
+            <div className="mt-6 space-y-4">
+              <div className="rounded-xl border border-[#161b26] p-4 md:p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                <div className={LABEL} style={{ color: TXT3 }}>Lo básico</div>
+                <div className="mt-4 flex flex-wrap items-start gap-5">
               <Campo etiqueta="Categoría del producto nuevo">
                 <select
                   value={lanCategoriaEf}
@@ -938,7 +950,46 @@ export default function StockEngine({
                   {categoriasLan.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </Campo>
-
+              <Campo
+                etiqueta="Tipo de lanzamiento"
+                hint={lanTipo === 'capsula' ? 'Ventana corta sin reposición: el total apunta a agotarse incluso con venta floja.' : 'Producto que se queda en catálogo: curva de 12 semanas.'}
+              >
+                <Segmentos
+                  valor={lanTipo}
+                  onChange={setLanTipo}
+                  opciones={[{ v: 'permanente', t: 'Permanente' }, { v: 'capsula', t: 'Cápsula' }]}
+                />
+              </Campo>
+              {lanTipo === 'capsula' ? (
+                <Campo etiqueta="Semanas de venta" hint="Entre 3 y 12 (hasta donde llega la referencia de tus análogos).">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" inputMode="numeric" min="3" max="12" step="1"
+                      value={lanSemanasTxt} onChange={(e) => setLanSemanasTxt(e.target.value)}
+                      className={`${INPUT_CLS} w-[90px] tnum`}
+                      style={{ background: '#090c12', colorScheme: 'dark' }}
+                    />
+                    <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
+                  </div>
+                </Campo>
+              ) : null}
+              <Campo
+                etiqueta="Unidades totales"
+                hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para ${resultadoLan.semanasVenta} semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
+              >
+                <input
+                  type="number" inputMode="numeric" min="1" max="1000000" step="1"
+                  placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
+                  value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
+                  className={`${INPUT_CLS} w-[150px] tnum`}
+                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                />
+              </Campo>
+                </div>
+              </div>
+              <div className="rounded-xl border border-[#161b26] p-4 md:p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                <div className={LABEL} style={{ color: TXT3 }}>Afinar la referencia (opcional)</div>
+                <div className="mt-4 flex flex-wrap items-start gap-5">
               {posiciones ? (
                 <Campo
                   etiqueta="Posicionamiento de precio"
@@ -966,7 +1017,6 @@ export default function StockEngine({
                   </select>
                 </Campo>
               ) : null}
-
               <Campo
                 etiqueta="Mes de lanzamiento"
                 hint={lanMes === '' ? 'Opcional: cruza con la estacionalidad y afina los análogos.' : 'Los análogos que se lanzaron en tu misma estación pesan más.'}
@@ -983,45 +1033,6 @@ export default function StockEngine({
                   ))}
                 </select>
               </Campo>
-
-              <Campo
-                etiqueta="Tipo de lanzamiento"
-                hint={lanTipo === 'capsula' ? 'Ventana corta sin reposición: el total apunta a agotarse incluso con venta floja.' : 'Producto que se queda en catálogo: curva de 12 semanas.'}
-              >
-                <Segmentos
-                  valor={lanTipo}
-                  onChange={setLanTipo}
-                  opciones={[{ v: 'permanente', t: 'Permanente' }, { v: 'capsula', t: 'Cápsula' }]}
-                />
-              </Campo>
-
-              {lanTipo === 'capsula' ? (
-                <Campo etiqueta="Semanas de venta" hint="Entre 3 y 12 (hasta donde llega la referencia de tus análogos).">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number" inputMode="numeric" min="3" max="12" step="1"
-                      value={lanSemanasTxt} onChange={(e) => setLanSemanasTxt(e.target.value)}
-                      className={`${INPUT_CLS} w-[90px] tnum`}
-                      style={{ background: '#090c12', colorScheme: 'dark' }}
-                    />
-                    <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
-                  </div>
-                </Campo>
-              ) : null}
-
-              <Campo
-                etiqueta="Unidades totales"
-                hint={resultadoLan?.ok ? `Vacío = sugerencia del motor (≈${fmtInt(resultadoLan.totalSugerido)} uds para ${resultadoLan.semanasVenta} semanas).` : 'Déjalo vacío y el motor te las sugiere.'}
-              >
-                <input
-                  type="number" inputMode="numeric" min="1" max="1000000" step="1"
-                  placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
-                  value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
-                  className={`${INPUT_CLS} w-[150px] tnum`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
-                />
-              </Campo>
-
               <Campo etiqueta="Nº de colores (opcional)" hint="Cuántos colores lanzarás; vacío = los que sugieren tus análogos.">
                 <input
                   type="number" inputMode="numeric" min="1" step="1" placeholder="todos"
@@ -1030,7 +1041,17 @@ export default function StockEngine({
                   style={{ background: '#090c12', colorScheme: 'dark' }}
                 />
               </Campo>
+                </div>
+              </div>
             </div>
+
+            {/* L3: la sugerencia del motor, visible y no escondida en un placeholder */}
+            {resultadoLan?.ok && lanTotalTxt.trim() === '' ? (
+              <p className="mt-4 font-mono text-[11px] tracking-[0.04em]" style={{ color: TXT2 }}>
+                usando la sugerencia del motor: ≈<span style={{ color: TXT }}>{fmtInt(resultadoLan.totalSugerido)}</span> uds
+                para {resultadoLan.semanasVenta} semanas — escribe una cifra en «Unidades totales» si quieres forzarla
+              </p>
+            ) : null}
 
             {resultadoLan && !resultadoLan.ok ? (
               <div className="mt-8 rounded-xl border border-[#1d2330] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
