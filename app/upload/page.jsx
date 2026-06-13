@@ -475,6 +475,7 @@ export default function UploadPage() {
         headers={result?.headers ?? []}
         rows={result?.rows ?? []}
         hayDatos={Boolean(result?.headers?.length)}
+        estadoDatos={result ? { filas: result.dataRows, guardado: result.source === 'db' || saveState === 'done' } : null}
         seccionDatos={(
         <>
         {/* Section label row */}
@@ -486,23 +487,34 @@ export default function UploadPage() {
             </span>
           </div>
           <div className="col-span-12 md:col-span-5 md:text-right">
-            <span className={MONO} style={{ color: '#8A8A8F' }}>Paso 01 · sin guardar todavía</span>
+            <span
+              className={MONO}
+              style={{ color: result?.source === 'db' || saveState === 'done' ? '#6BCB9A' : result ? '#E3C04B' : '#8A8A8F' }}
+            >
+              {result?.source === 'db' || saveState === 'done'
+                ? 'guardado en tu cuenta ✓'
+                : result ? 'procesado · sin guardar' : 'paso 01 · sube tu CSV'}
+            </span>
           </div>
         </div>
 
-        {/* Title */}
+        {/* Title: protagonista SOLO sin datos (con datos, esta sección es de gestión) */}
+        {!result ? (
         <h1 className="mt-8 font-display font-bold leading-[1.02] tracking-[-0.03em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch] [text-wrap:balance]">
           <TituloDecodificado texto="Sube tu archivo" acento="de ventas." />
         </h1>
+        ) : null}
 
         {/* Description + upload card */}
-        <div className="grid grid-cols-12 gap-6 mt-12 md:mt-16">
+        <div className={`grid grid-cols-12 gap-6 ${result ? 'mt-8' : 'mt-12 md:mt-16'}`}>
           <div className="col-span-12 md:col-span-5">
             <Reveal>
               <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: '#8A8A8F' }}>
-                Elige un archivo CSV con tus datos de ventas. Lo analizamos al
-                instante y nada se guarda ni viaja a ningún servidor<Fn n={1} /> —
-                todo pasa dentro de tu navegador.
+                {result
+                  ? 'Sube otro export para añadir más ventas al análisis.'
+                  : 'Elige un archivo CSV con tus datos de ventas.'}{' '}
+                El análisis ocurre al instante, dentro de tu navegador<Fn n={1} /> —
+                solo se guarda en tu cuenta si tú pulsas «Guardar».
               </p>
             </Reveal>
           </div>
@@ -514,7 +526,9 @@ export default function UploadPage() {
                 style={{ background: SURFACE_BG }}
               >
                 <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
-                <span className={MONO} style={{ color: '#8A8A8F' }}>Archivo CSV</span>
+                <span className={MONO} style={{ color: '#8A8A8F' }}>
+                  {result ? 'Archivo CSV — añadir o actualizar' : 'Archivo CSV'}
+                </span>
 
                 <div className="mt-6">
                   <label htmlFor="csv-input" className="btn-neon select-none">
@@ -674,7 +688,7 @@ export default function UploadPage() {
         <div className="mt-24 md:mt-32">
           <Hairline dark />
           <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
-            <Fn n={1} /> Lectura local · nada sale de tu dispositivo
+            <Fn n={1} /> El análisis es local · solo «Guardar» envía tus ventas a tu cuenta
           </p>
         </div>
         </>

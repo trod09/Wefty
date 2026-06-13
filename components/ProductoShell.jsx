@@ -70,7 +70,7 @@ function VacioAmable({ irADatos }) {
   );
 }
 
-export default function ProductoShell({ headers, rows, hayDatos, seccionDatos }) {
+export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, estadoDatos }) {
   const [seccion, setSeccion] = useState(hayDatos ? 'resumen' : 'datos');
   const [hayFiltros, setHayFiltros] = useState(false);
   const [email, setEmail] = useState(null);
@@ -117,8 +117,11 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
   useEffect(() => { if (esMotor) setPestanaMotor(seccion); }, [esMotor, seccion]);
   const irADatos = () => setSeccion('datos');
 
+  // Hay un CSV procesado sin guardar: puntito ámbar en "Datos" como recordatorio.
+  const pendienteGuardar = Boolean(estadoDatos?.filas && !estadoDatos.guardado);
+
   const itemCls = (activa) =>
-    `w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
+    `relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
       activa ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
     }`;
 
@@ -152,10 +155,13 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
                   color: activa ? '#F5F5F7' : undefined,
                 }}
                 aria-current={activa ? 'page' : undefined}
-                title={sec.etiqueta}
+                title={sec.id === 'datos' && pendienteGuardar ? `${sec.etiqueta} — datos sin guardar` : sec.etiqueta}
               >
                 <span style={{ color: activa ? '#F08C56' : 'currentColor' }}><Icono id={sec.id} /></span>
                 <span className="hidden lg:inline">{sec.etiqueta}</span>
+                {sec.id === 'datos' && pendienteGuardar ? (
+                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: '#E3C04B' }} />
+                ) : null}
               </button>
             );
           })}
@@ -207,12 +213,15 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
               key={sec.id}
               type="button"
               onClick={() => setSeccion(sec.id)}
-              className="flex flex-col items-center gap-1 pt-2.5 pb-2 transition-colors"
+              className="relative flex flex-col items-center gap-1 pt-2.5 pb-2 transition-colors"
               style={{ color: activa ? '#F5F5F7' : TXT2 }}
               aria-current={activa ? 'page' : undefined}
             >
               <span style={{ color: activa ? '#F08C56' : 'currentColor' }}><Icono id={sec.id} /></span>
               <span className="font-mono text-[8.5px] tracking-[0.04em] uppercase">{sec.corta}</span>
+              {sec.id === 'datos' && pendienteGuardar ? (
+                <span className="absolute top-1.5 right-[22%] w-1.5 h-1.5 rounded-full" style={{ background: '#E3C04B' }} />
+              ) : null}
             </button>
           );
         })}
@@ -266,6 +275,29 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
           {/* Datos y ajustes: la subida/guardado vive en la página (los
               manejadores del CSV no se mueven) y entra aquí como contenido */}
           <section className={`seccion-panel ${seccion === 'datos' ? '' : 'hidden'}`}>
+            {estadoDatos?.filas ? (
+              <div
+                className="mb-8 rounded-xl border p-4 md:p-5 flex flex-wrap items-center gap-x-5 gap-y-3"
+                style={{
+                  borderColor: estadoDatos.guardado ? 'rgba(107,203,154,0.35)' : 'rgba(227,192,75,0.35)',
+                  background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)',
+                }}
+              >
+                <span className="flex items-center gap-2.5 text-[13px]" style={{ color: TXT }}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: estadoDatos.guardado ? '#6BCB9A' : '#E3C04B' }} />
+                  {estadoDatos.guardado
+                    ? `${estadoDatos.filas.toLocaleString('es-ES')} filas de ventas guardadas en tu cuenta.`
+                    : `Listo: ${estadoDatos.filas.toLocaleString('es-ES')} filas reconocidas — guárdalas abajo para no subirlas cada vez.`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSeccion('resumen')}
+                  className="btn-sheen h-10 px-5 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                >
+                  Ver mi Resumen →
+                </button>
+              </div>
+            ) : null}
             {seccionDatos}
             {hayDatos && motor ? (
               <div className="mt-12 rounded-xl border border-[#1d2330] p-6 md:p-8" style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}>
