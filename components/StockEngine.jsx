@@ -361,8 +361,10 @@ function TablaTallas({ reparto, recomendado }) {
         {['Talla', '', 'Uds', '%'].map((h, i) => (
           <span key={h || i} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
         ))}
-        <span className={`${LABEL} hidden md:block text-right`} style={{ color: TXT3 }}>Rotura</span>
-        <span className={`${LABEL} hidden md:block text-right`} style={{ color: TXT3 }}>Rebaja</span>
+        <span className={`${LABEL} hidden md:block text-right cursor-help`} style={{ color: TXT3 }}
+          title="Probabilidad de quedarte sin esa talla antes de reponer">Rotura</span>
+        <span className={`${LABEL} hidden md:block text-right cursor-help`} style={{ color: TXT3 }}
+          title="Probabilidad de que sobre más del 30% de esa talla y acabe rebajada">Rebaja</span>
       </div>
       <ul>
         {reparto.map((f) => (
@@ -794,7 +796,12 @@ export default function StockEngine({
                 <div className="mt-4 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                   <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 pb-2 border-b border-white/10">
                     {['Producto', 'Uds', 'Inversión', 'Margen esp.', '%', 'Riesgo (rotura · rebaja)'].map((h, i) => (
-                      <span key={h} className={`${LABEL} ${i >= 1 && i <= 4 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
+                      <span
+                        key={h}
+                        className={`${LABEL} ${i >= 1 && i <= 4 ? 'text-right' : ''} ${i === 5 ? 'cursor-help' : ''}`}
+                        style={{ color: TXT3 }}
+                        title={i === 5 ? 'Rotura: prob. de quedarte corto · Rebaja: prob. de que sobre más del 30%' : undefined}
+                      >{h}</span>
                     ))}
                   </div>
                   <ul>
@@ -1215,8 +1222,10 @@ export default function StockEngine({
           </>
         ) : (
           <>
-            {/* Entradas */}
-            <div className="mt-6 flex flex-wrap items-start gap-5">
+            {/* Entradas: barra de configuración (el resultado es el protagonista) */}
+            <div className="mt-6 rounded-xl border border-[#161b26] p-4 md:p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+            <div className={LABEL} style={{ color: TXT3 }}>Configura tu pedido — el resultado se actualiza solo</div>
+            <div className="mt-4 flex flex-wrap items-start gap-5">
               <Campo etiqueta="Producto">
                 <select
                   value={producto}
@@ -1297,27 +1306,40 @@ export default function StockEngine({
                       : 'Con coste y PVP, el pedido pasa a maximizar tu margen (liquidación: 30% del PVP si no la cambias).'
                 }
               >
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number" inputMode="decimal" min="0" step="0.01" placeholder="coste €"
-                    value={costeTxt} onChange={(e) => setCosteTxt(e.target.value)}
-                    className={`${INPUT_CLS} w-[92px] tnum`}
-                    style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
-                  />
-                  <input
-                    type="number" inputMode="decimal" min="0" step="0.01" placeholder="PVP €"
-                    value={pvpTxt} onChange={(e) => setPvpTxt(e.target.value)}
-                    className={`${INPUT_CLS} w-[92px] tnum`}
-                    style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
-                  />
-                  <input
-                    type="number" inputMode="decimal" min="0" max="90" step="1" placeholder="liq. 30%"
-                    value={liqTxt} onChange={(e) => setLiqTxt(e.target.value)}
-                    className={`${INPUT_CLS} w-[92px] tnum`}
-                    style={{ background: '#090c12', colorScheme: 'dark' }}
-                  />
+                <div className="flex items-start gap-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: TXT3 }}>coste €/ud</span>
+                    <input
+                      type="number" inputMode="decimal" min="0" step="0.01" placeholder="p. ej. 12"
+                      value={costeTxt} onChange={(e) => setCosteTxt(e.target.value)}
+                      className={`${INPUT_CLS} w-[92px] tnum`}
+                      style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                    />
+                    {costeTxt !== '' && costeGuardado != null && String(costeGuardado) === costeTxt ? (
+                      <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: VERDE }}>✓ de tu panel de costes</span>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: TXT3 }}>pvp €/ud</span>
+                    <input
+                      type="number" inputMode="decimal" min="0" step="0.01" placeholder="p. ej. 30"
+                      value={pvpTxt} onChange={(e) => setPvpTxt(e.target.value)}
+                      className={`${INPUT_CLS} w-[92px] tnum`}
+                      style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-mono text-[9px] tracking-[0.12em] uppercase" style={{ color: TXT3 }}>liquidación %</span>
+                    <input
+                      type="number" inputMode="decimal" min="0" max="90" step="1" placeholder="30"
+                      value={liqTxt} onChange={(e) => setLiqTxt(e.target.value)}
+                      className={`${INPUT_CLS} w-[92px] tnum`}
+                      style={{ background: '#090c12', colorScheme: 'dark' }}
+                    />
+                  </div>
                 </div>
               </Campo>
+            </div>
             </div>
 
             {/* Resultado */}
@@ -1337,7 +1359,10 @@ export default function StockEngine({
 
             {resultado?.ok ? (
               <>
-                <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
+                <div
+                  className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5 transition-opacity duration-200"
+                  style={{ opacity: calculando ? 0.45 : 1 }}
+                >
                   {/* Pedido recomendado — tarjeta protagonista */}
                   <div
                     className="lg:col-span-5 relative rounded-xl border border-[#3a2b20] p-7 md:p-8 overflow-hidden flex flex-col"
