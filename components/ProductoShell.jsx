@@ -248,6 +248,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 rows={rows}
                 seccion={seccion === 'insights' ? 'insights' : 'resumen'}
                 onHayFiltros={setHayFiltros}
+                onNavegar={setSeccion}
               />
             ) : (
               <VacioAmable irADatos={irADatos} />

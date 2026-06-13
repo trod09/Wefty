@@ -115,7 +115,7 @@ function ChartCard({ title, subtitle, children, className = '' }) {
   );
 }
 
-function Kpi({ label, value, principal = false }) {
+function Kpi({ label, value, principal = false, hint }) {
   if (principal) {
     return (
       <div
@@ -125,7 +125,7 @@ function Kpi({ label, value, principal = false }) {
           boxShadow: '0 0 60px -26px rgba(240,140,86,0.55)',
         }}
       >
-        <div className={LABEL} style={{ color: '#f0a987' }}>{label}</div>
+        <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: '#f0a987' }} title={hint}>{label}</div>
         <div className="mt-6 font-display text-[48px] md:text-[68px] leading-[0.92] tracking-[-0.025em] tnum break-words" style={{ color: TXT }}>
           {value}
         </div>
@@ -137,7 +137,7 @@ function Kpi({ label, value, principal = false }) {
       className="relative rounded-xl border border-[#1d2330] p-5 md:p-6 transition-all duration-300 hover:border-[#2e3850]"
       style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
     >
-      <div className={LABEL} style={{ color: TXT2 }}>{label}</div>
+      <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: TXT2 }} title={hint}>{label}</div>
       <div className="mt-3 font-display text-[28px] md:text-[36px] leading-none tracking-[-0.02em] tnum break-words" style={{ color: TXT }}>
         {value}
       </div>
@@ -203,7 +203,7 @@ export function parsearVentas(headers, rows) {
 // seccion: 'resumen' (titular + KPIs + gráficos) o 'insights' (filtros +
 // insights accionables). Una sola instancia montada sirve a ambas secciones
 // del sidebar: los filtros viven aquí y afectan a las dos, como siempre.
-export default function SalesDashboard({ headers, rows, seccion = 'resumen', onHayFiltros }) {
+export default function SalesDashboard({ headers, rows, seccion = 'resumen', onHayFiltros, onNavegar }) {
   const parsed = useMemo(() => parsearVentas(headers, rows), [headers, rows]);
 
   // 2) Estado de los filtros. Valor vacío significa "todos / sin filtrar".
@@ -397,8 +397,8 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         { label: 'Ingresos totales', value: fmtEur(totalIngresos), principal: true },
         { label: 'Unidades vendidas', value: fmtInt(totalUnidades) },
         { label: 'Productos distintos', value: fmtInt(productosDistintos) },
-        { label: 'Variantes (talla·color)', value: fmtInt(variantes) },
-        { label: 'Ticket medio', value: fmtEur2(ticketMedio) },
+        { label: 'Combinaciones talla-color', value: fmtInt(variantes) },
+        { label: 'Ingreso medio / línea', value: fmtEur2(ticketMedio), hint: 'Por cada línea de tu CSV, no por pedido.' },
       ],
       totalUnidades, totalIngresos,
       insight, avgTalla, tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
@@ -422,13 +422,16 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
     insightColor && {
       key: 'color', label: 'Color que no rota', accent: EMBER,
       body: <>El color {em(insightColor.color, EMBER)} solo representa el {em(`${insightColor.pct}%`, EMBER)} de tus ventas{ambito} — posible exceso de inventario.</>,
+      accion: { texto: 'Pide menos de ese color en tu próxima compra.' },
     },
     insightEstrella && {
       key: 'estrella', label: 'Producto estrella', accent: ELECTRIC,
       body: <>{em(insightEstrella.producto, ELECTRIC)} concentra el {em(`${insightEstrella.pct}%`, ELECTRIC)} de tus ingresos{fCategoria ? ` en ${fCategoria}` : ''} — protégelo en stock y campañas.</>,
+      accion: { texto: 'Planifica su pedido', seccion: 'reposicion', enlace: 'en Reposición' },
     },
     insightConcentracion && {
       key: 'concentracion', label: 'Concentración de catálogo', accent: ELECTRIC,
+      accion: { texto: 'Reparte ahí tu presupuesto', seccion: 'plan', enlace: 'en Plan de compra' },
       body: fCategoria ? (
         <>El {em(`${insightConcentracion.pct}%`, ELECTRIC)} de tus ventas en {fCategoria} viene de solo {em(insightConcentracion.n, ELECTRIC)} de los {insightConcentracion.total} productos de la categoría — el resto pesa poco.</>
       ) : (
@@ -438,10 +441,12 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
     insightVariante && {
       key: 'variante', label: 'Variante ganadora', accent: ELECTRIC,
       body: <>Tu variante estrella{ambito} es {em(`${insightVariante.talla}/${insightVariante.color}`, ELECTRIC)} ({em(`${insightVariante.pct}%`, ELECTRIC)}) — asegura su stock.</>,
+      accion: { texto: 'Revisa su pedido', seccion: 'reposicion', enlace: 'en Reposición' },
     },
     insightMuertas && {
       key: 'muertas', label: 'Variantes muertas', accent: EMBER,
       body: <>Tienes {em(insightMuertas.n, EMBER)} {insightMuertas.n === 1 ? 'variante' : 'variantes'}{ambito} con ventas mínimas — {insightMuertas.n === 1 ? 'candidata' : 'candidatas'} a revisar o descatalogar.</>,
+      accion: { texto: 'Revísalas antes de tu próxima compra.' },
     },
   ].filter(Boolean);
 
@@ -513,43 +518,43 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
       style={{ background: 'radial-gradient(120% 80% at 50% 0%, #090c12 0%, #05060a 60%)' }}
     >
       {seccion === 'insights' ? (<>
-      {/* 0 · FILTROS — recalculan todo el dashboard al instante */}
-      <div
-        className="flex flex-wrap items-end gap-4 rounded-xl border border-[#161b26] p-4 md:p-5"
-        style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}
-      >
-        <FilterSelect
-          label="Categoría" value={fCategoria} onChange={setFCategoria}
-          options={parsed.categorias} allLabel="Todas"
-        />
-        <FilterSelect
-          label="Producto" value={fProducto} onChange={setFProducto}
-          options={parsed.productos} allLabel="Todos"
-        />
-        {hayFiltros ? (
-          <button
-            type="button"
-            onClick={limpiarFiltros}
-            className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
-          >
-            Limpiar filtros
-          </button>
-        ) : null}
+      {/* Filtros: barra compacta y secundaria (su porqué a la izquierda); las
+          tarjetas de abajo son las protagonistas de la sección. */}
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-1 border-b border-white/[0.06]">
+        <p className="text-[13px] leading-snug max-w-[42ch]" style={{ color: TXT2 }}>
+          Lo que el motor detecta en tus ventas. Filtra para investigar una categoría o un producto.
+        </p>
+        <div className="flex flex-wrap items-end gap-3">
+          <FilterSelect
+            label="Categoría" value={fCategoria} onChange={setFCategoria}
+            options={parsed.categorias} allLabel="Todas"
+          />
+          <FilterSelect
+            label="Producto" value={fProducto} onChange={setFProducto}
+            options={parsed.productos} allLabel="Todos"
+          />
+          {hayFiltros ? (
+            <button
+              type="button"
+              onClick={limpiarFiltros}
+              className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+            >
+              Limpiar
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
         sinResultados
-      ) : (
-        <>
-      {/* 1b · INSIGHTS DE APOYO — accionables, en rejilla, sin saturar */}
-      {insightsApoyo.length ? (
+      ) : insightsApoyo.length ? (
         <div>
-          <div className={LABEL} style={{ color: TXT2 }}>Insights accionables</div>
+          <div className={LABEL} style={{ color: TXT2 }}>Insights accionables · {insightsApoyo.length}</div>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             {insightsApoyo.map((it) => (
               <div
                 key={it.key}
-                className="rounded-xl border border-[#161b26] p-5 md:p-6"
+                className="rounded-xl border border-[#161b26] p-5 md:p-6 flex flex-col"
                 style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}
               >
                 <div className={`${LABEL} flex items-center gap-2`} style={{ color: it.accent }}>
@@ -559,12 +564,39 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                 <p className="mt-3 text-[15px] md:text-[16px] leading-[1.5]" style={{ color: TXT }}>
                   {it.body}
                 </p>
+                {it.accion ? (
+                  <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="text-[12px] leading-snug" style={{ color: TXT2 }}>{it.accion.texto}</span>
+                    {it.accion.seccion ? (
+                      <button
+                        type="button"
+                        onClick={() => onNavegar?.(it.accion.seccion)}
+                        className="font-mono text-[10px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70"
+                        style={{ color: it.accent }}
+                      >
+                        {it.accion.enlace} →
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
+          {!hayFiltros ? (
+            <p className="mt-4 text-[12px] leading-snug" style={{ color: '#5d5e63' }}>
+              Con filtros encuentras más: prueba a mirar una categoría o un producto concretos.
+            </p>
+          ) : null}
         </div>
-      ) : null}
-        </>
+      ) : (
+        <div
+          className="rounded-xl border border-[#1d2330] p-10 md:p-12 text-center"
+          style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+        >
+          <p className="text-[15px]" style={{ color: TXT2 }}>
+            No hay suficientes datos para destacar un patrón con este filtro. Prueba a quitarlo.
+          </p>
+        </div>
       )}
 
       </>) : (<>
@@ -619,6 +651,16 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             La <span style={{ color: EMBER }}>{insight.minTalla}</span> apenas rota
             (<span style={{ color: EMBER }}>{insight.minPct}%</span>).
           </p>
+          {onNavegar ? (
+            <button
+              type="button"
+              onClick={() => onNavegar('reposicion')}
+              className="relative mt-7 inline-flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] uppercase transition-opacity hover:opacity-70"
+              style={{ color: ELECTRIC }}
+            >
+              Ajusta tu pedido a estas tallas en Reposición →
+            </button>
+          ) : null}
         </div>
       ) : null}
 
