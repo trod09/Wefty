@@ -36,13 +36,14 @@ function Icono({ id }) {
   );
 }
 
+// Cada sección se presenta en UNA línea de negocio: qué pregunta responde.
 const SECCIONES = [
-  { id: 'resumen', etiqueta: 'Resumen', corta: 'Resumen' },
-  { id: 'insights', etiqueta: 'Insights', corta: 'Insights' },
-  { id: 'reposicion', etiqueta: 'Reposición', corta: 'Repos.' },
-  { id: 'lanzamiento', etiqueta: 'Lanzamiento', corta: 'Lanz.' },
-  { id: 'plan', etiqueta: 'Plan de compra', corta: 'Plan' },
-  { id: 'datos', etiqueta: 'Datos y ajustes', corta: 'Datos' },
+  { id: 'resumen', etiqueta: 'Resumen', corta: 'Resumen', linea: 'Cómo va tu negocio, de un vistazo.' },
+  { id: 'insights', etiqueta: 'Insights', corta: 'Insights', linea: 'Qué está pasando en tus ventas — explóralo con filtros.' },
+  { id: 'reposicion', etiqueta: 'Reposición', corta: 'Repos.', linea: 'Cuánto pedir de los productos que ya vendes.' },
+  { id: 'lanzamiento', etiqueta: 'Lanzamiento', corta: 'Lanz.', linea: 'Cuánto fabricar de un producto nuevo, sin histórico.' },
+  { id: 'plan', etiqueta: 'Plan de compra', corta: 'Plan', linea: 'Reparte tu presupuesto entre todo el catálogo para maximizar margen.' },
+  { id: 'datos', etiqueta: 'Datos y ajustes', corta: 'Datos', linea: 'Tus datos, tus costes y la maquinaria del motor.' },
 ];
 
 // Estado vacío amable para secciones que aún no tienen datos.
@@ -220,6 +221,16 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos })
       {/* ——— Contenido ——— */}
       <div className="flex-1 min-w-0 md:pl-16 lg:pl-[220px] pb-24 md:pb-0">
         <div className="max-w-[1280px] mx-auto px-5 md:px-10 py-8 md:py-12">
+          {/* Cabecera de la sección activa: qué hace, en lenguaje de negocio */}
+          <header key={seccion} className="seccion-panel mb-6 md:mb-8">
+            <h1 className="font-display font-bold text-[28px] md:text-[36px] tracking-[-0.02em] leading-none" style={{ color: TXT }}>
+              {SECCIONES.find((x) => x.id === seccion)?.etiqueta}
+            </h1>
+            <p className="mt-2.5 text-[14px] md:text-[15px] leading-relaxed" style={{ color: TXT2 }}>
+              {SECCIONES.find((x) => x.id === seccion)?.linea}
+            </p>
+          </header>
+
           {/* Resumen + Insights: UNA instancia del dashboard (los filtros se comparten) */}
           <section className={`seccion-panel ${esDashboard ? '' : 'hidden'}`}>
             {hayDatos ? (

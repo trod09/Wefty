@@ -209,8 +209,8 @@ function MatrizTallaColor({ matriz }) {
           ← desliza para ver toda la matriz →
         </p>
         <p className="mt-2 text-[11px] leading-snug" style={{ color: TXT3 }}>
-          Ajuste proporcional iterativo (IPF) sobre tus combinaciones reales: cada talla cuadra
-          exacta; los colores quedan a ±1 ud de su curva.
+          Cruzamos tus combinaciones reales de talla y color (ajuste proporcional iterativo):
+          cada talla cuadra exacta; los colores quedan a ±1 ud de su curva.
         </p>
       </div>
     </details>
@@ -317,7 +317,7 @@ export function PanelValidacion({ motor }) {
           <>
             <p className="text-[13px] leading-relaxed max-w-[68ch]" style={{ color: TXT2 }}>
               El motor viaja a varios puntos de tu pasado, pronostica «a ciegas» las 4 semanas
-              siguientes y comprueba cuánto falló. El error es WAPE (desviación media ponderada);
+              siguientes y comprueba cuánto falló. El error se mide como desviación media ponderada (WAPE);
               «−X% de error» = cuánto mejora al pronóstico ingenuo de extrapolar a ojo.
             </p>
             {v.global && !v.global.insuficiente ? (
@@ -575,7 +575,7 @@ export default function StockEngine({
     if (!resultado?.ok) return;
     const r = resultado;
     const criterio = r.modoCantidad === 'economia'
-      ? `cuantil óptimo ${Math.round(r.economia.cr * 100)}% (maximiza margen)`
+      ? `punto de máximo margen (cuantil ${Math.round(r.economia.cr * 100)}%)`
       : `nivel de servicio ${r.nivelServicio}% · escenario ${r.escenario}`;
     const lineas = [
       `Pedido recomendado — ${textoSeguro(r.producto)}`,
@@ -637,9 +637,11 @@ export default function StockEngine({
     <div>
       {/* Cabecera de la sección */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
+        {/* Con el sidebar de pestañas, la cabecera de sección ya presenta el
+            contexto: aquí solo queda el estado del cálculo. */}
         <div className={`${LABEL} flex items-center gap-2`} style={{ color: TXT2 }}>
           <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: '#F08C56' }} />
-          Motor de stock · cuánto pedir
+          {pestanaProp ? 'Motor de stock' : 'Motor de stock · cuánto pedir'}
         </div>
         <span className={LABEL} style={{ color: calculando ? CIELO : TXT3 }}>
           {calculando
@@ -695,7 +697,7 @@ export default function StockEngine({
                   style={{ background: '#090c12', colorScheme: 'dark' }}
                 />
               </Campo>
-              <Campo etiqueta="Escenario de demanda" hint="Conservador reparte contra demanda floja (P25); agresivo, contra fuerte (P75).">
+              <Campo etiqueta="Escenario de demanda" hint="Conservador reparte por si la venta viene floja; agresivo, por si viene fuerte (P25/P75).">
                 <Segmentos
                   valor={planEsc}
                   onChange={setPlanEsc}
@@ -933,7 +935,7 @@ export default function StockEngine({
               {posiciones ? (
                 <Campo
                   etiqueta="Posicionamiento de precio"
-                  hint={lanPos ? 'Análogos del mismo tercil +30, tercil vecino +15.' : 'Opcional: terciles de los precios reales de esta categoría.'}
+                  hint={lanPos ? 'Los análogos de tu misma franja de precio pesan más en la referencia.' : 'Opcional: franjas según los precios reales de esta categoría.'}
                 >
                   <select
                     value={lanPos}
@@ -960,7 +962,7 @@ export default function StockEngine({
 
               <Campo
                 etiqueta="Mes de lanzamiento"
-                hint={lanMes === '' ? 'Opcional: cruza con la estacionalidad y afina los análogos.' : 'Análogos de la misma estación +20, estación vecina +10.'}
+                hint={lanMes === '' ? 'Opcional: cruza con la estacionalidad y afina los análogos.' : 'Los análogos que se lanzaron en tu misma estación pesan más.'}
               >
                 <select
                   value={lanMes}
@@ -977,7 +979,7 @@ export default function StockEngine({
 
               <Campo
                 etiqueta="Tipo de lanzamiento"
-                hint={lanTipo === 'capsula' ? 'Ventana corta sin reposición: el total apunta a agotar (banda P25).' : 'Producto que se queda en catálogo: curva de 12 semanas.'}
+                hint={lanTipo === 'capsula' ? 'Ventana corta sin reposición: el total apunta a agotarse incluso con venta floja.' : 'Producto que se queda en catálogo: curva de 12 semanas.'}
               >
                 <Segmentos
                   valor={lanTipo}
@@ -1063,7 +1065,7 @@ export default function StockEngine({
                     <p className="mt-4 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                       {resultadoLan.totalEsSugerido
                         ? (resultadoLan.tipo === 'capsula'
-                          ? `Sugerido para agotar en ${resultadoLan.semanasVenta} semanas: banda conservadora (P25) de tus análogos.`
+                          ? `Sugerido para agotar en ${resultadoLan.semanasVenta} semanas incluso con venta floja (banda conservadora de tus análogos).`
                           : 'Sugerido: lo que vendieron tus análogos en sus primeras 12 semanas, ponderado por parecido.')
                         : `Tus unidades (la curva sugería ≈${fmtInt(resultadoLan.totalSugerido)} para ${resultadoLan.semanasVenta} semanas).`}
                     </p>
@@ -1092,7 +1094,7 @@ export default function StockEngine({
                   <div className="lg:col-span-8 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
                     <div className="flex items-baseline justify-between gap-4 mb-4">
                       <span className={LABEL} style={{ color: TXT2 }}>Curva de lanzamiento esperada</span>
-                      <span className={LABEL} style={{ color: TXT3 }}>uds/semana · banda P25–P75</span>
+                      <span className={LABEL} style={{ color: TXT3 }}>uds/semana · banda flojo–fuerte</span>
                     </div>
                     <div className="h-[240px]">
                       <ResponsiveContainer width="100%" height="100%">
@@ -1271,7 +1273,7 @@ export default function StockEngine({
               {!economiaActiva ? (
                 <Campo
                   etiqueta="Escenario de demanda"
-                  hint="Conservador planifica con el P25 de las simulaciones; agresivo, con el P75."
+                  hint="Conservador planifica por si la venta viene floja; agresivo, por si viene fuerte (P25/P75 de las simulaciones)."
                 >
                   <Segmentos
                     valor={escenario}
@@ -1291,7 +1293,7 @@ export default function StockEngine({
                   resultado?.erroresCostes?.length
                     ? resultado.erroresCostes[0]
                     : economiaActiva
-                      ? `Cuantil óptimo ${pct0(resultado.economia.cr)}: el pedido maximiza tu margen esperado.`
+                      ? `Pedido en el punto de máximo margen (cuantil ${pct0(resultado.economia.cr)}).`
                       : 'Con coste y PVP, el pedido pasa a maximizar tu margen (liquidación: 30% del PVP si no la cambias).'
                 }
               >
@@ -1360,15 +1362,14 @@ export default function StockEngine({
                       </p>
                     ) : resultado.modoCantidad === 'economia' ? (
                       <p className="mt-5 text-[14px] leading-relaxed" style={{ color: TXT2 }}>
-                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda mediana
-                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> extra hasta el{' '}
-                        cuantil óptimo <span style={{ color: TXT }}>{pct0(resultado.economia.cr)}</span> —
-                        el pedido que maximiza tu margen esperado.
+                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda esperada
+                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> extra hasta el punto
+                        donde más margen ganas (cuantil óptimo <span style={{ color: TXT }}>{pct0(resultado.economia.cr)}</span>).
                       </p>
                     ) : (
                       <p className="mt-5 text-[14px] leading-relaxed" style={{ color: TXT2 }}>
                         ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda{' '}
-                        {resultado.escenario === 'conservador' ? 'conservadora (P25)' : resultado.escenario === 'agresivo' ? 'agresiva (P75)' : 'esperada (P50)'}
+                        {resultado.escenario === 'conservador' ? 'prudente — por si viene floja (P25)' : resultado.escenario === 'agresivo' ? 'ambiciosa — por si viene fuerte (P75)' : 'esperada (P50)'}
                         {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> de colchón de
                         seguridad (servicio {resultado.nivelServicio}%).
                       </p>
@@ -1378,8 +1379,8 @@ export default function StockEngine({
                       proveedor + {resultado.horizonte.cobertura} de venta.
                     </p>
                     <p className="mt-2 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT3 }}>
-                      banda 80%: {fmtInt(resultado.intervalo.p10)}–{fmtInt(resultado.intervalo.p90)} uds ·
-                      P25 {fmtInt(resultado.escenarios.conservador)} · P50 {fmtInt(resultado.escenarios.esperado)} · P75 {fmtInt(resultado.escenarios.agresivo)}
+                      en 8 de cada 10 escenarios venderías {fmtInt(resultado.intervalo.p10)}–{fmtInt(resultado.intervalo.p90)} uds
+                      {' · '}floja {fmtInt(resultado.escenarios.conservador)} · esperada {fmtInt(resultado.escenarios.esperado)} · fuerte {fmtInt(resultado.escenarios.agresivo)}
                       {' · '}{resultado.bootstrap.simulaciones} simulaciones
                     </p>
 
@@ -1470,7 +1471,7 @@ export default function StockEngine({
                 {/* Economía del pedido en euros (cuando hay costes) */}
                 {resultado.economia ? (
                   <div className="mt-5 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
-                    <div className={LABEL} style={{ color: CIELO }}>Economía del pedido · newsvendor</div>
+                    <div className={LABEL} style={{ color: CIELO }}>Economía del pedido · en euros</div>
                     <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
                         <div className={LABEL} style={{ color: TXT3 }}>Margen esperado</div>
