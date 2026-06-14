@@ -43,6 +43,7 @@
   --glow-brand: rgba(240, 140, 86, 0.5);
   --tint-brand: rgba(240, 140, 86, 0.08);
   --nav-bg: rgba(7, 9, 14, 0.96);
+  --tooltip-bg: rgba(25, 26, 30, 0.97);
 }
 
 [data-theme='light'] {
@@ -79,6 +80,7 @@
   --glow-brand: rgba(196, 99, 45, 0.14);
   --tint-brand: rgba(240, 140, 86, 0.09);
   --nav-bg: rgba(251, 249, 244, 0.96);
+  --tooltip-bg: rgba(255, 255, 255, 0.98);
 }
 
 /* Fondo base oscuro: la landing y el producto comparten el mismo mundo

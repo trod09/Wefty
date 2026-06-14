@@ -13,12 +13,12 @@ import {
 } from 'recharts';
 
 // ---- Paleta ------------------------------------------------------------
-const ELECTRIC = '#2D6BE4';
-const EMBER = '#E07A5F';        // único acento de apoyo
-const MUTED = '#43464D';        // barras "que apenas rotan" (gris apagado sobre oscuro)
-const SURFACE = '#0b0e14';      // fondo de tarjeta (para separar slices del donut)
-const TXT = '#F5F5F7';          // títulos
-const TXT2 = '#8A8A8F';         // secundario
+const ELECTRIC = 'var(--data)';
+const EMBER = 'var(--bad)';        // único acento de apoyo
+const MUTED = 'var(--muted)';        // barras "que apenas rotan"
+const SURFACE = 'var(--surface-1)';      // separador de slices del donut (= fondo de tarjeta)
+const TXT = 'var(--txt)';          // títulos
+const TXT2 = 'var(--txt-2)';         // secundario
 const PIE_PALETTE = ['#2D6BE4', '#C85A3F', '#1B2D6B', '#E07A5F', '#7CA3F0', '#E8A07F', '#34488A', '#B5734E'];
 
 // Mapa de nombres de color de prenda a un hex aproximado (con tildes ya quitadas).
@@ -87,7 +87,7 @@ function groupSum(records, keyFn, valFn) {
 // Tooltip oscuro personalizado: título con muestra de color + líneas de dato.
 function tip(title, accent, lines) {
   return (
-    <div className="rounded-lg border border-[#232a3a] px-3.5 py-2.5 shadow-2xl" style={{ background: 'rgba(25,26,30,0.97)' }}>
+    <div className="rounded-lg border border-line px-3.5 py-2.5 shadow-2xl" style={{ background: 'var(--tooltip-bg)' }}>
       <div className="flex items-center gap-2 mb-1.5">
         <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: accent }} />
         <span className="font-mono text-[11px] tracking-[0.06em]" style={{ color: TXT }}>{title}</span>
@@ -103,12 +103,12 @@ function tip(title, accent, lines) {
 function ChartCard({ title, subtitle, children, className = '' }) {
   return (
     <div
-      className={`group relative rounded-xl border border-[#1d2330] p-6 md:p-7 transition-all duration-300 hover:border-[#2e3850] ${className}`}
-      style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+      className={`group relative rounded-xl border border-line p-6 md:p-7 transition-all duration-300 hover:border-lineHover ${className}`}
+      style={{ background: 'var(--card-grad)' }}
     >
       <div className="flex items-baseline justify-between gap-4 mb-5">
         <span className={LABEL} style={{ color: TXT2 }}>{title}</span>
-        {subtitle ? <span className={`${LABEL} whitespace-nowrap`} style={{ color: '#5d5e63' }}>{subtitle}</span> : null}
+        {subtitle ? <span className={`${LABEL} whitespace-nowrap`} style={{ color: 'var(--txt-3)' }}>{subtitle}</span> : null}
       </div>
       {children}
     </div>
@@ -119,13 +119,13 @@ function Kpi({ label, value, principal = false, hint }) {
   if (principal) {
     return (
       <div
-        className="relative col-span-2 lg:row-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between overflow-hidden border border-[#3a2b20] transition-all duration-300"
+        className="relative col-span-2 lg:row-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between overflow-hidden border border-brandLine transition-all duration-300"
         style={{
-          background: 'linear-gradient(150deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 38%, #0b0e14 100%)',
-          boxShadow: '0 0 60px -26px rgba(240,140,86,0.55)',
+          background: 'linear-gradient(150deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 38%, var(--surface-2) 100%)',
+          boxShadow: '0 0 60px -26px var(--glow-brand)',
         }}
       >
-        <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: '#f0a987' }} title={hint}>{label}</div>
+        <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: 'var(--brand-soft)' }} title={hint}>{label}</div>
         <div className="mt-6 font-display text-[48px] md:text-[68px] leading-[0.92] tracking-[-0.025em] tnum break-words" style={{ color: TXT }}>
           {value}
         </div>
@@ -134,8 +134,8 @@ function Kpi({ label, value, principal = false, hint }) {
   }
   return (
     <div
-      className="relative rounded-xl border border-[#1d2330] p-5 md:p-6 transition-all duration-300 hover:border-[#2e3850]"
-      style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+      className="relative rounded-xl border border-line p-5 md:p-6 transition-all duration-300 hover:border-lineHover"
+      style={{ background: 'var(--card-grad)' }}
     >
       <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: TXT2 }} title={hint}>{label}</div>
       <div className="mt-3 font-display text-[28px] md:text-[36px] leading-none tracking-[-0.02em] tnum break-words" style={{ color: TXT }}>
@@ -155,8 +155,8 @@ function FilterSelect({ label, value, onChange, options, allLabel }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 md:h-10 min-w-[170px] rounded-lg border border-[#1d2330] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#F08C56] cursor-pointer"
-        style={{ background: '#090c12', colorScheme: 'dark' }}
+        className="h-11 md:h-10 min-w-[170px] rounded-lg border border-line px-3 text-[16px] md:text-[14px] text-txt outline-none transition-colors focus:border-brand cursor-pointer"
+        style={{ background: 'var(--surface-input)' }}
       >
         <option value="">{allLabel}</option>
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
@@ -499,8 +499,8 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
   // Tarjeta "sin resultados con estos filtros" (sale en la sección activa).
   const sinResultados = (
         <div
-          className="rounded-xl border border-[#1d2330] p-12 md:p-16 text-center"
-          style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+          className="rounded-xl border border-line p-12 md:p-16 text-center"
+          style={{ background: 'var(--card-grad)' }}
         >
           <div className={LABEL} style={{ color: EMBER }}>Sin resultados</div>
           <p className="mt-4 font-display text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
@@ -514,13 +514,13 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
 
   return (
     <div
-      className="rounded-2xl border border-[#161b26] p-4 md:p-6 space-y-4 md:space-y-5"
-      style={{ background: 'radial-gradient(120% 80% at 50% 0%, #090c12 0%, #05060a 60%)' }}
+      className="rounded-2xl border border-lineSoft p-4 md:p-6 space-y-4 md:space-y-5"
+      style={{ background: 'var(--dash-grad)' }}
     >
       {seccion === 'insights' ? (<>
       {/* Filtros: barra compacta y secundaria (su porqué a la izquierda); las
           tarjetas de abajo son las protagonistas de la sección. */}
-      <div className="flex flex-wrap items-end justify-between gap-4 pb-1 border-b border-white/[0.06]">
+      <div className="flex flex-wrap items-end justify-between gap-4 pb-1 border-b border-hairlineSoft">
         <p className="text-[13px] leading-snug max-w-[42ch]" style={{ color: TXT2 }}>
           Lo que el motor detecta en tus ventas. Filtra para investigar una categoría o un producto.
         </p>
@@ -537,7 +537,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             <button
               type="button"
               onClick={limpiarFiltros}
-              className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#8A8A8F] hover:text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+              className="btn-sheen h-11 md:h-10 px-4 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt2 hover:text-txt hover:border-txt3 transition-colors"
             >
               Limpiar
             </button>
@@ -554,8 +554,8 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             {insightsApoyo.map((it) => (
               <div
                 key={it.key}
-                className="rounded-xl border border-[#161b26] p-5 md:p-6 flex flex-col"
-                style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}
+                className="rounded-xl border border-lineSoft p-5 md:p-6 flex flex-col"
+                style={{ background: 'var(--inset-grad)' }}
               >
                 <div className={`${LABEL} flex items-center gap-2`} style={{ color: it.accent }}>
                   <span className="w-1.5 h-1.5 rounded-full" style={{ background: it.accent }} />
@@ -565,7 +565,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                   {it.body}
                 </p>
                 {it.accion ? (
-                  <div className="mt-4 pt-3 border-t border-white/[0.06] flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <div className="mt-4 pt-3 border-t border-hairlineSoft flex flex-wrap items-center gap-x-2 gap-y-1">
                     <span className="text-[12px] leading-snug" style={{ color: TXT2 }}>{it.accion.texto}</span>
                     {it.accion.seccion ? (
                       <button
@@ -583,15 +583,15 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             ))}
           </div>
           {!hayFiltros ? (
-            <p className="mt-4 text-[12px] leading-snug" style={{ color: '#5d5e63' }}>
+            <p className="mt-4 text-[12px] leading-snug" style={{ color: 'var(--txt-3)' }}>
               Con filtros encuentras más: prueba a mirar una categoría o un producto concretos.
             </p>
           ) : null}
         </div>
       ) : (
         <div
-          className="rounded-xl border border-[#1d2330] p-10 md:p-12 text-center"
-          style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+          className="rounded-xl border border-line p-10 md:p-12 text-center"
+          style={{ background: 'var(--card-grad)' }}
         >
           <p className="text-[15px]" style={{ color: TXT2 }}>
             No hay suficientes datos para destacar un patrón con este filtro. Prueba a quitarlo.
@@ -603,8 +603,8 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
       {/* RESUMEN — titular + KPIs + gráficos (el motor vive en su sección) */}
       {hayFiltros ? (
         <div
-          className="flex flex-wrap items-center gap-3 rounded-xl border border-[#161b26] px-4 py-3"
-          style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-lineSoft px-4 py-3"
+          style={{ background: 'var(--panel-grad)' }}
         >
           <span className={LABEL} style={{ color: TXT2 }}>filtrado:</span>
           <span className="font-mono text-[12px]" style={{ color: TXT }}>
@@ -613,11 +613,11 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
           <button
             type="button"
             onClick={limpiarFiltros}
-            className="font-mono text-[11px] tracking-[0.1em] uppercase transition-colors text-[#8A8A8F] hover:text-[#F5F5F7]"
+            className="font-mono text-[11px] tracking-[0.1em] uppercase transition-colors text-txt2 hover:text-txt"
           >
             ✕ quitar
           </button>
-          <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: '#5d5e63' }}>
+          <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--txt-3)' }}>
             se ajusta en Insights
           </span>
         </div>
@@ -629,10 +629,10 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
       {/* 1 · TITULAR — insight destacado, a lo ancho, con glow */}
       {insight ? (
         <div
-          className="relative rounded-xl border border-[#33261d] p-10 md:p-14 overflow-hidden"
+          className="relative rounded-xl border border-brandLine p-10 md:p-14 overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #0c1018 0%, #070910 55%)',
-            boxShadow: '0 0 80px -30px rgba(240,140,86,0.4)',
+            background: 'linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 55%)',
+            boxShadow: '0 0 80px -30px var(--glow-brand)',
           }}
         >
           <div
@@ -640,7 +640,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             style={{ background: 'radial-gradient(circle, rgba(240,140,86,0.16) 0%, transparent 60%)' }}
           />
           <div className={`${LABEL} flex items-center gap-2 relative`} style={{ color: ELECTRIC }}>
-            <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: '#F08C56' }} />
+            <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: 'var(--brand)' }} />
             Insight automático · patrón de tallas
           </div>
           <p className="relative mt-6 font-display font-light text-[34px] md:text-[60px] leading-[1.08] tracking-[-0.025em] max-w-[24ch]" style={{ color: TXT }}>
@@ -678,20 +678,20 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                 <BarChart data={tallaData} margin={{ top: 16, right: 8, left: -12, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradTallaUp" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#5C8DEE" />
-                      <stop offset="100%" stopColor="#2D6BE4" />
+                      <stop offset="0%" stopColor="var(--data-2)" />
+                      <stop offset="100%" stopColor="var(--data)" />
                     </linearGradient>
                     <linearGradient id="gradTallaDown" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#52555C" />
-                      <stop offset="100%" stopColor="#393B41" />
+                      <stop offset="0%" stopColor="var(--muted)" />
+                      <stop offset="100%" stopColor="var(--muted)" />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid vertical={false} stroke="#FFFFFF" strokeOpacity={0.06} />
+                  <CartesianGrid vertical={false} stroke="var(--grid-line)" />
                   <XAxis dataKey="talla" tick={tickMono} axisLine={false} tickLine={false} />
                   <YAxis tick={tickMono} axisLine={false} tickLine={false} width={40} />
                   <Tooltip cursor={{ fill: 'rgba(240,140,86,0.06)' }} content={<TallaTip />} />
                   <ReferenceLine
-                    y={avgTalla} stroke="#F5F5F7" strokeOpacity={0.32} strokeDasharray="4 4"
+                    y={avgTalla} stroke="var(--txt)" strokeOpacity={0.32} strokeDasharray="4 4"
                     label={{ value: `media ${fmtInt(avgTalla)}`, position: 'right', fontSize: 10, fill: TXT2 }}
                   />
                   <Bar dataKey="unidades" name="Unidades" radius={[6, 6, 0, 0]} maxBarSize={64}>
@@ -724,10 +724,10 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
               {colorData.map((d, i) => (
                 <li key={i} className="flex items-center justify-between gap-2 font-mono text-[11px]">
                   <span className="flex items-center gap-2 truncate" style={{ color: TXT2 }}>
-                    <span className="w-2.5 h-2.5 rounded-sm border border-white/10 flex-shrink-0" style={{ background: d.fill }} />
+                    <span className="w-2.5 h-2.5 rounded-sm border border-hairline flex-shrink-0" style={{ background: d.fill }} />
                     <span className="truncate">{d.color}</span>
                   </span>
-                  <span className="tnum flex-shrink-0" style={{ color: '#5d5e63' }}>{fmtInt(d.unidades)}</span>
+                  <span className="tnum flex-shrink-0" style={{ color: 'var(--txt-3)' }}>{fmtInt(d.unidades)}</span>
                 </li>
               ))}
             </ul>
@@ -742,13 +742,13 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                 <BarChart data={productoData} layout="vertical" margin={{ top: 4, right: esMovil ? 12 : 130, left: 8, bottom: 4 }}>
                   <defs>
                     <linearGradient id="gradProducto" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#234E9E" />
-                      <stop offset="100%" stopColor="#3F7BEC" />
+                      <stop offset="0%" stopColor="var(--data)" />
+                      <stop offset="100%" stopColor="var(--data-2)" />
                     </linearGradient>
                   </defs>
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="producto" width={esMovil ? 92 : 132} tick={{ ...tickMono, fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<ProductoTip />} />
+                  <Tooltip cursor={{ fill: 'var(--hairline-soft)' }} content={<ProductoTip />} />
                   <Bar dataKey="ingresos" name="Ingresos" radius={[0, 4, 4, 0]} maxBarSize={26} fill="url(#gradProducto)">
                     {esMovil ? null : <LabelList content={renderProductoLabel} />}
                   </Bar>
@@ -775,10 +775,10 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
               {categoriaData.map((d, i) => (
                 <li key={i} className="flex items-center justify-between gap-2 font-mono text-[11px]">
                   <span className="flex items-center gap-2 truncate" style={{ color: TXT2 }}>
-                    <span className="w-2.5 h-2.5 rounded-sm border border-white/10 flex-shrink-0" style={{ background: d.fill }} />
+                    <span className="w-2.5 h-2.5 rounded-sm border border-hairline flex-shrink-0" style={{ background: d.fill }} />
                     <span className="truncate">{d.categoria}</span>
                   </span>
-                  <span className="tnum flex-shrink-0" style={{ color: '#5d5e63' }}>{fmtInt(d.unidades)}</span>
+                  <span className="tnum flex-shrink-0" style={{ color: 'var(--txt-3)' }}>{fmtInt(d.unidades)}</span>
                 </li>
               ))}
             </ul>
@@ -800,7 +800,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                       <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#2D6BE4" floodOpacity="0.45" />
                     </filter>
                   </defs>
-                  <CartesianGrid vertical={false} stroke="#FFFFFF" strokeOpacity={0.06} />
+                  <CartesianGrid vertical={false} stroke="var(--grid-line)" />
                   <XAxis dataKey="label" tick={tickMono} axisLine={false} tickLine={false} />
                   <YAxis tick={tickMono} axisLine={false} tickLine={false} width={48}
                     tickFormatter={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : v)} />
