@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import SalesDashboard, { parsearVentas } from '@/components/SalesDashboard';
 import StockEngine, { PanelConfiguracion, PanelValidacion } from '@/components/StockEngine';
 import CostesProducto from '@/components/CostesProducto';
+import InicioOnboarding from '@/components/InicioOnboarding';
 import TemaToggle from '@/components/TemaToggle';
 import { prepararMotor } from '@/lib/engine/motor.mjs';
 
@@ -22,6 +23,7 @@ const TXT3 = 'var(--txt-3)';
 // Iconos geométricos mínimos (trazo, 14×14), al estilo de la casa.
 function Icono({ id }) {
   const trazos = {
+    inicio: <path d="M7 1 L8.3 5.7 L13 7 L8.3 8.3 L7 13 L5.7 8.3 L1 7 L5.7 5.7 Z" strokeLinejoin="round" />,
     resumen: <><rect x="1.5" y="1.5" width="4.6" height="4.6" /><rect x="7.9" y="1.5" width="4.6" height="4.6" /><rect x="1.5" y="7.9" width="4.6" height="4.6" /><rect x="7.9" y="7.9" width="4.6" height="4.6" /></>,
     insights: <><path d="M7 1 V13" /><path d="M1.8 4 L12.2 10" /><path d="M12.2 4 L1.8 10" /></>,
     reposicion: <><rect x="2" y="6" width="10" height="6.5" /><path d="M7 1 V4.8 M4.8 3 L7 5.2 L9.2 3" /></>,
@@ -39,6 +41,7 @@ function Icono({ id }) {
 
 // Cada sección se presenta en UNA línea de negocio: qué pregunta responde.
 const SECCIONES = [
+  { id: 'inicio', etiqueta: 'Inicio', corta: 'Inicio', linea: 'Tus primeros pasos con Wefty.' },
   { id: 'resumen', etiqueta: 'Resumen', corta: 'Resumen', linea: 'Cómo va tu negocio, de un vistazo.' },
   { id: 'insights', etiqueta: 'Insights', corta: 'Insights', linea: 'Qué está pasando en tus ventas — explóralo con filtros.' },
   { id: 'reposicion', etiqueta: 'Reposición', corta: 'Repos.', linea: 'Cuánto pedir de los productos que ya vendes.' },
@@ -72,8 +75,9 @@ function VacioAmable({ irADatos }) {
 }
 
 export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, estadoDatos }) {
-  const [seccion, setSeccion] = useState(hayDatos ? 'resumen' : 'datos');
+  const [seccion, setSeccion] = useState(hayDatos && estadoDatos?.guardado ? 'resumen' : 'inicio');
   const [hayFiltros, setHayFiltros] = useState(false);
+  const [visitadas, setVisitadas] = useState(() => new Set());
   const [email, setEmail] = useState(null);
 
   const parsed = useMemo(
@@ -108,6 +112,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
   useEffect(() => {
     window.dispatchEvent(new Event('resize'));
     window.scrollTo(0, 0);
+    setVisitadas((v) => (v.has(seccion) ? v : new Set(v).add(seccion)));
   }, [seccion]);
 
   const esDashboard = seccion === 'resumen' || seccion === 'insights';
@@ -120,6 +125,21 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
   // Hay un CSV procesado sin guardar: puntito ámbar en "Datos" como recordatorio.
   const pendienteGuardar = Boolean(estadoDatos?.filas && !estadoDatos.guardado);
+
+  // Pasos del onboarding — el estado de cada uno SALE del estado real del
+  // usuario (datos, guardado, costes, secciones visitadas). No es decorativo.
+  const imprescindibles = [
+    { id: 'subir', titulo: 'Sube tus ventas', desc: 'Importa tu CSV de ventas para que Wefty lo analice.', hecho: hayDatos, destino: 'datos', cta: 'Subir ventas' },
+    { id: 'guardar', titulo: 'Guarda tus datos', desc: 'Guárdalas en tu cuenta para no subirlas cada vez.', hecho: Boolean(estadoDatos?.guardado), destino: 'datos', cta: 'Ir a guardar' },
+    { id: 'recom', titulo: 'Pide tu primera recomendación', desc: 'Cuánto pedir de cada producto, talla y color.', hecho: visitadas.has('reposicion') || visitadas.has('plan'), destino: 'reposicion', cta: 'Ver recomendación' },
+  ];
+  const recomendados = [
+    { id: 'costes', titulo: 'Añade tus costes reales', desc: 'El coste real de cada producto afina el plan de compra.', hecho: costesReales.size > 0, destino: 'datos', cta: 'Añadir costes' },
+    { id: 'insights', titulo: 'Explora tus insights', desc: 'Patrones de tus ventas y qué hacer con ellos.', hecho: visitadas.has('insights'), destino: 'insights', cta: 'Ver insights' },
+    { id: 'lanz', titulo: 'Simula un lanzamiento', desc: 'Cuánto fabricar de un producto nuevo, sin histórico.', hecho: visitadas.has('lanzamiento'), destino: 'lanzamiento', cta: 'Simular lanzamiento' },
+  ];
+  const completadosImpr = imprescindibles.filter((p) => p.hecho).length;
+  const progresoInicio = Math.round((completadosImpr / imprescindibles.length) * 100);
 
   const itemCls = (activa) =>
     `relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
@@ -199,7 +219,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
       {/* ——— Nav móvil: barra inferior fija (área táctil generosa) ——— */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-6 border-t border-lineSoft"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-7 border-t border-lineSoft"
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(10px)',
@@ -237,7 +257,8 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
       {/* ——— Contenido ——— */}
       <div className="flex-1 min-w-0 md:pl-16 lg:pl-[220px] pb-24 md:pb-0">
         <div className="max-w-[1280px] mx-auto px-5 md:px-10 py-8 md:py-12">
-          {/* Cabecera de la sección activa: qué hace, en lenguaje de negocio */}
+          {/* Cabecera de la sección activa (Inicio trae su propia cabecera rica) */}
+          {seccion !== 'inicio' ? (
           <header key={seccion} className="seccion-panel mb-6 md:mb-8">
             <h1 className="font-display font-bold text-[28px] md:text-[36px] tracking-[-0.02em] leading-none" style={{ color: TXT }}>
               {SECCIONES.find((x) => x.id === seccion)?.etiqueta}
@@ -246,6 +267,19 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
               {SECCIONES.find((x) => x.id === seccion)?.linea}
             </p>
           </header>
+          ) : null}
+
+          {/* Inicio: onboarding por pasos (estado real del usuario) */}
+          <section className={`seccion-panel ${seccion === 'inicio' ? '' : 'hidden'}`}>
+            <InicioOnboarding
+              progreso={progresoInicio}
+              completados={completadosImpr}
+              total={imprescindibles.length}
+              imprescindibles={imprescindibles}
+              recomendados={recomendados}
+              onIr={setSeccion}
+            />
+          </section>
 
           {/* Resumen + Insights: UNA instancia del dashboard (los filtros se comparten) */}
           <section className={`seccion-panel ${esDashboard ? '' : 'hidden'}`}>
