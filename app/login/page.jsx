@@ -6,13 +6,13 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/hooks';
-import { Hairline, UnderlineLink } from '@/components/primitives';
 import { CornerCrosshairs } from '@/components/decor';
 import { supabase } from '@/lib/supabase';
 import TituloDecodificado from '@/components/TituloDecodificado';
+import TemaToggle from '@/components/TemaToggle';
 
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const SURFACE_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
+const SURFACE_BG = 'var(--card-grad)';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -104,31 +104,34 @@ export default function LoginPage() {
   }
 
   const messageColor =
-    messageType === 'error' ? '#E07A5F' : messageType === 'ok' ? '#6BCB9A' : '#8A8A8F';
+    messageType === 'error' ? 'var(--bad)' : messageType === 'ok' ? 'var(--ok)' : 'var(--txt-2)';
 
   return (
     <main
-      className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
-      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
+      className="relative min-h-screen overflow-hidden text-txt"
+      style={{ background: 'var(--bg-grad)' }}
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
       <div className="relative max-w-[1440px] mx-auto px-8 md:px-12 pt-16 md:pt-32 pb-24">
         {/* Top bar */}
-        <div className="flex items-baseline justify-between">
-          <UnderlineLink href="/" dark className="font-display text-[22px] tracking-[-0.02em]">
+        <div className="flex items-center justify-between">
+          <a href="/" className="ul-anim font-display text-[22px] tracking-[-0.02em]" style={{ color: 'var(--txt)' }}>
             Wefty
-          </UnderlineLink>
-          <span className={MONO} style={{ color: '#8A8A8F' }}>Wefty · acceso</span>
+          </a>
+          <div className="flex items-center gap-4">
+            <span className={MONO} style={{ color: 'var(--txt-2)' }}>Wefty · acceso</span>
+            <TemaToggle variante="icono" />
+          </div>
         </div>
 
-        <Hairline dark className="mt-6" />
+        <div className="mt-6 h-px w-full" style={{ background: 'var(--hairline)' }} />
 
         {/* Section label row */}
         <div className="grid grid-cols-12 gap-6 mt-10 md:mt-20">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
-            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>00 //</span>
-            <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: 'var(--txt-3)' }}>00 //</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
               Acceso — Tu cuenta de Wefty.
             </span>
           </div>
@@ -145,20 +148,20 @@ export default function LoginPage() {
             <Reveal>
               {sessionEmail ? (
                 <div>
-                  <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: '#8A8A8F' }}>
+                  <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: 'var(--txt-2)' }}>
                     Tienes la sesión iniciada como{' '}
-                    <span className="text-[#F5F5F7]">{sessionEmail}</span>.
+                    <span style={{ color: 'var(--txt)' }}>{sessionEmail}</span>.
                   </p>
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className={`mt-6 ${MONO} transition-colors text-[#8A8A8F] hover:text-[#F5F5F7] py-3 -my-3 px-2 -mx-2`}
+                    className={`mt-6 ${MONO} transition-colors text-txt2 hover:text-txt py-3 -my-3 px-2 -mx-2`}
                   >
                     Cerrar sesión
                   </button>
                 </div>
               ) : (
-                <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: '#8A8A8F' }}>
+                <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: 'var(--txt-2)' }}>
                   Crea una cuenta o inicia sesión con tu email y contraseña para
                   acceder a Wefty.
                 </p>
@@ -170,15 +173,15 @@ export default function LoginPage() {
           <div className="col-span-12 md:col-span-6 md:col-start-7">
             <Reveal delay={150}>
               <div
-                className="relative rounded-xl border border-[#1d2330] p-8 md:p-10"
+                className="relative rounded-xl border border-line p-8 md:p-10"
                 style={{ background: SURFACE_BG }}
               >
-                <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
-                <span className={MONO} style={{ color: '#8A8A8F' }}>Email y contraseña</span>
+                <CornerCrosshairs size={12} inset={10} color="var(--txt)" opacity={0.35} />
+                <span className={MONO} style={{ color: 'var(--txt-2)' }}>Email y contraseña</span>
 
                 <div className="mt-6 space-y-5">
                   <div>
-                    <label htmlFor="email" className={`${MONO} block mb-2`} style={{ color: '#6f7075' }}>
+                    <label htmlFor="email" className={`${MONO} block mb-2`} style={{ color: 'var(--txt-3)' }}>
                       Email
                     </label>
                     <input
@@ -188,11 +191,11 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="tu@email.com"
-                      className="w-full h-12 px-4 rounded-lg bg-[#090c12] border border-[#1d2330] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#F08C56]"
+                      className="w-full h-12 px-4 rounded-lg bg-surfaceInput border border-line text-[16px] md:text-[15px] text-txt placeholder-txt3 outline-none transition-colors focus:border-brand"
                     />
                   </div>
                   <div>
-                    <label htmlFor="password" className={`${MONO} block mb-2`} style={{ color: '#6f7075' }}>
+                    <label htmlFor="password" className={`${MONO} block mb-2`} style={{ color: 'var(--txt-3)' }}>
                       Contraseña
                     </label>
                     <input
@@ -202,7 +205,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full h-12 px-4 rounded-lg bg-[#090c12] border border-[#1d2330] text-[16px] md:text-[15px] text-[#F5F5F7] placeholder-[#5d5e63] outline-none transition-colors focus:border-[#F08C56]"
+                      className="w-full h-12 px-4 rounded-lg bg-surfaceInput border border-line text-[16px] md:text-[15px] text-txt placeholder-txt3 outline-none transition-colors focus:border-brand"
                     />
                   </div>
                 </div>
@@ -237,8 +240,8 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-24 md:mt-32">
-          <Hairline dark />
-          <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+          <div className="h-px w-full" style={{ background: 'var(--hairline)' }} />
+          <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
             Acceso seguro con Supabase Auth
           </p>
         </div>

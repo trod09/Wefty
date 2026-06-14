@@ -11,12 +11,13 @@ import { supabase } from '@/lib/supabase';
 import SalesDashboard, { parsearVentas } from '@/components/SalesDashboard';
 import StockEngine, { PanelConfiguracion, PanelValidacion } from '@/components/StockEngine';
 import CostesProducto from '@/components/CostesProducto';
+import TemaToggle from '@/components/TemaToggle';
 import { prepararMotor } from '@/lib/engine/motor.mjs';
 
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const TXT = '#F5F5F7';
-const TXT2 = '#8A8A8F';
-const TXT3 = '#5d5e63';
+const TXT = 'var(--txt)';
+const TXT2 = 'var(--txt-2)';
+const TXT3 = 'var(--txt-3)';
 
 // Iconos geométricos mínimos (trazo, 14×14), al estilo de la casa.
 function Icono({ id }) {
@@ -50,8 +51,8 @@ const SECCIONES = [
 function VacioAmable({ irADatos }) {
   return (
     <div
-      className="rounded-xl border border-[#1d2330] p-12 md:p-16 text-center"
-      style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}
+      className="rounded-xl border border-line p-12 md:p-16 text-center"
+      style={{ background: 'var(--card-grad)' }}
     >
       <p className="font-display text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
         Sube tus ventas para ver esto.
@@ -62,7 +63,7 @@ function VacioAmable({ irADatos }) {
       <button
         type="button"
         onClick={irADatos}
-        className="btn-sheen mt-8 h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+        className="btn-sheen mt-8 h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
       >
         Ir a Datos y ajustes
       </button>
@@ -122,18 +123,18 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
   const itemCls = (activa) =>
     `relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
-      activa ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
+      activa ? 'text-txt' : 'text-txt2 hover:text-txt'
     }`;
 
   return (
     <div className="relative flex min-h-screen">
       {/* ——— Sidebar (escritorio) ——— */}
       <aside
-        className="hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[220px] z-40 border-r border-[#161b26]"
-        style={{ background: 'linear-gradient(180deg, #0a0d14 0%, #07090e 100%)' }}
+        className="hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[220px] z-40 border-r border-lineSoft"
+        style={{ background: 'var(--sidebar-grad)' }}
       >
         <div className="px-0 lg:px-6 pt-7 text-center lg:text-left">
-          <Link href="/" className="font-display text-[22px] tracking-[-0.02em] text-[#F5F5F7]">
+          <Link href="/" className="font-display text-[22px] tracking-[-0.02em] text-txt">
             <span className="lg:hidden" aria-hidden="true">W</span>
             <span className="hidden lg:inline">Wefty</span>
           </Link>
@@ -150,34 +151,35 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 onClick={() => setSeccion(sec.id)}
                 className={itemCls(activa)}
                 style={{
-                  background: activa ? 'rgba(240,140,86,0.10)' : 'transparent',
-                  boxShadow: activa ? 'inset 2px 0 0 #F08C56' : 'none',
-                  color: activa ? '#F5F5F7' : undefined,
+                  background: activa ? 'var(--tint-brand)' : 'transparent',
+                  boxShadow: activa ? 'inset 2px 0 0 var(--brand)' : 'none',
+                  color: activa ? 'var(--txt)' : undefined,
                 }}
                 aria-current={activa ? 'page' : undefined}
                 title={sec.id === 'datos' && pendienteGuardar ? `${sec.etiqueta} — datos sin guardar` : sec.etiqueta}
               >
-                <span style={{ color: activa ? '#F08C56' : 'currentColor' }}><Icono id={sec.id} /></span>
+                <span style={{ color: activa ? 'var(--brand)' : 'currentColor' }}><Icono id={sec.id} /></span>
                 <span className="hidden lg:inline">{sec.etiqueta}</span>
                 {sec.id === 'datos' && pendienteGuardar ? (
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: '#E3C04B' }} />
+                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
                 ) : null}
               </button>
             );
           })}
         </nav>
 
-        <div className="px-3 lg:px-6 py-5 border-t border-[#161b26]">
+        <div className="px-3 lg:px-6 py-5 border-t border-lineSoft space-y-3">
+          <TemaToggle variante="sidebar" />
           {email ? (
             <>
               <div className="hidden lg:flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#6BCB9A' }} />
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: 'var(--ok)' }} />
                 <span className="text-[12px] truncate" style={{ color: TXT2 }} title={email}>{email}</span>
               </div>
               <button
                 type="button"
                 onClick={() => supabase.auth.signOut()}
-                className={`${MONO} lg:mt-2.5 w-full flex items-center justify-center lg:justify-start transition-colors hover:text-[#F5F5F7]`}
+                className={`${MONO} lg:mt-2.5 w-full flex items-center justify-center lg:justify-start transition-colors hover:text-txt`}
                 style={{ color: TXT3 }}
                 title={`Cerrar sesión (${email})`}
               >
@@ -188,7 +190,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
               </button>
             </>
           ) : (
-            <a href="/login" className={`${MONO} transition-colors hover:text-[#F5F5F7]`} style={{ color: TXT2 }}>
+            <a href="/login" className={`${MONO} transition-colors hover:text-txt`} style={{ color: TXT2 }}>
               Iniciar sesión
             </a>
           )}
@@ -197,9 +199,9 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
       {/* ——— Nav móvil: barra inferior fija (área táctil generosa) ——— */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-6 border-t border-[#161b26]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-6 border-t border-lineSoft"
         style={{
-          background: 'rgba(7,9,14,0.96)',
+          background: 'var(--nav-bg)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           paddingBottom: 'env(safe-area-inset-bottom)',
@@ -214,18 +216,23 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
               type="button"
               onClick={() => setSeccion(sec.id)}
               className="relative flex flex-col items-center gap-1 pt-2.5 pb-2 transition-colors"
-              style={{ color: activa ? '#F5F5F7' : TXT2 }}
+              style={{ color: activa ? 'var(--txt)' : TXT2 }}
               aria-current={activa ? 'page' : undefined}
             >
-              <span style={{ color: activa ? '#F08C56' : 'currentColor' }}><Icono id={sec.id} /></span>
+              <span style={{ color: activa ? 'var(--brand)' : 'currentColor' }}><Icono id={sec.id} /></span>
               <span className="font-mono text-[8.5px] tracking-[0.04em] uppercase">{sec.corta}</span>
               {sec.id === 'datos' && pendienteGuardar ? (
-                <span className="absolute top-1.5 right-[22%] w-1.5 h-1.5 rounded-full" style={{ background: '#E3C04B' }} />
+                <span className="absolute top-1.5 right-[22%] w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
               ) : null}
             </button>
           );
         })}
       </nav>
+
+      {/* Interruptor de tema en móvil (en escritorio vive en el sidebar) */}
+      <div className="md:hidden fixed top-3 right-3 z-40">
+        <TemaToggle variante="icono" />
+      </div>
 
       {/* ——— Contenido ——— */}
       <div className="flex-1 min-w-0 md:pl-16 lg:pl-[220px] pb-24 md:pb-0">
@@ -281,11 +288,11 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 className="mb-8 rounded-xl border p-4 md:p-5 flex flex-wrap items-center gap-x-5 gap-y-3"
                 style={{
                   borderColor: estadoDatos.guardado ? 'rgba(107,203,154,0.35)' : 'rgba(227,192,75,0.35)',
-                  background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)',
+                  background: 'var(--panel-grad)',
                 }}
               >
                 <span className="flex items-center gap-2.5 text-[13px]" style={{ color: TXT }}>
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: estadoDatos.guardado ? '#6BCB9A' : '#E3C04B' }} />
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: estadoDatos.guardado ? 'var(--ok)' : 'var(--warn)' }} />
                   {estadoDatos.guardado
                     ? `${estadoDatos.filas.toLocaleString('es-ES')} filas de ventas guardadas en tu cuenta.`
                     : `Listo: ${estadoDatos.filas.toLocaleString('es-ES')} filas reconocidas — guárdalas abajo para no subirlas cada vez.`}
@@ -293,7 +300,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 <button
                   type="button"
                   onClick={() => setSeccion('resumen')}
-                  className="btn-sheen h-10 px-5 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
+                  className="btn-sheen h-10 px-5 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
                 >
                   Ver mi Resumen →
                 </button>
@@ -301,7 +308,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
             ) : null}
             {seccionDatos}
             {hayDatos && motor ? (
-              <div className="mt-12 rounded-xl border border-[#1d2330] p-6 md:p-8" style={{ background: 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)' }}>
+              <div className="mt-12 rounded-xl border border-line p-6 md:p-8" style={{ background: 'var(--card-grad)' }}>
                 <div className={`${MONO}`} style={{ color: TXT2 }}>Ajustes del motor</div>
                 <CostesProducto
                   motor={motor}

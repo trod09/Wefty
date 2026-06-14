@@ -9,7 +9,6 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/hooks';
-import { Hairline } from '@/components/primitives';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import ProductoShell from '@/components/ProductoShell';
 import TituloDecodificado from '@/components/TituloDecodificado';
@@ -160,7 +159,7 @@ function castValue(raw, kind) {
 
 // Clases de etiqueta mono reutilizadas
 const MONO = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const SURFACE_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
+const SURFACE_BG = 'var(--card-grad)';
 
 // Tamaño máximo del CSV: leerlo entero en memoria más allá de esto puede
 // congelar la pestaña. 15 MB dan para varios años de ventas línea a línea.
@@ -437,11 +436,11 @@ export default function UploadPage() {
   if (auth !== 'authed') {
     return (
       <main
-        className="relative min-h-screen flex items-center justify-center text-[#F5F5F7]"
-        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
+        className="relative min-h-screen flex items-center justify-center text-txt"
+        style={{ background: 'var(--bg-grad)' }}
       >
         <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
-        <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+        <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
           Comprobando acceso…
         </span>
       </main>
@@ -453,11 +452,11 @@ export default function UploadPage() {
   if (savedState === 'checking' && !result) {
     return (
       <main
-        className="relative min-h-screen flex items-center justify-center text-[#F5F5F7]"
-        style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
+        className="relative min-h-screen flex items-center justify-center text-txt"
+        style={{ background: 'var(--bg-grad)' }}
       >
         <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
-        <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+        <span className="relative font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
           Cargando tu panel…
         </span>
       </main>
@@ -466,8 +465,8 @@ export default function UploadPage() {
 
   return (
     <main
-      className="relative min-h-screen overflow-hidden text-[#F5F5F7]"
-      style={{ background: 'radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%)' }}
+      className="relative min-h-screen overflow-hidden text-txt"
+      style={{ background: 'var(--bg-grad)' }}
     >
       <div className="absolute inset-0 grid-noise-dark opacity-70 pointer-events-none" />
 
@@ -481,15 +480,15 @@ export default function UploadPage() {
         {/* Section label row */}
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
-            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: '#5d5e63' }}>00 //</span>
-            <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: 'var(--txt-3)' }}>00 //</span>
+            <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
               Upload — Tus datos de ventas.
             </span>
           </div>
           <div className="col-span-12 md:col-span-5 md:text-right">
             <span
               className={MONO}
-              style={{ color: result?.source === 'db' || saveState === 'done' ? '#6BCB9A' : result ? '#E3C04B' : '#8A8A8F' }}
+              style={{ color: result?.source === 'db' || saveState === 'done' ? 'var(--ok)' : result ? 'var(--warn)' : 'var(--txt-2)' }}
             >
               {result?.source === 'db' || saveState === 'done'
                 ? 'guardado en tu cuenta ✓'
@@ -509,7 +508,7 @@ export default function UploadPage() {
         <div className={`grid grid-cols-12 gap-6 ${result ? 'mt-8' : 'mt-12 md:mt-16'}`}>
           <div className="col-span-12 md:col-span-5">
             <Reveal>
-              <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: '#8A8A8F' }}>
+              <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: 'var(--txt-2)' }}>
                 {result
                   ? 'Sube otro export para añadir más ventas al análisis.'
                   : 'Elige un archivo CSV con tus datos de ventas.'}{' '}
@@ -522,11 +521,11 @@ export default function UploadPage() {
           <div className="col-span-12 md:col-span-6 md:col-start-7">
             <Reveal delay={150}>
               <div
-                className="relative rounded-xl border border-[#1d2330] p-8 md:p-10 transition-all duration-300 hover:border-[#2e3850]"
+                className="relative rounded-xl border border-line p-8 md:p-10 transition-all duration-300 hover:border-lineHover"
                 style={{ background: SURFACE_BG }}
               >
-                <CornerCrosshairs size={12} inset={10} color="#F5F5F7" opacity={0.35} />
-                <span className={MONO} style={{ color: '#8A8A8F' }}>
+                <CornerCrosshairs size={12} inset={10} color="var(--txt)" opacity={0.35} />
+                <span className={MONO} style={{ color: 'var(--txt-2)' }}>
                   {result ? 'Archivo CSV — añadir o actualizar' : 'Archivo CSV'}
                 </span>
 
@@ -548,13 +547,13 @@ export default function UploadPage() {
                   />
                 </div>
 
-                <p className="mt-6 text-[13px] leading-relaxed" style={{ color: '#6f7075' }}>
+                <p className="mt-6 text-[13px] leading-relaxed" style={{ color: 'var(--txt-3)' }}>
                   Exporta tu CSV desde Shopify o una hoja de cálculo. La primera
                   fila debe ser el encabezado con los nombres de las columnas.
                 </p>
 
                 {error ? (
-                  <p className="mt-6 font-mono text-[12px] tracking-[0.04em]" style={{ color: '#E07A5F' }}>{error}</p>
+                  <p className="mt-6 font-mono text-[12px] tracking-[0.04em]" style={{ color: 'var(--bad)' }}>{error}</p>
                 ) : null}
               </div>
             </Reveal>
@@ -565,17 +564,17 @@ export default function UploadPage() {
         {result ? (
           <div className="mt-20 md:mt-28">
             {/* Cabecera compacta del archivo */}
-            <Hairline dark />
+            <div className="h-px w-full" style={{ background: 'var(--hairline)' }} />
             <div className="flex flex-wrap items-baseline justify-between gap-4 pt-8">
               <div>
-                <span className={MONO} style={{ color: '#8A8A8F' }}>
+                <span className={MONO} style={{ color: 'var(--txt-2)' }}>
                   {result.source === 'db' ? 'Datos guardados' : 'Archivo analizado'}
                 </span>
                 <div className="mt-2 font-display text-[24px] md:text-[32px] leading-tight tracking-[-0.01em] break-all">
                   {result.name}
                 </div>
               </div>
-              <span className={MONO} style={{ color: '#8A8A8F' }}>
+              <span className={MONO} style={{ color: 'var(--txt-2)' }}>
                 {result.dataRows.toLocaleString('es-ES')} filas · {result.headers.length} columnas
               </span>
             </div>
@@ -598,14 +597,14 @@ export default function UploadPage() {
                 {saveMessage ? (
                   <span
                     className="font-mono text-[12px] tracking-[0.04em]"
-                    style={{ color: saveState === 'error' ? '#E07A5F' : '#6BCB9A' }}
+                    style={{ color: saveState === 'error' ? 'var(--bad)' : 'var(--ok)' }}
                   >
                     {saveMessage}
                   </span>
                 ) : null}
               </div>
             ) : result.source === 'db' ? (
-              <p className="mt-8 font-mono text-[12px] tracking-[0.04em]" style={{ color: '#6BCB9A' }}>
+              <p className="mt-8 font-mono text-[12px] tracking-[0.04em]" style={{ color: 'var(--ok)' }}>
                 Cargado desde tus datos guardados. Sube un CSV nuevo para añadir más.
               </p>
             ) : null}
@@ -614,17 +613,17 @@ export default function UploadPage() {
             {result.detected ? (
               <details className="mt-8 group">
                 <summary className="flex items-center gap-3 cursor-pointer select-none">
-                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
                     Columnas reconocidas automáticamente
                   </span>
-                  <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: '#5d5e63' }}>›</span>
+                  <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: 'var(--txt-3)' }}>›</span>
                 </summary>
                 <div className="mt-4 flex flex-wrap gap-x-10 gap-y-2.5">
                   {result.detected.map((d) => (
                     <div key={d.label} className="flex items-baseline gap-2.5">
-                      <span className={MONO} style={{ color: '#8A8A8F' }}>{d.label}</span>
-                      <span className="font-mono text-[11px]" style={{ color: '#5d5e63' }}>←</span>
-                      <span className="text-[13px]" style={{ color: '#b9b9be' }}>{d.from}</span>
+                      <span className={MONO} style={{ color: 'var(--txt-2)' }}>{d.label}</span>
+                      <span className="font-mono text-[11px]" style={{ color: 'var(--txt-3)' }}>←</span>
+                      <span className="text-[13px]" style={{ color: 'var(--txt)' }}>{d.from}</span>
                     </div>
                   ))}
                 </div>
@@ -635,10 +634,10 @@ export default function UploadPage() {
             {result.headers.length > 0 ? (
               <details className="mt-16 group">
                 <summary className="flex items-center gap-3 cursor-pointer select-none py-4 border-t border-white/10">
-                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+                  <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
                     Ver datos en bruto · tabla
                   </span>
-                  <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: '#5d5e63' }}>›</span>
+                  <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: 'var(--txt-3)' }}>›</span>
                 </summary>
                 <div className="mt-4 acc-body">
                   <div className="overflow-x-auto">
@@ -649,7 +648,7 @@ export default function UploadPage() {
                             <th
                               key={i}
                               className="font-mono text-[10px] tracking-[0.18em] uppercase font-normal py-3 pr-8 border-b border-white/10 whitespace-nowrap align-bottom"
-                              style={{ color: '#8A8A8F' }}
+                              style={{ color: 'var(--txt-2)' }}
                             >
                               {h || `Columna ${i + 1}`}
                             </th>
@@ -663,7 +662,7 @@ export default function UploadPage() {
                               <td
                                 key={c}
                                 className="text-[14px] py-3 pr-8 align-top whitespace-nowrap"
-                                style={{ color: '#b9b9be' }}
+                                style={{ color: 'var(--txt)' }}
                               >
                                 {row[c] ?? ''}
                               </td>
@@ -674,7 +673,7 @@ export default function UploadPage() {
                     </table>
                   </div>
                   {result.dataRows > 20 ? (
-                    <p className="mt-5 font-mono text-[11px] tracking-[0.08em] uppercase" style={{ color: '#8A8A8F' }}>
+                    <p className="mt-5 font-mono text-[11px] tracking-[0.08em] uppercase" style={{ color: 'var(--txt-2)' }}>
                       Mostrando 20 de {result.dataRows.toLocaleString('es-ES')} filas
                     </p>
                   ) : null}
@@ -686,8 +685,8 @@ export default function UploadPage() {
 
         {/* Footnote */}
         <div className="mt-24 md:mt-32">
-          <Hairline dark />
-          <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: '#8A8A8F' }}>
+          <div className="h-px w-full" style={{ background: 'var(--hairline)' }} />
+          <p className="mt-6 font-mono text-[10px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
             <Fn n={1} /> El análisis es local · solo «Guardar» envía tus ventas a tu cuenta
           </p>
         </div>

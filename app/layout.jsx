@@ -44,6 +44,16 @@ export default function RootLayout({ children }) {
       lang="es"
       className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
     >
+      <head>
+        {/* Fija el tema del producto ANTES de pintar (sin parpadeo). Por
+            defecto oscuro; si el usuario eligió claro, se recuerda. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('wefty-tema');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();",
+          }}
+        />
+      </head>
       <body className="font-sans">{children}</body>
     </html>
   );

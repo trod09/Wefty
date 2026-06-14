@@ -2,6 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===========================================================================
+   SISTEMA DE TEMA del PRODUCTO (/upload, /login). La landing (.wefty-root) NO
+   usa estas variables, así que conserva su oscuro cyberpunk pase lo que pase.
+   El tema oscuro es el DEFECTO y cada variable vale EXACTAMENTE lo que el color
+   que reemplaza, así que el modo oscuro queda idéntico al de siempre. El tema
+   claro es una paleta editorial cálida (hueso/tinta) afín a la marca.
+   =========================================================================== */
+:root {
+  color-scheme: dark;
+  --bg: #05060a;
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%);
+  --dash-grad: radial-gradient(120% 80% at 50% 0%, #090c12 0%, #05060a 60%);
+  --sidebar-grad: linear-gradient(180deg, #0a0d14 0%, #07090e 100%);
+  --card-grad: linear-gradient(150deg, #0c0f16 0%, #090b11 100%);
+  --panel-grad: linear-gradient(150deg, #0b0e15 0%, #080a10 100%);
+  --inset-grad: linear-gradient(150deg, #0a0c12 0%, #07090d 100%);
+  --surface-1: #0c0f16;
+  --surface-2: #090b11;
+  --surface-input: #090c12;
+  --txt: #f5f5f7;
+  --txt-2: #8a8a8f;
+  --txt-3: #5d5e63;
+  --muted: #43464d;
+  --line: #1d2330;
+  --line-soft: #161b26;
+  --line-hover: #2e3850;
+  --hairline: rgba(255, 255, 255, 0.1);
+  --hairline-soft: rgba(255, 255, 255, 0.06);
+  --grid-line: rgba(255, 255, 255, 0.06);
+  --brand: #f08c56;
+  --brand-soft: #f0a987;
+  --brand-line: #3a2b20;
+  --data: #2d6be4;
+  --data-2: #3f7bec;
+  --ok: #6bcb9a;
+  --warn: #e3c04b;
+  --bad: #e07a5f;
+  --scrollbar: #2a2c31;
+  --glow-brand: rgba(240, 140, 86, 0.5);
+  --tint-brand: rgba(240, 140, 86, 0.08);
+  --nav-bg: rgba(7, 9, 14, 0.96);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f3f0e9;
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #fbf9f4 0%, #efebe1 60%);
+  --dash-grad: radial-gradient(120% 80% at 50% 0%, #fbf9f4 0%, #f0ece2 60%);
+  --sidebar-grad: linear-gradient(180deg, #fbf9f4 0%, #f1ede3 100%);
+  --card-grad: linear-gradient(150deg, #ffffff 0%, #f7f4ec 100%);
+  --panel-grad: linear-gradient(150deg, #faf8f1 0%, #f2eee4 100%);
+  --inset-grad: linear-gradient(150deg, #f8f5ee 0%, #f1ede3 100%);
+  --surface-1: #ffffff;
+  --surface-2: #f7f4ec;
+  --surface-input: #ffffff;
+  --txt: #1b1b1f;
+  --txt-2: #5d5c63;
+  --txt-3: #97938a;
+  --muted: #b3aea2;
+  --line: #e4dfd2;
+  --line-soft: #ebe6da;
+  --line-hover: #d0c8b8;
+  --hairline: rgba(20, 18, 12, 0.1);
+  --hairline-soft: rgba(20, 18, 12, 0.06);
+  --grid-line: rgba(20, 18, 12, 0.08);
+  --brand: #c4632d;
+  --brand-soft: #b06a42;
+  --brand-line: #e7d8c5;
+  --data: #1d54bd;
+  --data-2: #2f6be0;
+  --ok: #2c8a55;
+  --warn: #9a7611;
+  --bad: #bf3c27;
+  --scrollbar: #cdc6b8;
+  --glow-brand: rgba(196, 99, 45, 0.14);
+  --tint-brand: rgba(240, 140, 86, 0.09);
+  --nav-bg: rgba(251, 249, 244, 0.96);
+}
+
 /* Fondo base oscuro: la landing y el producto comparten el mismo mundo
    visual; así el rebote del scroll (overscroll) nunca enseña un flash claro.
    Cada página pinta su propio fondo encima, como hasta ahora. */
@@ -130,7 +209,7 @@ details > summary::-webkit-details-marker {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2c31;
+  background: var(--scrollbar);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-track {
