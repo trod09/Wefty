@@ -615,13 +615,23 @@ export default function StockEngine({
 
   const refResumenPlan = useRef(null);
 
-  function generarPlan() {
+  // Presupuesto "redondo" un ±% sobre el actual, para comparar de un clic.
+  const otroPresupuesto = (factor) => {
+    const base = Number(plan?.presupuesto) || 0;
+    const paso = base >= 10000 ? 1000 : base >= 2000 ? 500 : 100;
+    return Math.max(paso, Math.round((base * factor) / paso) * paso);
+  };
+
+  function generarPlan(presuOverride) {
     if (calculandoPlan) return;
+    const presuNum = typeof presuOverride === 'number' ? presuOverride : Number(planPresuTxt);
+    if (!(presuNum > 0)) return;
+    if (typeof presuOverride === 'number') setPlanPresuTxt(String(presuOverride));
     setCalculandoPlan(true);
     // setTimeout: deja pintar "Calculando plan…" antes del cálculo pesado.
     setTimeout(() => {
       const nuevo = generarPlanCompra(motor, {
-        presupuesto: Number(planPresuTxt),
+        presupuesto: presuNum,
         horizonte: Number(planHorizTxt) || 12,
         margenPct: Number(planMargenTxt) || 60,
         escenario: planEsc,
@@ -636,7 +646,7 @@ export default function StockEngine({
         });
       }
       setPlan(nuevo);
-      setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc, costes: huellaCostes });
+      setPlanParams({ presu: String(presuNum), horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc, costes: huellaCostes });
       setCalculandoPlan(false);
       // El resumen puede quedar fuera de pantalla: lo traemos a la vista.
       if (nuevo.ok) {
@@ -782,7 +792,7 @@ export default function StockEngine({
             <div className="mt-6 flex flex-wrap items-center gap-5">
               <button
                 type="button"
-                onClick={generarPlan}
+                onClick={() => generarPlan()}
                 disabled={calculandoPlan || !(Number(planPresuTxt) > 0)}
                 className="btn-sheen h-11 px-6 rounded-lg border border-brandLine font-mono text-[11px] tracking-[0.12em] uppercase text-txt transition-colors disabled:opacity-60"
                 style={{ background: 'var(--tint-brand)' }}
@@ -873,6 +883,24 @@ export default function StockEngine({
                     {plan.filas.length} productos · {fmtInt(plan.unidadesTotales)} unidades ·{' '}
                     <span style={{ color: VERDE }}>{fmtEur(plan.margenEsperado)}</span> de margen esperado con tus {fmtEur(plan.presupuesto)}.
                   </p>
+                  {/* Comparar de un clic: regenera con otro presupuesto y la comparativa aparece sola */}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>¿y con otro presupuesto?</span>
+                    <button
+                      type="button" disabled={calculandoPlan}
+                      onClick={() => generarPlan(otroPresupuesto(0.8))}
+                      className="btn-sheen h-8 px-3 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.06em] uppercase text-txt2 hover:text-txt hover:border-txt3 transition-colors disabled:opacity-60"
+                    >
+                      − {fmtEur(otroPresupuesto(0.8))}
+                    </button>
+                    <button
+                      type="button" disabled={calculandoPlan}
+                      onClick={() => generarPlan(otroPresupuesto(1.2))}
+                      className="btn-sheen h-8 px-3 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.06em] uppercase text-txt2 hover:text-txt hover:border-txt3 transition-colors disabled:opacity-60"
+                    >
+                      + {fmtEur(otroPresupuesto(1.2))}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Comparativa con el plan anterior (memoria de sesión) */}
