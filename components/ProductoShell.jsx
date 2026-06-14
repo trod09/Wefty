@@ -276,7 +276,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
               completados={completadosImpr}
               total={imprescindibles.length}
               imprescindibles={imprescindibles}
-              recomendados={recomendados}
+              recomendados={hayDatos ? recomendados : []}
               onIr={setSeccion}
             />
           </section>

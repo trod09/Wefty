@@ -8,7 +8,6 @@ import React from 'react';
 
 const TXT = 'var(--txt)';
 const TXT2 = 'var(--txt-2)';
-const TXT3 = 'var(--txt-3)';
 const OK = 'var(--ok)';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 
@@ -129,13 +128,15 @@ export default function InicioOnboarding({ progreso, completados, total, impresc
         )}
       </div>
 
-      {/* Saca más partido */}
-      <div>
-        <div className={LABEL} style={{ color: TXT2 }}>Saca más partido</div>
-        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {recomendados.map((p) => <Tarjeta key={p.id} paso={p} onIr={onIr} />)}
+      {/* Saca más partido — solo cuando ya hay datos (si no, llevaría a secciones vacías) */}
+      {recomendados.length > 0 ? (
+        <div>
+          <div className={LABEL} style={{ color: TXT2 }}>Saca más partido</div>
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recomendados.map((p) => <Tarjeta key={p.id} paso={p} onIr={onIr} />)}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Ayuda discreta */}
       <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-hairlineSoft mt-2" style={{ paddingTop: '1.25rem' }}>
