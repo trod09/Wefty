@@ -274,6 +274,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 costesReales={costesReales}
                 margenTxt={margenTxt}
                 onMargenTxt={setMargenTxt}
+                onNavegar={setSeccion}
               />
             ) : (
               <VacioAmable irADatos={irADatos} />

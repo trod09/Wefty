@@ -411,7 +411,7 @@ function TablaTallas({ reparto, recomendado }) {
 
 export default function StockEngine({
   records, hayFiltros, pestana: pestanaProp,
-  motor: motorProp, costesReales: costesRealesProp, margenTxt, onMargenTxt,
+  motor: motorProp, costesReales: costesRealesProp, margenTxt, onMargenTxt, onNavegar,
 }) {
   // La pestaña puede venir CONTROLADA desde el sidebar del shell (Reposición /
   // Lanzamiento / Plan como secciones); sin prop, manda el estado interno.
@@ -743,6 +743,31 @@ export default function StockEngine({
                   />
                 </Campo>
               </div>
+              {costesReales.size === 0 ? (
+                <div className="mt-4 rounded-lg border p-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1" style={{ borderColor: 'rgba(227,192,75,0.35)', background: 'var(--panel-grad)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: AMBAR }} />
+                  <span className="text-[13px] leading-snug" style={{ color: TXT2 }}>
+                    Estás usando un margen estimado del {Number(planMargenTxt) || 60}% para todo el catálogo. Para un plan más preciso, añade el coste real de cada producto.
+                  </span>
+                  {onNavegar ? (
+                    <button type="button" onClick={() => onNavegar('datos')} className="font-mono text-[11px] tracking-[0.1em] uppercase transition-opacity hover:opacity-70" style={{ color: 'var(--brand-soft)' }}>
+                      Añadir costes →
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mt-4 rounded-lg border p-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1" style={{ borderColor: 'rgba(107,203,154,0.35)', background: 'var(--panel-grad)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: VERDE }} />
+                  <span className="text-[13px] leading-snug" style={{ color: VERDE }}>
+                    Usando tus costes reales en {costesReales.size} de {productos.filter((p) => p.suficiente).length} productos.
+                  </span>
+                  {onNavegar && productos.filter((p) => p.suficiente).length - costesReales.size > 0 ? (
+                    <button type="button" onClick={() => onNavegar('datos')} className="font-mono text-[11px] tracking-[0.1em] uppercase transition-opacity hover:opacity-70" style={{ color: 'var(--brand-soft)' }}>
+                      Completar el resto →
+                    </button>
+                  ) : null}
+                </div>
+              )}
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-5">
