@@ -449,6 +449,7 @@ export default function StockEngine({
   const [calculandoPlan, setCalculandoPlan] = useState(false);
   const [copiadoPlan, setCopiadoPlan] = useState(false);
   const [planParams, setPlanParams] = useState(null);
+  const [planAnterior, setPlanAnterior] = useState(null); // totales del último plan, para comparar
   // Costes reales por producto: llegan del shell (el panel "Costes de
   // producto" vive en Datos y ajustes); sin shell, mapa vacío estable.
   const costesReales = costesRealesProp ?? SIN_COSTES;
@@ -626,6 +627,14 @@ export default function StockEngine({
         escenario: planEsc,
         costesReales,
       });
+      if (plan && plan.ok && nuevo.ok) {
+        setPlanAnterior({
+          presupuesto: plan.presupuesto,
+          unidadesTotales: plan.unidadesTotales,
+          margenEsperado: plan.margenEsperado,
+          nProductos: plan.filas.length,
+        });
+      }
       setPlan(nuevo);
       setPlanParams({ presu: planPresuTxt, horiz: planHorizTxt, margen: planMargenTxt, esc: planEsc, costes: huellaCostes });
       setCalculandoPlan(false);
@@ -857,8 +866,63 @@ export default function StockEngine({
 
             {plan?.ok ? (
               <>
+                {/* Titular del resultado: que se lea como recomendación, no como tabla */}
+                <div ref={refResumenPlan} className="mt-6 scroll-mt-6">
+                  <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Esto es lo que te recomiendo comprar</div>
+                  <p className="mt-2 font-display text-[20px] md:text-[26px] leading-snug tracking-[-0.01em] max-w-[40ch]" style={{ color: TXT }}>
+                    {plan.filas.length} productos · {fmtInt(plan.unidadesTotales)} unidades ·{' '}
+                    <span style={{ color: VERDE }}>{fmtEur(plan.margenEsperado)}</span> de margen esperado con tus {fmtEur(plan.presupuesto)}.
+                  </p>
+                </div>
+
+                {/* Comparativa con el plan anterior (memoria de sesión) */}
+                {planAnterior && planAnterior.presupuesto !== plan.presupuesto ? (
+                  <div className="mt-4 rounded-xl border border-line p-5" style={{ background: 'var(--panel-grad)' }}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className={LABEL} style={{ color: TXT2 }}>Comparativa con tu plan anterior</div>
+                      <button type="button" onClick={() => setPlanAnterior(null)} className="font-mono text-[10px] tracking-[0.1em] uppercase transition-opacity hover:opacity-70" style={{ color: TXT3 }}>
+                        ↺ olvidar
+                      </button>
+                    </div>
+                    <div className="mt-3 overflow-x-auto">
+                      <table className="w-full min-w-[420px] border-collapse">
+                        <thead>
+                          <tr className="border-b border-hairline">
+                            <th className={`${LABEL} text-left font-normal py-1.5`} style={{ color: TXT3 }}> </th>
+                            <th className={`${LABEL} text-right font-normal py-1.5`} style={{ color: TXT3 }}>Anterior</th>
+                            <th className={`${LABEL} text-right font-normal py-1.5`} style={{ color: TXT3 }}>Este plan</th>
+                            <th className={`${LABEL} text-right font-normal py-1.5`} style={{ color: TXT3 }}>Δ</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { k: 'Presupuesto', a: planAnterior.presupuesto, b: plan.presupuesto, money: true, neutral: true },
+                            { k: 'Unidades', a: planAnterior.unidadesTotales, b: plan.unidadesTotales },
+                            { k: 'Margen esperado', a: planAnterior.margenEsperado, b: plan.margenEsperado, money: true },
+                            { k: 'Productos', a: planAnterior.nProductos, b: plan.filas.length },
+                          ].map((f) => {
+                            const d = f.b - f.a;
+                            const fmt = f.money ? fmtEur : fmtInt;
+                            const col = f.neutral || d === 0 ? TXT2 : d > 0 ? VERDE : EMBER;
+                            return (
+                              <tr key={f.k} className="border-b border-hairlineSoft">
+                                <td className="text-[13px] py-2" style={{ color: TXT2 }}>{f.k}</td>
+                                <td className="font-mono text-[12px] tnum text-right py-2" style={{ color: TXT3 }}>{fmt(f.a)}</td>
+                                <td className="font-mono text-[13px] tnum text-right py-2" style={{ color: TXT }}>{fmt(f.b)}</td>
+                                <td className="font-mono text-[12px] tnum text-right py-2" style={{ color: col }}>
+                                  {d === 0 ? '=' : `${d > 0 ? '+' : '−'}${fmt(Math.abs(d))}`}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : null}
+
                 {/* Resumen global del plan */}
-                <div ref={refResumenPlan} className="mt-6 scroll-mt-6 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
+                <div className="mt-4 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
                   <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
                   {plan.costes ? (
                     <p className="mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>
