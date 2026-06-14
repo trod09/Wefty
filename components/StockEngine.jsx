@@ -679,46 +679,70 @@ export default function StockEngine({
 
         {pestana === 'plan' ? (
           <>
-            {/* Entradas del plan de compra */}
-            <div className="mt-6 flex flex-wrap items-start gap-5">
-              <Campo etiqueta="Presupuesto de compra (€)" hint="Lo único imprescindible: lo que vas a invertir en stock. El resto ya tiene valores sensatos.">
-                <input
-                  type="number" inputMode="decimal" min="1" step="1" placeholder="p. ej. 20000"
-                  value={planPresuTxt} onChange={(e) => setPlanPresuTxt(e.target.value)}
-                  className={`${INPUT_CLS} w-[170px] tnum`}
-                  style={{ background: 'var(--surface-input)' }}
-                />
-              </Campo>
-              <Campo etiqueta="Horizonte (semanas)" hint="Cuántas semanas de venta debe cubrir la compra.">
-                <input
-                  type="number" inputMode="numeric" min="4" max="26" step="1"
-                  value={planHorizTxt} onChange={(e) => setPlanHorizTxt(e.target.value)}
-                  className={`${INPUT_CLS} w-[90px] tnum`}
-                  style={{ background: 'var(--surface-input)' }}
-                />
-              </Campo>
-              <Campo
-                etiqueta="Margen bruto (%)"
-                hint={`Coste estimado = ${Math.max(10, 100 - (Number(planMargenTxt) || 60))}% del PVP medio de cada producto (de tus datos).${costesReales.size > 0 ? ` ${costesReales.size} producto${costesReales.size === 1 ? ' usa' : 's usan'} su coste real y lo ignoran.` : ''}`}
-              >
-                <input
-                  type="number" inputMode="numeric" min="20" max="90" step="1"
-                  value={planMargenTxt} onChange={(e) => setPlanMargenTxt(e.target.value)}
-                  className={`${INPUT_CLS} w-[90px] tnum`}
-                  style={{ background: 'var(--surface-input)' }}
-                />
-              </Campo>
-              <Campo etiqueta="Escenario de demanda" hint="Conservador reparte por si la venta viene floja; agresivo, por si viene fuerte (P25/P75).">
-                <Segmentos
-                  valor={planEsc}
-                  onChange={setPlanEsc}
-                  opciones={[
-                    { v: 'conservador', t: 'Conserv.' },
-                    { v: 'esperado', t: 'Esperado' },
-                    { v: 'agresivo', t: 'Agresivo' },
-                  ]}
-                />
-              </Campo>
+            {/* ① TU PRESUPUESTO — lo imprescindible, destacado */}
+            <div className="mt-6 rounded-xl border border-brandLine p-5 md:p-6" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 75%)' }}>
+              <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Tu presupuesto de compra</div>
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <div className="flex items-baseline gap-2">
+                  <input
+                    type="number" inputMode="decimal" min="1" step="1" placeholder="20000"
+                    value={planPresuTxt} onChange={(e) => setPlanPresuTxt(e.target.value)}
+                    className={`${INPUT_CLS} w-[180px] !h-12 !text-[22px] md:!text-[20px] tnum`}
+                    style={{ background: 'var(--surface-input)' }}
+                  />
+                  <span className="font-display text-[20px]" style={{ color: TXT2 }}>€</span>
+                </div>
+                {!(Number(planPresuTxt) > 0) ? (
+                  <button
+                    type="button"
+                    onClick={() => setPlanPresuTxt('20000')}
+                    className="font-mono text-[11px] tracking-[0.08em] uppercase transition-opacity hover:opacity-70 text-left"
+                    style={{ color: 'var(--brand-soft)' }}
+                  >
+                    ¿No sabes por dónde empezar? · usar 20.000 €
+                  </button>
+                ) : null}
+              </div>
+              <p className="mt-2.5 text-[12px] leading-snug" style={{ color: TXT3 }}>
+                Lo único imprescindible: lo que vas a invertir en stock. El resto ya tiene valores sensatos.
+              </p>
+            </div>
+
+            {/* ② AJUSTES — opcional, secundario */}
+            <div className="mt-4">
+              <div className={LABEL} style={{ color: TXT3 }}>Ajustes (opcional)</div>
+              <div className="mt-3 flex flex-wrap items-start gap-5">
+                <Campo etiqueta="Horizonte (semanas)" hint="Cuántas semanas de venta debe cubrir la compra.">
+                  <input
+                    type="number" inputMode="numeric" min="4" max="26" step="1"
+                    value={planHorizTxt} onChange={(e) => setPlanHorizTxt(e.target.value)}
+                    className={`${INPUT_CLS} w-[90px] tnum`}
+                    style={{ background: 'var(--surface-input)' }}
+                  />
+                </Campo>
+                <Campo
+                  etiqueta="Margen bruto (%)"
+                  hint={`Coste estimado = ${Math.max(10, 100 - (Number(planMargenTxt) || 60))}% del PVP medio de cada producto (de tus datos).${costesReales.size > 0 ? ` ${costesReales.size} producto${costesReales.size === 1 ? ' usa' : 's usan'} su coste real y lo ignoran.` : ''}`}
+                >
+                  <input
+                    type="number" inputMode="numeric" min="20" max="90" step="1"
+                    value={planMargenTxt} onChange={(e) => setPlanMargenTxt(e.target.value)}
+                    className={`${INPUT_CLS} w-[90px] tnum`}
+                    style={{ background: 'var(--surface-input)' }}
+                  />
+                </Campo>
+                <Campo etiqueta="Escenario de demanda" hint="Conservador reparte por si la venta viene floja; agresivo, por si viene fuerte (P25/P75).">
+                  <Segmentos
+                    valor={planEsc}
+                    onChange={setPlanEsc}
+                    opciones={[
+                      { v: 'conservador', t: 'Conserv.' },
+                      { v: 'esperado', t: 'Esperado' },
+                      { v: 'agresivo', t: 'Agresivo' },
+                    ]}
+                  />
+                </Campo>
+              </div>
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-5">
