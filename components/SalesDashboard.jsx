@@ -16,7 +16,7 @@ import {
 const ELECTRIC = 'var(--data)';
 const EMBER = 'var(--bad)';        // único acento de apoyo
 const MUTED = 'var(--muted)';        // barras "que apenas rotan"
-const SURFACE = 'var(--surface-1)';      // separador de slices del donut (= fondo de tarjeta)
+const SURFACE = 'var(--pie-stroke)';      // borde de slices del donut (sutil en oscuro, visible en claro)
 const TXT = 'var(--txt)';          // títulos
 const TXT2 = 'var(--txt-2)';         // secundario
 const PIE_PALETTE = ['#2D6BE4', '#C85A3F', '#1B2D6B', '#E07A5F', '#7CA3F0', '#E8A07F', '#34488A', '#B5734E'];
