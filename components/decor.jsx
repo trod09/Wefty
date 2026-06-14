@@ -69,7 +69,7 @@ export function PullQuote({ children, source, mark = '\u201C', className = '' })
           top: '-0.45em',
           left: '-0.1em',
           fontSize: 'clamp(120px, 14vw, 220px)',
-          color: '#2D6BE4',
+          color: 'var(--data)',
           opacity: 0.18,
           fontStyle: 'italic',
         }}
@@ -110,7 +110,7 @@ export function WordmarkBand({ children, dark = false }) {
               style={{
                 width: 'clamp(8px, 1.2vw, 14px)',
                 height: 'clamp(8px, 1.2vw, 14px)',
-                background: '#2D6BE4',
+                background: 'var(--data)',
               }}
             />
           </span>
@@ -127,7 +127,7 @@ export function Annotation({ label, side = 'right', dark = false }) {
     <span className="inline-flex items-center gap-2">
       <span
         className="inline-block w-1.5 h-1.5 rounded-full"
-        style={{ background: '#2D6BE4', boxShadow: `0 0 0 4px rgba(45,107,228,0.12)` }}
+        style={{ background: 'var(--data)', boxShadow: `0 0 0 4px rgba(45,107,228,0.12)` }}
       />
       <span className="inline-block w-8 h-px" style={{ background: color }} />
       <span className={`font-mono text-[10px] tracking-[0.18em] uppercase ${dark ? 'text-ash-300' : 'text-ash-500'}`}>{label}</span>
@@ -136,7 +136,7 @@ export function Annotation({ label, side = 'right', dark = false }) {
 }
 
 // Inline footnote superscript marker
-export function Fn({ n, color = '#2D6BE4' }) {
+export function Fn({ n, color = 'var(--data)' }) {
   return (
     <sup className="font-mono text-[10px] tracking-[0.04em] tnum ml-0.5" style={{ color }}>
       {String(n).padStart(2, '0')}

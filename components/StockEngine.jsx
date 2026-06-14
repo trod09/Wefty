@@ -24,18 +24,18 @@ import { fmtFecha } from '@/lib/engine/datos.mjs';
 
 const SIN_COSTES = new Map();
 
-const EMBER = '#E07A5F';
-const VERDE = '#6BCB9A';
-const AMBAR = '#E3C04B';
-const CIELO = '#f0a987';
-const TXT = '#F5F5F7';
-const TXT2 = '#8A8A8F';
-const TXT3 = '#5d5e63';
+const EMBER = 'var(--bad)';
+const VERDE = 'var(--ok)';
+const AMBAR = 'var(--warn)';
+const CIELO = 'var(--brand-soft)';
+const TXT = 'var(--txt)';
+const TXT2 = 'var(--txt-2)';
+const TXT3 = 'var(--txt-3)';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const CARD_BG = 'linear-gradient(150deg, #0c0f16 0%, #090b11 100%)';
+const CARD_BG = 'var(--card-grad)';
 // Inputs: 16px en móvil (iOS hace zoom forzado con cualquier input menor) y
 // 44px de alto táctil; en escritorio, el tamaño compacto de siempre.
-const INPUT_CLS = 'h-11 md:h-10 rounded-lg border border-[#1d2330] px-3 text-[16px] md:text-[14px] text-[#F5F5F7] outline-none transition-colors focus:border-[#F08C56]';
+const INPUT_CLS = 'h-11 md:h-10 rounded-lg border border-line px-3 text-[16px] md:text-[14px] text-txt outline-none transition-colors focus:border-brand';
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
 const fmt1 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -44,7 +44,7 @@ const pct0 = (x) => `${Math.round((Number(x) || 0) * 100)}%`;
 const pct1 = (x) => `${((Number(x) || 0) * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })}%`;
 
 // Color de un riesgo (0..1): tranquilo, atención o alerta.
-const colorRiesgo = (r) => (r > 0.25 ? '#E07A5F' : r > 0.1 ? '#E3C04B' : '#5d5e63');
+const colorRiesgo = (r) => (r > 0.25 ? 'var(--bad)' : r > 0.1 ? 'var(--warn)' : 'var(--txt-3)');
 
 // Seguridad al copiar a hojas de cálculo: una celda que empieza por = + - @
 // podría interpretarse como FÓRMULA al pegarla en Excel/Sheets (inyección CSV).
@@ -64,16 +64,16 @@ function Campo({ etiqueta, children, hint }) {
 // Control segmentado (escenarios de demanda).
 function Segmentos({ valor, onChange, opciones }) {
   return (
-    <div className="inline-flex rounded-lg border border-[#1d2330] overflow-hidden">
+    <div className="inline-flex rounded-lg border border-line overflow-hidden">
       {opciones.map((o) => (
         <button
           key={o.v}
           type="button"
           onClick={() => onChange(o.v)}
           className={`h-11 md:h-10 px-3.5 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors ${
-            valor === o.v ? 'text-[#F5F5F7]' : 'text-[#8A8A8F] hover:text-[#F5F5F7]'
+            valor === o.v ? 'text-txt' : 'text-txt2 hover:text-txt'
           }`}
-          style={{ background: valor === o.v ? 'rgba(240,140,86,0.22)' : '#090c12' }}
+          style={{ background: valor === o.v ? 'rgba(240,140,86,0.22)' : 'var(--surface-input)' }}
         >
           {o.t}
         </button>
@@ -88,7 +88,7 @@ const COLOR_CONFIANZA = { ALTA: VERDE, MEDIA: AMBAR, BAJA: EMBER };
 const ESTILO_CICLO = {
   LANZAMIENTO: { color: CIELO, texto: 'Lanzamiento' },
   CRECIMIENTO: { color: VERDE, texto: 'Crecimiento' },
-  MADURO: { color: '#9a9aa0', texto: 'Maduro' },
+  MADURO: { color: 'var(--txt-2)', texto: 'Maduro' },
   DECLIVE: { color: EMBER, texto: 'Declive' },
 };
 function BadgeCiclo({ ciclo }) {
@@ -127,9 +127,9 @@ export function PanelConfiguracion({ perfil, configuracion }) {
     proximamente: { color: CIELO, texto: 'próximamente' },
   };
   return (
-    <details className="mt-8 group border-t border-white/10 pt-5">
+    <details className="mt-8 group border-t border-hairline pt-5">
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
           Configuración del motor — qué está activo y por qué
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
@@ -168,7 +168,7 @@ function MatrizTallaColor({ matriz }) {
   return (
     <details className="mt-4 group">
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
           Ver desglose talla × color
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
@@ -176,7 +176,7 @@ function MatrizTallaColor({ matriz }) {
       <div className="mt-3 acc-body overflow-x-auto">
         <table className="w-full min-w-[460px] border-collapse">
           <thead>
-            <tr className="border-b border-white/10">
+            <tr className="border-b border-hairline">
               <th className={`${LABEL} text-left py-1.5 px-2 font-normal`} style={{ color: TXT3 }}>Talla</th>
               {matriz.colores.map((c) => (
                 <th key={c} className={`${LABEL} text-right py-1.5 px-2 font-normal`} style={{ color: TXT3 }}>{c}</th>
@@ -186,7 +186,7 @@ function MatrizTallaColor({ matriz }) {
           </thead>
           <tbody>
             {matriz.filas.map((f) => (
-              <tr key={f.talla} className="border-b border-white/[0.06]">
+              <tr key={f.talla} className="border-b border-hairlineSoft">
                 <td className="font-mono text-[12px] py-1.5 px-2" style={{ color: TXT }}>{f.talla}</td>
                 {f.celdas.map((u, j) => (
                   <td key={j} className={celda} style={{ color: u > 0 ? TXT : TXT3 }}>{u}</td>
@@ -221,9 +221,9 @@ function MatrizTallaColor({ matriz }) {
 function Explicacion({ pasos, titulo = '¿Por qué esta recomendación?' }) {
   if (!pasos?.length) return null;
   return (
-    <details className="mt-5 group rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+    <details className="mt-5 group rounded-xl border border-line p-5 md:p-6" style={{ background: 'var(--panel-grad)' }}>
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
           {titulo}
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
@@ -231,7 +231,7 @@ function Explicacion({ pasos, titulo = '¿Por qué esta recomendación?' }) {
       <ol className="mt-4 space-y-3 acc-body">
         {pasos.map((p, i) => (
           <li key={p.titulo} className="flex gap-3.5">
-            <span className="font-mono text-[11px] tnum pt-0.5 flex-shrink-0" style={{ color: '#5d5e63' }}>
+            <span className="font-mono text-[11px] tnum pt-0.5 flex-shrink-0" style={{ color: 'var(--txt-3)' }}>
               [{String(i + 1).padStart(2, '0')}]
             </span>
             <div>
@@ -256,7 +256,7 @@ export function PanelValidacion({ motor }) {
   const textoMejora = (f) =>
     f.mejora != null ? (f.mejora > 0 ? `−${pct0(f.mejora)} de error` : 'sin mejora') : 'es el baseline';
   const FilaVal = ({ f }) => (
-    <li className="border-b border-white/[0.06]">
+    <li className="border-b border-hairlineSoft">
       {/* Móvil: tarjeta apilada */}
       <div className="md:hidden py-3">
         <div className="flex items-baseline justify-between gap-3">
@@ -299,9 +299,9 @@ export function PanelValidacion({ motor }) {
   );
 
   return (
-    <details className="mt-4 group border-t border-white/10 pt-5">
+    <details className="mt-4 group border-t border-hairline pt-5">
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
           Validación del motor — error real sobre tu histórico
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
@@ -332,7 +332,7 @@ export function PanelValidacion({ motor }) {
             ) : null}
             {v.filas.length ? (
               <ul className="mt-4">
-                <li className="hidden md:grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-white/10">
+                <li className="hidden md:grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-hairline">
                   {['Categoría', 'Mejor modelo', 'Error', 'vs ingenuo', 'Cortes'].map((h, i) => (
                     <span key={h} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
                   ))}
@@ -357,7 +357,7 @@ function TablaTallas({ reparto, recomendado }) {
   const conRiesgos = reparto.some((f) => f.riesgoRotura != null);
   return (
     <div>
-      <div className={`grid ${GRID_TALLAS} gap-2.5 pb-2 border-b border-white/10`}>
+      <div className={`grid ${GRID_TALLAS} gap-2.5 pb-2 border-b border-hairline`}>
         {['Talla', '', 'Uds', '%'].map((h, i) => (
           <span key={h || i} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
         ))}
@@ -368,15 +368,15 @@ function TablaTallas({ reparto, recomendado }) {
       </div>
       <ul>
         {reparto.map((f) => (
-          <li key={f.talla} className="py-2 border-b border-white/[0.06]">
+          <li key={f.talla} className="py-2 border-b border-hairlineSoft">
             <div className={`grid ${GRID_TALLAS} gap-2.5 items-center`}>
               <span className="font-mono text-[13px]" style={{ color: TXT }}>{f.talla}</span>
-              <span className="h-[18px] rounded-sm relative overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
+              <span className="h-[18px] rounded-sm relative overflow-hidden" style={{ background: 'var(--hairline-soft)' }}>
                 <span
                   className="absolute inset-y-0 left-0 rounded-sm transition-all duration-300"
                   style={{
                     width: `${Math.max((f.peso / maxPeso) * 100, 2)}%`,
-                    background: 'linear-gradient(90deg, #234E9E 0%, #3F7BEC 100%)',
+                    background: 'linear-gradient(90deg, var(--data) 0%, var(--data-2) 100%)',
                   }}
                 />
               </span>
@@ -564,7 +564,7 @@ export default function StockEngine({
 
   if (motor.almacen.vacio) {
     return (
-      <div className="rounded-xl border border-[#1d2330] p-8 text-center" style={{ background: CARD_BG }}>
+      <div className="rounded-xl border border-line p-8 text-center" style={{ background: CARD_BG }}>
         <div className={LABEL} style={{ color: TXT2 }}>Motor de stock</div>
         <p className="mt-3 text-[15px]" style={{ color: TXT2 }}>
           Para recomendar pedidos necesitamos ventas con fecha válida. Revisa la columna de fechas de tu CSV.
@@ -641,7 +641,7 @@ export default function StockEngine({
   // Pestañas con área táctil ≥44px en móvil (padding extra solo ahí).
   const tabCls = (activa) =>
     `pt-3 pb-3.5 md:pt-0 md:pb-2.5 font-mono text-[11px] tracking-[0.18em] uppercase transition-colors border-b-2 ${
-      activa ? 'border-[#F08C56] text-[#F5F5F7]' : 'border-transparent text-[#8A8A8F] hover:text-[#F5F5F7]'
+      activa ? 'border-brand text-txt' : 'border-transparent text-txt2 hover:text-txt'
     }`;
 
   return (
@@ -651,7 +651,7 @@ export default function StockEngine({
         {/* Con el sidebar de pestañas, la cabecera de sección ya presenta el
             contexto: aquí solo queda el estado del cálculo. */}
         <div className={`${LABEL} flex items-center gap-2`} style={{ color: TXT2 }}>
-          <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: '#F08C56' }} />
+          <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: 'var(--brand)' }} />
           {pestanaProp ? 'Motor de stock' : 'Motor de stock · cuánto pedir'}
         </div>
         <span className={LABEL} style={{ color: calculando ? CIELO : TXT3 }}>
@@ -661,10 +661,10 @@ export default function StockEngine({
         </span>
       </div>
 
-      <div className="mt-3 rounded-xl border border-[#1d2330] p-6 md:p-8" style={{ background: CARD_BG }}>
+      <div className="mt-3 rounded-xl border border-line p-6 md:p-8" style={{ background: CARD_BG }}>
         {/* Pestañas (ocultas cuando el sidebar hace de pestañas) */}
         {pestanaProp ? null : (
-          <div className="flex gap-7 border-b border-white/10">
+          <div className="flex gap-7 border-b border-hairline">
             <button type="button" className={tabCls(pestana === 'reposicion')} onClick={() => setPestanaLocal('reposicion')}>
               Reposición
             </button>
@@ -686,7 +686,7 @@ export default function StockEngine({
                   type="number" inputMode="decimal" min="1" step="1" placeholder="p. ej. 20000"
                   value={planPresuTxt} onChange={(e) => setPlanPresuTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[170px] tnum`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 />
               </Campo>
               <Campo etiqueta="Horizonte (semanas)" hint="Cuántas semanas de venta debe cubrir la compra.">
@@ -694,7 +694,7 @@ export default function StockEngine({
                   type="number" inputMode="numeric" min="4" max="26" step="1"
                   value={planHorizTxt} onChange={(e) => setPlanHorizTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[90px] tnum`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 />
               </Campo>
               <Campo
@@ -705,7 +705,7 @@ export default function StockEngine({
                   type="number" inputMode="numeric" min="20" max="90" step="1"
                   value={planMargenTxt} onChange={(e) => setPlanMargenTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[90px] tnum`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 />
               </Campo>
               <Campo etiqueta="Escenario de demanda" hint="Conservador reparte por si la venta viene floja; agresivo, por si viene fuerte (P25/P75).">
@@ -726,8 +726,8 @@ export default function StockEngine({
                 type="button"
                 onClick={generarPlan}
                 disabled={calculandoPlan || !(Number(planPresuTxt) > 0)}
-                className="btn-sheen h-11 px-6 rounded-lg border border-[#3a2b20] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] transition-colors disabled:opacity-60"
-                style={{ background: 'rgba(240,140,86,0.10)' }}
+                className="btn-sheen h-11 px-6 rounded-lg border border-brandLine font-mono text-[11px] tracking-[0.12em] uppercase text-txt transition-colors disabled:opacity-60"
+                style={{ background: 'var(--tint-brand)' }}
               >
                 {calculandoPlan ? 'Calculando plan…' : Number(planPresuTxt) > 0 ? 'Generar plan' : 'Escribe tu presupuesto'}
               </button>
@@ -746,7 +746,7 @@ export default function StockEngine({
 
             {/* Errores amables */}
             {plan && !plan.ok ? (
-              <div className="mt-6 rounded-xl border border-[#1d2330] p-6" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
+              <div className="mt-6 rounded-xl border border-line p-6" style={{ background: 'var(--inset-grad)' }}>
                 <p className="text-[14px] leading-relaxed" style={{ color: TXT2 }}>
                   {plan.motivo === 'presupuesto-invalido'
                     ? 'Escribe un presupuesto válido (un número mayor que 0).'
@@ -765,8 +765,8 @@ export default function StockEngine({
             {plan?.ok ? (
               <>
                 {/* Resumen global del plan */}
-                <div ref={refResumenPlan} className="mt-6 scroll-mt-6 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
-                  <div className={LABEL} style={{ color: '#f0a987' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
+                <div ref={refResumenPlan} className="mt-6 scroll-mt-6 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
+                  <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
                   {plan.costes ? (
                     <p className="mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>
                       calculado con <span style={{ color: plan.costes.reales > 0 ? VERDE : TXT3 }}>{plan.costes.reales} coste{plan.costes.reales === 1 ? '' : 's'} real{plan.costes.reales === 1 ? '' : 'es'}</span> y {plan.costes.estimados} estimado{plan.costes.estimados === 1 ? '' : 's'}
@@ -802,8 +802,8 @@ export default function StockEngine({
                 </div>
 
                 {/* Tabla del plan, ordenada por inversión */}
-                <div className="mt-4 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
-                  <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 pb-2 border-b border-white/10">
+                <div className="mt-4 rounded-xl border border-line p-5 md:p-6" style={{ background: 'var(--panel-grad)' }}>
+                  <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 pb-2 border-b border-hairline">
                     {['Producto', 'Uds', 'Inversión', 'Margen esp.', '%', 'Riesgo (rotura · rebaja)'].map((h, i) => (
                       <span
                         key={h}
@@ -815,7 +815,7 @@ export default function StockEngine({
                   </div>
                   <ul>
                     {plan.filas.map((f) => (
-                      <li key={f.producto} className="border-b border-white/[0.06]">
+                      <li key={f.producto} className="border-b border-hairlineSoft">
                         <details className="group">
                           <summary className="cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
                             {/* Móvil: tarjeta apilada */}
@@ -841,7 +841,7 @@ export default function StockEngine({
                                 <span className="font-mono text-[10px] flex-shrink-0 transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
                                 <span
                                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                  style={{ background: f.origenCoste === 'real' ? VERDE : '#2e3850' }}
+                                  style={{ background: f.origenCoste === 'real' ? VERDE : 'var(--line-hover)' }}
                                   title={f.origenCoste === 'real' ? 'coste real (tu panel de costes)' : 'coste estimado por margen global'}
                                 />
                                 <span className="text-[13px] truncate" style={{ color: TXT }}>{f.producto}</span>
@@ -879,7 +879,7 @@ export default function StockEngine({
 
                 {/* La frontera: la última unidad que entra y la primera que se queda fuera */}
                 {plan.frontera.ultimaComprada ? (
-                  <div className="mt-4 rounded-xl border border-[#1d2330] p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="mt-4 rounded-xl border border-line p-5" style={{ background: 'var(--panel-grad)' }}>
                     <div className={LABEL} style={{ color: TXT2 }}>La frontera del presupuesto</div>
                     <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                       La última unidad comprada (<span style={{ color: TXT }}>{plan.frontera.ultimaComprada.nombre}</span>) rinde{' '}
@@ -901,8 +901,8 @@ export default function StockEngine({
                   <button
                     type="button"
                     onClick={copiarPlan}
-                    className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
-                    style={{ background: copiadoPlan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoPlan ? `${VERDE}66` : undefined, color: copiadoPlan ? VERDE : undefined }}
+                    className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
+                    style={{ background: copiadoPlan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoPlan ? 'var(--ok)' : undefined, color: copiadoPlan ? VERDE : undefined }}
                   >
                     {copiadoPlan ? 'Copiado ✓' : 'Copiar plan'}
                   </button>
@@ -918,7 +918,7 @@ export default function StockEngine({
                   </p>
                 ) : null}
                 {plan.avisos.length > 0 ? (
-                  <div className="mt-4 rounded-xl border border-[#1d2330] p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="mt-4 rounded-xl border border-line p-5" style={{ background: 'var(--panel-grad)' }}>
                     <div className={LABEL} style={{ color: AMBAR }}>Avisos del plan · {plan.avisos.length}</div>
                     <ul className="mt-3 space-y-2">
                       {plan.avisos.map((texto, i) => (
@@ -937,7 +937,7 @@ export default function StockEngine({
           <>
             {/* Entradas del lanzamiento: lo esencial primero, lo opcional aparte */}
             <div className="mt-6 space-y-4">
-              <div className="rounded-xl border border-[#161b26] p-4 md:p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+              <div className="rounded-xl border border-lineSoft p-4 md:p-5" style={{ background: 'var(--panel-grad)' }}>
                 <div className={LABEL} style={{ color: TXT3 }}>Lo básico</div>
                 <div className="mt-4 flex flex-wrap items-start gap-5">
               <Campo etiqueta="Categoría del producto nuevo">
@@ -945,7 +945,7 @@ export default function StockEngine({
                   value={lanCategoriaEf}
                   onChange={(e) => setLanCategoria(e.target.value)}
                   className={`${INPUT_CLS} min-w-[190px] cursor-pointer`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 >
                   {categoriasLan.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -967,7 +967,7 @@ export default function StockEngine({
                       type="number" inputMode="numeric" min="3" max="12" step="1"
                       value={lanSemanasTxt} onChange={(e) => setLanSemanasTxt(e.target.value)}
                       className={`${INPUT_CLS} w-[90px] tnum`}
-                      style={{ background: '#090c12', colorScheme: 'dark' }}
+                      style={{ background: 'var(--surface-input)' }}
                     />
                     <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
                   </div>
@@ -982,12 +982,12 @@ export default function StockEngine({
                   placeholder={resultadoLan?.ok ? `sugerir (≈${resultadoLan.totalSugerido})` : 'sugiérelas'}
                   value={lanTotalTxt} onChange={(e) => setLanTotalTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[150px] tnum`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 />
               </Campo>
                 </div>
               </div>
-              <div className="rounded-xl border border-[#161b26] p-4 md:p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+              <div className="rounded-xl border border-lineSoft p-4 md:p-5" style={{ background: 'var(--panel-grad)' }}>
                 <div className={LABEL} style={{ color: TXT3 }}>Afinar la referencia (opcional)</div>
                 <div className="mt-4 flex flex-wrap items-start gap-5">
               {posiciones ? (
@@ -999,7 +999,7 @@ export default function StockEngine({
                     value={lanPos}
                     onChange={(e) => setLanPos(e.target.value)}
                     className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
-                    style={{ background: '#090c12', colorScheme: 'dark' }}
+                    style={{ background: 'var(--surface-input)' }}
                   >
                     <option value="">Sin preferencia</option>
                     {posiciones.opciones.map((o) => <option key={o.clave} value={o.clave}>{o.etiqueta}</option>)}
@@ -1011,7 +1011,7 @@ export default function StockEngine({
                     value={String(lanBandaIdx)}
                     onChange={(e) => setLanBanda(e.target.value)}
                     className={`${INPUT_CLS} min-w-[170px] cursor-pointer`}
-                    style={{ background: '#090c12', colorScheme: 'dark' }}
+                    style={{ background: 'var(--surface-input)' }}
                   >
                     {bandas.map((b, i) => <option key={i} value={String(i)}>{b.etiqueta}</option>)}
                   </select>
@@ -1025,7 +1025,7 @@ export default function StockEngine({
                   value={lanMes}
                   onChange={(e) => setLanMes(e.target.value)}
                   className={`${INPUT_CLS} min-w-[160px] cursor-pointer`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 >
                   <option value="">Sin definir</option>
                   {MESES_LANZAMIENTO.map((m, i) => (
@@ -1038,7 +1038,7 @@ export default function StockEngine({
                   type="number" inputMode="numeric" min="1" step="1" placeholder="todos"
                   value={lanColoresTxt} onChange={(e) => setLanColoresTxt(e.target.value)}
                   className={`${INPUT_CLS} w-[110px] tnum`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 />
               </Campo>
                 </div>
@@ -1054,7 +1054,7 @@ export default function StockEngine({
             ) : null}
 
             {resultadoLan && !resultadoLan.ok ? (
-              <div className="mt-8 rounded-xl border border-[#1d2330] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
+              <div className="mt-8 rounded-xl border border-line p-8 md:p-10" style={{ background: 'var(--inset-grad)' }}>
                 <div className={LABEL} style={{ color: EMBER }}>Sin análogos suficientes</div>
                 <p className="mt-4 text-[15px] leading-relaxed max-w-[58ch]" style={{ color: TXT2 }}>
                   Ningún producto de tu catálogo tiene aún el histórico mínimo ({resultadoLan.minimo ?? 20} uds y 6 semanas)
@@ -1069,10 +1069,10 @@ export default function StockEngine({
                 <div className="mt-8 grid grid-cols-1 lg:grid-cols-12 gap-5">
                   {/* Total propuesto */}
                   <div
-                    className="lg:col-span-4 relative rounded-xl border border-[#3a2b20] p-7 md:p-8 overflow-hidden flex flex-col"
+                    className="lg:col-span-4 relative rounded-xl border border-brandLine p-7 md:p-8 overflow-hidden flex flex-col"
                     style={{
-                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, #0b0e14 100%)',
-                      boxShadow: '0 0 60px -26px rgba(240,140,86,0.5)',
+                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, var(--surface-2) 100%)',
+                      boxShadow: '0 0 60px -26px var(--glow-brand)',
                     }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1119,7 +1119,7 @@ export default function StockEngine({
                   </div>
 
                   {/* Curva de lanzamiento con banda P25–P75 */}
-                  <div className="lg:col-span-8 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="lg:col-span-8 rounded-xl border border-line p-6 md:p-7" style={{ background: 'var(--panel-grad)' }}>
                     <div className="flex items-baseline justify-between gap-4 mb-4">
                       <span className={LABEL} style={{ color: TXT2 }}>Curva de lanzamiento esperada</span>
                       <span className={LABEL} style={{ color: TXT3 }}>uds/semana · banda flojo–fuerte</span>
@@ -1130,35 +1130,35 @@ export default function StockEngine({
                           data={resultadoLan.curva.map((c) => ({ semana: `S${c.semana}`, media: c.media, rango: [c.p25, c.p75] }))}
                           margin={{ top: 8, right: 12, left: -16, bottom: 0 }}
                         >
-                          <CartesianGrid vertical={false} stroke="#FFFFFF" strokeOpacity={0.06} />
+                          <CartesianGrid vertical={false} stroke="var(--grid-line)" />
                           <XAxis dataKey="semana" tick={{ fontSize: 10, fill: TXT2, fontFamily: 'var(--font-jetbrains), monospace' }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 10, fill: TXT2, fontFamily: 'var(--font-jetbrains), monospace' }} axisLine={false} tickLine={false} width={42} />
                           <Tooltip
-                            cursor={{ stroke: 'rgba(255,255,255,0.15)' }}
+                            cursor={{ stroke: 'var(--hairline)' }}
                             content={({ active, payload, label }) => {
                               if (!active || !payload?.length) return null;
                               const d = payload[0].payload;
                               return (
-                                <div className="rounded-lg border border-[#232a3a] px-3.5 py-2.5" style={{ background: 'rgba(25,26,30,0.97)' }}>
+                                <div className="rounded-lg border border-line px-3.5 py-2.5" style={{ background: 'var(--tooltip-bg)' }}>
                                   <div className="font-mono text-[11px]" style={{ color: TXT }}>{label}</div>
                                   <div className="font-mono text-[11px] tnum" style={{ color: TXT2 }}>media {fmt1(d.media)} uds · banda {fmt1(d.rango[0])}–{fmt1(d.rango[1])}</div>
                                 </div>
                               );
                             }}
                           />
-                          <Area dataKey="rango" stroke="none" fill="#2D6BE4" fillOpacity={0.16} />
-                          <Line dataKey="media" stroke="#3F7BEC" strokeWidth={2.5} dot={{ r: 3, fill: '#3F7BEC', strokeWidth: 0 }} />
+                          <Area dataKey="rango" stroke="none" fill="var(--data)" fillOpacity={0.16} />
+                          <Line dataKey="media" stroke="var(--data-2)" strokeWidth={2.5} dot={{ r: 3, fill: 'var(--data-2)', strokeWidth: 0 }} />
                         </ComposedChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
                   {/* Análogos con score transparente */}
-                  <div className="lg:col-span-6 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="lg:col-span-6 rounded-xl border border-line p-6 md:p-7" style={{ background: 'var(--panel-grad)' }}>
                     <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Basado en tus análogos · score transparente</div>
                     <ul className="space-y-3">
                       {resultadoLan.analogos.map((a) => (
-                        <li key={a.nombre} className="flex items-start justify-between gap-4 pb-3 border-b border-white/[0.06]">
+                        <li key={a.nombre} className="flex items-start justify-between gap-4 pb-3 border-b border-hairlineSoft">
                           <div className="min-w-0">
                             <div className="text-[14px] truncate" style={{ color: TXT }}>{a.nombre}</div>
                             <div className="mt-1 font-mono text-[10px] tracking-[0.06em]" style={{ color: TXT3 }}>
@@ -1169,7 +1169,7 @@ export default function StockEngine({
                           </div>
                           <span
                             className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] h-8 rounded-lg border font-mono text-[13px] tnum"
-                            style={{ color: '#9db4ec', borderColor: '#2a3654', background: 'rgba(45,107,228,0.10)' }}
+                            style={{ color: 'var(--data)', borderColor: 'var(--line-hover)', background: 'rgba(45,107,228,0.10)' }}
                           >
                             {a.score}
                           </span>
@@ -1179,7 +1179,7 @@ export default function StockEngine({
                   </div>
 
                   {/* Reparto por talla y color */}
-                  <div className="lg:col-span-6 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="lg:col-span-6 rounded-xl border border-line p-6 md:p-7" style={{ background: 'var(--panel-grad)' }}>
                     <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Reparto propuesto</div>
                     {!resultadoLan.reparto ? (
                       <p className="text-[14px]" style={{ color: TXT2 }}>Tus análogos no traen tallas: te damos solo el total.</p>
@@ -1192,7 +1192,7 @@ export default function StockEngine({
                       </p>
                     ) : null}
                     {resultadoLan.repartoColores ? (
-                      <div className="mt-5 pt-4 border-t border-white/10">
+                      <div className="mt-5 pt-4 border-t border-hairline">
                         <div className={`${LABEL} mb-2`} style={{ color: TXT3 }}>Por color</div>
                         <ul className="grid grid-cols-2 gap-x-6 gap-y-1.5">
                           {resultadoLan.repartoColores.map((f) => (
@@ -1210,7 +1210,7 @@ export default function StockEngine({
                 </div>
 
                 {resultadoLan.avisos.length > 0 ? (
-                  <div className="mt-5 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="mt-5 rounded-xl border border-line p-5 md:p-6" style={{ background: 'var(--panel-grad)' }}>
                     <div className={LABEL} style={{ color: AMBAR }}>Avisos · {resultadoLan.avisos.length}</div>
                     <ul className="mt-3 space-y-2">
                       {resultadoLan.avisos.map((texto, i) => (
@@ -1229,8 +1229,8 @@ export default function StockEngine({
                   <button
                     type="button"
                     onClick={copiarLanzamiento}
-                    className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
-                    style={{ background: copiadoLan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoLan ? `${VERDE}66` : undefined, color: copiadoLan ? VERDE : undefined }}
+                    className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
+                    style={{ background: copiadoLan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoLan ? 'var(--ok)' : undefined, color: copiadoLan ? VERDE : undefined }}
                   >
                     {copiadoLan ? 'Copiado ✓' : 'Copiar pedido'}
                   </button>
@@ -1244,7 +1244,7 @@ export default function StockEngine({
         ) : (
           <>
             {/* Entradas: barra de configuración (el resultado es el protagonista) */}
-            <div className="mt-6 rounded-xl border border-[#161b26] p-4 md:p-5" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+            <div className="mt-6 rounded-xl border border-lineSoft p-4 md:p-5" style={{ background: 'var(--panel-grad)' }}>
             <div className={LABEL} style={{ color: TXT3 }}>Configura tu pedido — el resultado se actualiza solo</div>
             <div className="mt-4 flex flex-wrap items-start gap-5">
               <Campo etiqueta="Producto">
@@ -1252,7 +1252,7 @@ export default function StockEngine({
                   value={producto}
                   onChange={(e) => setProdSel(e.target.value)}
                   className={`${INPUT_CLS} min-w-[230px] cursor-pointer`}
-                  style={{ background: '#090c12', colorScheme: 'dark' }}
+                  style={{ background: 'var(--surface-input)' }}
                 >
                   {productos.map((p) => (
                     <option key={p.nombre} value={p.nombre}>
@@ -1276,7 +1276,7 @@ export default function StockEngine({
                     value={leadTxt}
                     onChange={(e) => setLeadTxt(e.target.value)}
                     className={`${INPUT_CLS} w-[90px] tnum`}
-                    style={{ background: '#090c12', colorScheme: 'dark', borderColor: leadValido ? undefined : EMBER }}
+                    style={{ background: 'var(--surface-input)', borderColor: leadValido ? undefined : EMBER }}
                   />
                   <span className="font-mono text-[11px]" style={{ color: TXT2 }}>semanas</span>
                 </div>
@@ -1291,7 +1291,7 @@ export default function StockEngine({
                     value={nivel}
                     onChange={(e) => setNivel(e.target.value)}
                     className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
-                    style={{ background: '#090c12', colorScheme: 'dark' }}
+                    style={{ background: 'var(--surface-input)' }}
                   >
                     <option value="90">90% — ajustado</option>
                     <option value="95">95% — equilibrado</option>
@@ -1334,7 +1334,7 @@ export default function StockEngine({
                       type="number" inputMode="decimal" min="0" step="0.01" placeholder="p. ej. 12"
                       value={costeTxt} onChange={(e) => setCosteTxt(e.target.value)}
                       className={`${INPUT_CLS} w-[92px] tnum`}
-                      style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                      style={{ background: 'var(--surface-input)', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
                     />
                     {costeTxt !== '' && costeGuardado != null && String(costeGuardado) === costeTxt ? (
                       <span className="font-mono text-[9px] tracking-[0.08em]" style={{ color: VERDE }}>✓ de tu panel de costes</span>
@@ -1346,7 +1346,7 @@ export default function StockEngine({
                       type="number" inputMode="decimal" min="0" step="0.01" placeholder="p. ej. 30"
                       value={pvpTxt} onChange={(e) => setPvpTxt(e.target.value)}
                       className={`${INPUT_CLS} w-[92px] tnum`}
-                      style={{ background: '#090c12', colorScheme: 'dark', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
+                      style={{ background: 'var(--surface-input)', borderColor: resultado?.erroresCostes?.length ? EMBER : undefined }}
                     />
                   </div>
                   <div className="flex flex-col gap-1">
@@ -1355,7 +1355,7 @@ export default function StockEngine({
                       type="number" inputMode="decimal" min="0" max="90" step="1" placeholder="30"
                       value={liqTxt} onChange={(e) => setLiqTxt(e.target.value)}
                       className={`${INPUT_CLS} w-[92px] tnum`}
-                      style={{ background: '#090c12', colorScheme: 'dark' }}
+                      style={{ background: 'var(--surface-input)' }}
                     />
                   </div>
                 </div>
@@ -1365,7 +1365,7 @@ export default function StockEngine({
 
             {/* Resultado */}
             {resultado && !resultado.ok && resultado.motivo === 'pocos-datos' ? (
-              <div className="mt-8 rounded-xl border border-[#1d2330] p-8 md:p-10" style={{ background: 'linear-gradient(150deg, #0a0c12 0%, #07090d 100%)' }}>
+              <div className="mt-8 rounded-xl border border-line p-8 md:p-10" style={{ background: 'var(--inset-grad)' }}>
                 <div className={LABEL} style={{ color: EMBER }}>Datos insuficientes</div>
                 <p className="mt-4 text-[16px] leading-relaxed max-w-[58ch]" style={{ color: TXT }}>
                   <span className="font-medium">{resultado.producto}</span> acumula {fmtInt(resultado.unidades)} unidades
@@ -1386,10 +1386,10 @@ export default function StockEngine({
                 >
                   {/* Pedido recomendado — tarjeta protagonista */}
                   <div
-                    className="lg:col-span-5 relative rounded-xl border border-[#3a2b20] p-7 md:p-8 overflow-hidden flex flex-col"
+                    className="lg:col-span-5 relative rounded-xl border border-brandLine p-7 md:p-8 overflow-hidden flex flex-col"
                     style={{
-                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, #0b0e14 100%)',
-                      boxShadow: '0 0 60px -26px rgba(240,140,86,0.5)',
+                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, var(--surface-2) 100%)',
+                      boxShadow: '0 0 60px -26px var(--glow-brand)',
                     }}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1453,7 +1453,7 @@ export default function StockEngine({
                     </div>
 
                     {/* La credencial del motor: qué modelo ganó y contra qué se midió */}
-                    <div className="mt-4 pt-4 border-t border-white/10">
+                    <div className="mt-4 pt-4 border-t border-hairline">
                       <div className={LABEL} style={{ color: CIELO }}>Motor seleccionado</div>
                       <p className="mt-1.5 text-[13px] leading-snug" style={{ color: TXT }}>{resultado.modelo.resumen}</p>
                       <p className="mt-1 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT2 }}>
@@ -1468,7 +1468,7 @@ export default function StockEngine({
                   </div>
 
                   {/* Reparto por talla */}
-                  <div className="lg:col-span-7 rounded-xl border border-[#1d2330] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="lg:col-span-7 rounded-xl border border-line p-6 md:p-7" style={{ background: 'var(--panel-grad)' }}>
                     <div className="flex items-baseline justify-between gap-4 mb-5">
                       <span className={LABEL} style={{ color: TXT2 }}>Reparto por talla</span>
                       <span className={LABEL} style={{ color: TXT3 }}>{resultado.categoria}</span>
@@ -1503,7 +1503,7 @@ export default function StockEngine({
                     ) : null}
 
                     {resultado.sellThrough ? (
-                      <p className="mt-3 pt-3 border-t border-white/10 font-mono text-[11px] tracking-[0.02em]" style={{ color: TXT2 }}>
+                      <p className="mt-3 pt-3 border-t border-hairline font-mono text-[11px] tracking-[0.02em]" style={{ color: TXT2 }}>
                         sell-through proyectado:{' '}
                         <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st8)}</span> vendido a 8 semanas ·{' '}
                         <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st12)}</span> a 12
@@ -1516,7 +1516,7 @@ export default function StockEngine({
 
                 {/* Economía del pedido en euros (cuando hay costes) */}
                 {resultado.economia ? (
-                  <div className="mt-5 rounded-xl border border-[#3a2b20] p-6 md:p-7" style={{ background: 'linear-gradient(150deg, rgba(240,140,86,0.08) 0%, #090b11 70%)' }}>
+                  <div className="mt-5 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
                     <div className={LABEL} style={{ color: CIELO }}>Economía del pedido · en euros</div>
                     <div className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
                       <div>
@@ -1556,7 +1556,7 @@ export default function StockEngine({
 
                 {/* Avisos: limpieza estadística + notas del cálculo */}
                 {resultado.flags.length > 0 || resultado.avisos.length > 0 ? (
-                  <div className="mt-5 rounded-xl border border-[#1d2330] p-5 md:p-6" style={{ background: 'linear-gradient(150deg, #0b0e15 0%, #080a10 100%)' }}>
+                  <div className="mt-5 rounded-xl border border-line p-5 md:p-6" style={{ background: 'var(--panel-grad)' }}>
                     <div className={LABEL} style={{ color: AMBAR }}>
                       Avisos del motor · {resultado.flags.length + resultado.avisos.length}
                     </div>
@@ -1584,8 +1584,8 @@ export default function StockEngine({
                   <button
                     type="button"
                     onClick={copiarPedido}
-                    className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors"
-                    style={{ background: copiado ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiado ? `${VERDE}66` : undefined, color: copiado ? VERDE : undefined }}
+                    className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
+                    style={{ background: copiado ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiado ? 'var(--ok)' : undefined, color: copiado ? VERDE : undefined }}
                   >
                     {copiado ? 'Copiado ✓' : 'Copiar pedido'}
                   </button>

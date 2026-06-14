@@ -9,13 +9,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { productosOrdenados } from '@/lib/engine/motor.mjs';
 
-const VERDE = '#6BCB9A';
-const AMBAR = '#E3C04B';
-const TXT = '#F5F5F7';
-const TXT2 = '#8A8A8F';
-const TXT3 = '#5d5e63';
+const VERDE = 'var(--ok)';
+const AMBAR = 'var(--warn)';
+const TXT = 'var(--txt)';
+const TXT2 = 'var(--txt-2)';
+const TXT3 = 'var(--txt-3)';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const INPUT_CLS = 'h-11 md:h-9 rounded-lg border border-[#1d2330] px-3 text-[16px] md:text-[13px] text-[#F5F5F7] outline-none transition-colors focus:border-[#F08C56]';
+const INPUT_CLS = 'h-11 md:h-9 rounded-lg border border-line px-3 text-[16px] md:text-[13px] text-txt outline-none transition-colors focus:border-brand';
 
 const fmtEur2 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pctTxt = (x) => `${Math.round((Number(x) || 0) * 100)}%`;
@@ -132,9 +132,9 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
   }
 
   return (
-    <details className="mt-8 group border-t border-white/10 pt-5">
+    <details className="mt-8 group border-t border-hairline pt-5">
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-[#8A8A8F] group-hover:text-[#F5F5F7]">
+        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
           Costes de producto — cuánto te cuesta cada unidad
         </span>
         <span className="font-mono text-[10px] tracking-[0.1em]" style={{ color: nReales > 0 ? VERDE : TXT3 }}>
@@ -157,7 +157,7 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
               type="number" inputMode="numeric" min="20" max="90" step="1"
               value={margenTxt} onChange={(e) => onMargenTxt(e.target.value)}
               className={`${INPUT_CLS} w-[90px] tnum`}
-              style={{ background: '#090c12', colorScheme: 'dark' }}
+              style={{ background: 'var(--surface-input)' }}
             />
           </div>
           <span className="pb-2 text-[11px] leading-snug max-w-[330px]" style={{ color: TXT3 }}>
@@ -171,7 +171,7 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
 
         {/* Tabla de costes */}
         <div className="mt-5 max-w-[760px]">
-          <div className="hidden md:grid grid-cols-[1.6fr_90px_130px_170px] gap-3 pb-2 border-b border-white/10">
+          <div className="hidden md:grid grid-cols-[1.6fr_90px_130px_170px] gap-3 pb-2 border-b border-hairline">
             {['Producto', 'PVP medio', 'Coste unitario', 'Margen resultante'].map((h, i) => (
               <span key={h} className={`${LABEL} ${i === 1 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
             ))}
@@ -192,7 +192,7 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
                     value={valores[p.nombre] ?? ''}
                     onChange={(e) => { setMensaje(null); setValores((v) => ({ ...v, [p.nombre]: e.target.value })); }}
                     className={`${INPUT_CLS} w-[110px] tnum`}
-                    style={{ background: '#090c12', colorScheme: 'dark' }}
+                    style={{ background: 'var(--surface-input)' }}
                     aria-label={`Coste unitario de ${p.nombre}`}
                   />
                   <span
@@ -207,7 +207,7 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
                 </>
               );
               return (
-                <li key={p.nombre} className="border-b border-white/[0.06]">
+                <li key={p.nombre} className="border-b border-hairlineSoft">
                   {/* Móvil: tarjeta apilada */}
                   <div className="md:hidden py-3 flex flex-col gap-2">
                     <div className="flex items-baseline justify-between gap-3">
@@ -241,7 +241,7 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
             type="button"
             onClick={guardar}
             disabled={guardando}
-            className="btn-sheen h-11 px-6 rounded-lg border border-[#2e3850] font-mono text-[11px] tracking-[0.12em] uppercase text-[#F5F5F7] hover:border-[#5d5e63] transition-colors disabled:opacity-60"
+            className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors disabled:opacity-60"
             style={{
               background: mensaje?.tipo === 'ok' ? 'rgba(107,203,154,0.12)' : 'transparent',
               borderColor: mensaje?.tipo === 'ok' ? `${VERDE}66` : undefined,
