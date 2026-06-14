@@ -768,6 +768,50 @@ export default function StockEngine({
               ) : null}
             </div>
 
+            {/* ③ ESTADO PREVIO — qué obtendrá y sobre qué trabaja (sin hueco muerto) */}
+            {!plan ? (
+              <div className="mt-6 space-y-4">
+                <div className="rounded-xl border border-brandLine p-6" style={{ background: 'var(--inset-grad)' }}>
+                  <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Lo que hará Wefty</div>
+                  <p className="mt-3 text-[15px] leading-relaxed max-w-[60ch]" style={{ color: TXT }}>
+                    Repartirá tu presupuesto entre tus{' '}
+                    <span style={{ color: 'var(--brand-soft)' }}>{productos.filter((p) => p.suficiente).length}</span>{' '}
+                    productos con histórico suficiente, priorizando los de mayor margen y rotación, y te dirá
+                    cuántas unidades pedir de cada uno.
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 font-mono text-[11px] tracking-[0.02em]" style={{ color: TXT2 }}>
+                    <span><span style={{ color: TXT3 }}>productos · </span>{productos.filter((p) => p.suficiente).length}</span>
+                    <span>
+                      <span style={{ color: TXT3 }}>costes · </span>
+                      <span style={{ color: costesReales.size > 0 ? VERDE : TXT2 }}>{costesReales.size} reales</span>
+                      {' · '}{Math.max(0, productos.filter((p) => p.suficiente).length - costesReales.size)} estimados
+                    </span>
+                    <span><span style={{ color: TXT3 }}>histórico · </span>{motor.perfil.semanas} semanas ({fmtFecha(motor.perfil.fechaMin)} – {fmtFecha(motor.perfil.fechaMax)})</span>
+                  </div>
+                </div>
+
+                {/* Esqueleto atenuado: la forma de lo que llegará */}
+                <div className="rounded-xl border border-line p-5 md:p-6" style={{ background: 'var(--panel-grad)', opacity: 0.45 }} aria-hidden="true">
+                  <div className="hidden md:grid grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 pb-2 border-b border-hairline">
+                    {['Producto', 'Uds', 'Inversión', 'Margen esp.', '%', 'Riesgo'].map((h) => (
+                      <span key={h} className={LABEL} style={{ color: TXT3 }}>{h}</span>
+                    ))}
+                  </div>
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="flex md:grid md:grid-cols-[1.8fr_64px_100px_110px_56px_150px] gap-3 items-center py-3.5 border-b border-hairlineSoft">
+                      <span className="h-3 rounded-full" style={{ background: 'var(--hairline)', width: `${64 - i * 14}%` }} />
+                      <span className="hidden md:block h-3 rounded-full" style={{ background: 'var(--hairline)' }} />
+                      <span className="hidden md:block h-3 rounded-full" style={{ background: 'var(--hairline)' }} />
+                      <span className="hidden md:block h-3 rounded-full" style={{ background: 'var(--hairline)' }} />
+                      <span className="hidden md:block h-3 rounded-full" style={{ background: 'var(--hairline)' }} />
+                      <span className="hidden md:block h-3 rounded-full" style={{ background: 'var(--hairline)' }} />
+                    </div>
+                  ))}
+                  <p className="mt-3 font-mono text-[10px] tracking-[0.16em] uppercase" style={{ color: TXT3 }}>así se verá tu plan</p>
+                </div>
+              </div>
+            ) : null}
+
             {/* Errores amables */}
             {plan && !plan.ok ? (
               <div className="mt-6 rounded-xl border border-line p-6" style={{ background: 'var(--inset-grad)' }}>
