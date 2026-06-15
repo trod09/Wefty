@@ -90,6 +90,7 @@ const ESTILO_CICLO = {
   CRECIMIENTO: { color: VERDE, texto: 'Crecimiento' },
   MADURO: { color: 'var(--txt-2)', texto: 'Maduro' },
   DECLIVE: { color: EMBER, texto: 'Declive' },
+  DESCATALOGADO: { color: EMBER, texto: 'Descatalogado' },
 };
 function BadgeCiclo({ ciclo }) {
   const e = ESTILO_CICLO[ciclo.fase] || ESTILO_CICLO.MADURO;

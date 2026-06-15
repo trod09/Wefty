@@ -1053,9 +1053,25 @@ console.log('\n══════ BATERÍA 360 · BUGS CONOCIDOS (pendientes de 
   const plD = generarPlanCompra(mD, { presupuesto: 50000, horizonte: 12, margenPct: 60 });
   const planExcluye = plD.excluidos?.some((e) => e.producto === 'Muerto');
   const avisoApagado = (repD.avisos || []).some((a) => /sin ventas|descatalog|apagad|no se ha vendido|semanas sin/i.test(a));
-  casoPendiente('BUG1: descatalogado → confianza NO es ALTA', repD.confianza?.nivel !== 'ALTA', `hoy=${repD.confianza?.nivel}`);
-  casoPendiente('BUG1: descatalogado → recomendado bajo/0', repD.recomendado <= 40, `hoy=${repD.recomendado}`);
-  casoPendiente('BUG1: descatalogado → aviso honesto o excluido del plan', avisoApagado || planExcluye, `avisos=${(repD.avisos || []).length}, enExcluidos=${!!planExcluye}`);
+  // BUG 1 — ARREGLADO: producto descatalogado se detecta y degrada con aviso.
+  caso('BUG1 arreglado: descatalogado → fase DESCATALOGADO', repD.ciclo?.fase === 'DESCATALOGADO', `fase=${repD.ciclo?.fase}`);
+  caso('BUG1 arreglado: descatalogado → confianza NO es ALTA', repD.confianza?.nivel !== 'ALTA', `nivel=${repD.confianza?.nivel}`);
+  caso('BUG1 arreglado: descatalogado → recomendado a cero', repD.recomendado === 0, `recomendado=${repD.recomendado}`);
+  caso('BUG1 arreglado: descatalogado → aviso honesto Y excluido del plan con motivo', avisoApagado && planExcluye,
+    `avisos=${(repD.avisos || []).length}, enExcluidos=${!!planExcluye}`);
+
+  // Guarda estacional: producto MUY estacional (3 años), hoy en temporada baja
+  // (cola de ceros) pero con temporada alta inminente → NO debe ser descatalogado.
+  const estac = [];
+  for (let w = 0; w < 156; w++) {
+    const alta = (w % 52) < 13; // vende fuerte las 13 primeras semanas del año
+    if (alta) estac.push({ fecha: fechaSemana(w), producto: 'Botas', categoria: 'Calzado', talla: 'M', color: 'N', unidades: 30, precio: 60, ingresos: 1800 });
+    estac.push({ fecha: fechaSemana(w), producto: 'Plantilla', categoria: 'Calzado', talla: 'U', color: 'N', unidades: 5, precio: 10, ingresos: 50 });
+  }
+  const mE = prepararMotor(estac);
+  const repE = recomendarReposicion(mE, { producto: 'Botas', leadSemanas: 8 });
+  caso('guarda estacional: producto estacional con temporada alta inminente NO se marca descatalogado',
+    repE.ciclo?.fase !== 'DESCATALOGADO', `fase=${repE.ciclo?.fase}, factorEstacional=${repE.estacionalidad?.factorHorizonte?.toFixed(2)}`);
 
   // BUG 3 — fecha futura inverosímil estira la serie sin descartarla
   const fut = [];
