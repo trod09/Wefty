@@ -10,7 +10,7 @@
 import { readFileSync } from 'node:fs';
 import { prepararMotor, recomendarReposicion, productosOrdenados, demandaProducto } from '../lib/engine/motor.mjs';
 import { generarPlanCompra } from '../lib/engine/plan.mjs';
-import { parseNumero as parseNumber } from '../lib/csv.mjs';
+import { parseNumero as parseNumber, unificarNombres } from '../lib/csv.mjs';
 
 // ───── VERBATIM de app/upload/page.jsx ─────
 const CANON_FIELDS = [
@@ -67,11 +67,11 @@ export function parsearVentas(headers, rows) {
   const iCat = findCol(headers, 'categoria', 'category'); const iTalla = findCol(headers, 'talla', 'size');
   const iColor = findCol(headers, 'color'); const iUnid = findCol(headers, 'unidades_vendidas', 'unidades', 'cantidad', 'units', 'qty');
   const iPrecio = findCol(headers, 'precio_unitario', 'precio', 'price'); const iIng = findCol(headers, 'ingresos', 'revenue', 'importe', 'total');
-  const records = rows.map((r) => {
+  const records = unificarNombres(rows.map((r) => {
     const unidades = parseNumber(r[iUnid]) ?? 0; const precio = parseNumber(r[iPrecio]) ?? 0;
     const ingresos = iIng >= 0 ? (parseNumber(r[iIng]) ?? unidades * precio) : unidades * precio;
     return { fecha: iFecha >= 0 ? String(r[iFecha] ?? '').trim() : '', producto: iProd >= 0 ? String(r[iProd] ?? '').trim() : '', categoria: iCat >= 0 ? String(r[iCat] ?? '').trim() : '', talla: iTalla >= 0 ? String(r[iTalla] ?? '').trim().toUpperCase() : '', color: iColor >= 0 ? String(r[iColor] ?? '').trim() : '', unidades, precio, ingresos };
-  });
+  }));
   return { records };
 }
 
@@ -126,6 +126,24 @@ console.log('\n— Fechas y robustez de filas —');
   // no peta con celdas vacías / espacios
   let petó = false; try { recordsDe(enc + '\n  2026-01-05 , Polo , , , ,  , , '); } catch { petó = true; }
   caso('fila con celdas vacías/espacios no peta el parseo', petó === false);
+}
+
+console.log('\n— BUG 4 (ARREGLADO): unificación de nombres por mayúsculas/espacios —');
+{
+  const enc = 'fecha,producto,categoria,talla,color,unidades_vendidas,precio_unitario,ingresos';
+  const sucio = enc
+    + '\n2024-01-08,Camiseta Básica,Camisetas,M,Negro,5,10,50'
+    + '\n2024-01-15,CAMISETA BÁSICA,Camisetas,M,negro,3,10,30'
+    + '\n2024-01-22,  camiseta básica ,Camisetas,M, Negro ,2,10,20';
+  const recs = recordsDe(sucio);
+  const prods = [...new Set(recs.map((r) => r.producto))];
+  const colores = [...new Set(recs.map((r) => r.color))];
+  caso('BUG4 arreglado: 3 grafías de "Camiseta Básica" → 1 solo producto (grafía más frecuente)',
+    prods.length === 1 && prods[0] === 'Camiseta Básica', prods.join(' | '));
+  caso('BUG4 arreglado: "Negro" / "negro" / " Negro " → 1 solo color', colores.length === 1, colores.join(' | '));
+  // No fusiona nombres realmente distintos
+  const recs2 = recordsDe(enc + '\n2024-01-08,Camiseta Roja,Camisetas,M,Rojo,1,10,10\n2024-01-15,Camiseta Azul,Camisetas,M,Azul,1,10,10');
+  caso('BUG4: NO fusiona productos genuinamente distintos', new Set(recs2.map((r) => r.producto)).size === 2);
 }
 
 console.log('\n— BUG 2 (ARREGLADO): punto de miles "N.000" —');

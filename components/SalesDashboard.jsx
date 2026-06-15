@@ -11,7 +11,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Cell, PieChart, Pie, AreaChart, Area, LabelList, ReferenceLine,
 } from 'recharts';
-import { parseNumero as parseNumber } from '@/lib/csv.mjs';
+import { parseNumero as parseNumber, unificarNombres } from '@/lib/csv.mjs';
 
 // ---- Paleta ------------------------------------------------------------
 const ELECTRIC = 'var(--data)';
@@ -162,7 +162,7 @@ export function parsearVentas(headers, rows) {
     const iPrecio = findCol(headers, 'precio_unitario', 'precio', 'price');
     const iIng = findCol(headers, 'ingresos', 'revenue', 'importe', 'total');
 
-    const records = rows.map((r) => {
+    const records = unificarNombres(rows.map((r) => {
       const unidades = parseNumber(r[iUnid]) ?? 0;
       const precio = parseNumber(r[iPrecio]) ?? 0;
       const ingresos = iIng >= 0 ? (parseNumber(r[iIng]) ?? unidades * precio) : unidades * precio;
@@ -174,7 +174,7 @@ export function parsearVentas(headers, rows) {
         color: iColor >= 0 ? String(r[iColor] ?? '').trim() : '',
         unidades, precio, ingresos,
       };
-    });
+    }));
 
     // Opciones para los filtros: valores distintos, sin vacíos, ordenados.
     const categorias = [...new Set(records.map((r) => r.categoria).filter(Boolean))].sort();
