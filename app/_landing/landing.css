@@ -350,7 +350,6 @@ html:has(.wefty-root) { scroll-behavior: smooth; }
   padding: 150px 0 90px;
   overflow: hidden;
 }
-.wefty-root .hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.5; }
 .wefty-root .hero::before {
   content: "";
   position: absolute; inset: 0;

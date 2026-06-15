@@ -47,7 +47,6 @@ export default function Landing() {
 
       {/* ── hero ── */}
       <section className="hero" data-screen-label="Hero">
-        <canvas className="hero-canvas" aria-hidden="true"></canvas>
         <div className="wrap">
           <div>
             <p className="kicker"><span className="idx">00 //</span> predicción de stock · moda online</p>

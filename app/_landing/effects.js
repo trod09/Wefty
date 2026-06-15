@@ -321,58 +321,6 @@ export function initLanding(root) {
     giant.classList.add('in');
   }
 
-  /* ════ lluvia de datos del hero ════ */
-  (function dataRain() {
-    const canvas = root.querySelector('.hero-canvas');
-    if (!canvas) return;
-    const hero = canvas.parentElement;
-    const ctx = canvas.getContext('2d');
-    const RAIN = 'XSML0123456789€%▲▼·:/+−'.split('');
-    let W = 0, H = 0, cols = [], running = false;
-
-    function resize() {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      W = hero.clientWidth; H = hero.clientHeight;
-      canvas.width = W * dpr; canvas.height = H * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.floor(W / 36);
-      cols = [];
-      for (let i = 0; i < n; i++) {
-        cols.push({ x: i * 36 + 14, y: Math.random() * H, speed: 28 + Math.random() * 60, accent: Math.random() < 0.12, trail: 5 + ((Math.random() * 7) | 0) });
-      }
-    }
-    let last = 0;
-    function frame(now) {
-      if (!live.on || !running) return;
-      const dt = Math.min(0.05, (now - last) / 1000) || 0.016;
-      last = now;
-      ctx.clearRect(0, 0, W, H);
-      ctx.font = '12px ' + getComputedStyle(root).getPropertyValue('--font-mono');
-      const a = colA(), b = colB();
-      cols.forEach((c) => {
-        c.y += c.speed * dt * 16;
-        if (c.y - c.trail * 16 > H) { c.y = -20; c.speed = 28 + Math.random() * 60; }
-        for (let t = 0; t < c.trail; t++) {
-          const y = c.y - t * 16;
-          if (y < -16 || y > H + 16) continue;
-          ctx.fillStyle = c.accent ? (Math.random() < 0.5 ? a : b) : 'rgb(180, 195, 215)';
-          ctx.globalAlpha = (1 - t / c.trail) * (c.accent ? 0.6 : 0.22);
-          const g = RAIN[((c.x * 7 + y * 3) | 0) % RAIN.length];
-          ctx.fillText(Math.random() < 0.02 ? RAIN[(Math.random() * RAIN.length) | 0] : g, c.x, y);
-        }
-      });
-      ctx.globalAlpha = 1;
-      requestAnimationFrame(frame);
-    }
-    resize();
-    on(window, 'resize', resize);
-    if (reduced) return;
-    visible(canvas, (vis) => {
-      if (vis && !running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
-      else if (!vis) running = false;
-    });
-  })();
-
   /* ════ red de marcas (constelación) ════ */
   (function network() {
     const canvas = root.querySelector('.red-canvas');
