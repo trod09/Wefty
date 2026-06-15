@@ -13,6 +13,7 @@ import { CornerCrosshairs, Fn } from '@/components/decor';
 import ProductoShell from '@/components/ProductoShell';
 import TituloDecodificado from '@/components/TituloDecodificado';
 import { supabase } from '@/lib/supabase';
+import { parseNumeroLaxo as parseNumberLoose } from '@/lib/csv.mjs';
 
 // Columnas de la tabla "ventas" en Supabase y cómo convertir cada valor.
 // 'int'  → número entero, 'num' → número decimal, 'text' → texto tal cual.
@@ -106,29 +107,6 @@ function detectMapping(headers) {
   }
 
   return mapping;
-}
-
-// Convierte un número escrito de cualquier forma a un número de verdad.
-// Tolera símbolos (€, $, %), espacios y separadores de miles, tanto en formato
-// europeo (1.234,56) como anglosajón (1,234.56). Devuelve null si no es válido.
-function parseNumberLoose(raw) {
-  if (raw == null) return null;
-  let s = String(raw).trim().replace(/[^0-9.,-]/g, '');
-  if (s === '') return null;
-  const ld = s.lastIndexOf('.');
-  const lc = s.lastIndexOf(',');
-  if (ld >= 0 && lc >= 0) {
-    // Si hay punto y coma, el último que aparece es el separador decimal.
-    if (lc > ld) s = s.replace(/\./g, '').replace(',', '.'); // 1.234,56 → 1234.56
-    else s = s.replace(/,/g, '');                            // 1,234.56 → 1234.56
-  } else if (lc >= 0) {
-    const p = s.split(',');
-    // Una sola coma: decimal (12,5) salvo que parezca separador de miles (1,234).
-    if (p.length === 2 && p[1].length !== 3) s = p.join('.');
-    else s = p.join('');
-  }
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
 }
 
 // Normaliza una fecha al formato AAAA-MM-DD que esperan el dashboard y Supabase.

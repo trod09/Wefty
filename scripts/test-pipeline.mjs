@@ -5,10 +5,11 @@
 // IMPORTANTE: las funciones de parseo de aquí son COPIA VERBATIM del código de
 // producción (app/upload/page.jsx y components/SalesDashboard.jsx). Hoy esas
 // funciones viven dentro de componentes React (no importables en Node), así que
-// se replican aquí. Al arreglar el BUG 2 se extraerán a un módulo compartido
-// (lib/csv.mjs) y este test importará la versión de producción en vez de copiarla.
+// se replican aquí. El parser de números YA se importa de lib/csv.mjs (BUG 2);
+// el resto (separador, fechas, mapeo) sigue siendo copia verbatim hasta extraerlo.
 import { prepararMotor } from '../lib/engine/motor.mjs';
 import { generarPlanCompra } from '../lib/engine/plan.mjs';
+import { parseNumero as parseNumber } from '../lib/csv.mjs';
 
 // ───── VERBATIM de app/upload/page.jsx ─────
 const CANON_FIELDS = [
@@ -59,15 +60,6 @@ function findCol(headers, ...names) {
   for (const n of names) { const i = headers.findIndex((h) => norm(h) === norm(n)); if (i >= 0) return i; }
   for (const n of names) { const i = headers.findIndex((h) => norm(h).includes(norm(n))); if (i >= 0) return i; }
   return -1;
-}
-export function parseNumber(raw) {
-  if (raw == null) return null;
-  let s = String(raw).trim().replace(/[€$£%\s]/g, '');
-  if (s === '') return null;
-  const ld = s.lastIndexOf('.'); const lc = s.lastIndexOf(',');
-  if (ld >= 0 && lc >= 0) { if (lc > ld) s = s.replace(/\./g, '').replace(',', '.'); else s = s.replace(/,/g, ''); }
-  else if (lc >= 0) { const p = s.split(','); if (p.length === 2 && p[1].length !== 3) s = p.join('.'); else s = p.join(''); }
-  const n = Number(s); return Number.isFinite(n) ? n : null;
 }
 export function parsearVentas(headers, rows) {
   const iFecha = findCol(headers, 'fecha', 'date'); const iProd = findCol(headers, 'producto', 'product');
@@ -135,17 +127,18 @@ console.log('\n— Fechas y robustez de filas —');
   caso('fila con celdas vacías/espacios no peta el parseo', petó === false);
 }
 
-console.log('\n— BUG 2 (PENDIENTE): punto de miles "N.000" leído como 1 —');
-casoPendiente("parseNumber('1.000') debería ser 1000 (miles), no 1", parseNumber('1.000') === 1000, `hoy = ${parseNumber('1.000')}`);
-casoPendiente("parseNumber('2.500') debería ser 2500, no 2.5", parseNumber('2.500') === 2500, `hoy = ${parseNumber('2.500')}`);
+console.log('\n— BUG 2 (ARREGLADO): punto de miles "N.000" —');
+caso("BUG2 arreglado: parseNumber('1.000') → 1000 (miles)", parseNumber('1.000') === 1000, `= ${parseNumber('1.000')}`);
+caso("BUG2 arreglado: parseNumber('2.500') → 2500", parseNumber('2.500') === 2500, `= ${parseNumber('2.500')}`);
+caso("BUG2: '10.000' → 10000 · '1.234' → 1234", parseNumber('10.000') === 10000 && parseNumber('1.234') === 1234);
 {
   // Demostración del impacto (mismo dinero real, ~1000× distinto, sin aviso):
   const enc = 'fecha,producto,categoria,talla,color,unidades_vendidas,precio_unitario,ingresos';
   const mk = (precio) => { let s = enc; for (let w = 0; w < 60; w++) { const d = new Date(Date.UTC(2026, 0, 5) + w * 7 * 86400000).toISOString().slice(0, 10); s += `\n${d},Bonito,Camisetas,M,Negro,5,${precio},`; } return s; };
   const gA = generarPlanCompra(prepararMotor(recordsDe(mk('1000'))), { presupuesto: 50000, horizonte: 12, margenPct: 60 }).gastado;
   const gB = generarPlanCompra(prepararMotor(recordsDe(mk('1.000'))), { presupuesto: 50000, horizonte: 12, margenPct: 60 }).gastado;
-  casoPendiente('mismo precio real "1000" vs "1.000" → plan NO debería diferir ~1000×',
-    Math.abs(gA - gB) < gA * 0.05, `hoy gasta ${Math.round(gA)}€ vs ${Math.round(gB)}€`);
+  caso('BUG2 arreglado: "1000" vs "1.000" → el plan gasta lo MISMO (no ~1000× distinto)',
+    Math.abs(gA - gB) < gA * 0.02, `gasta ${Math.round(gA)}€ vs ${Math.round(gB)}€`);
 }
 
 // Resumen propio + salida solo si se ejecuta directamente (no al integrarse).

@@ -11,6 +11,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   Cell, PieChart, Pie, AreaChart, Area, LabelList, ReferenceLine,
 } from 'recharts';
+import { parseNumero as parseNumber } from '@/lib/csv.mjs';
 
 // ---- Paleta ------------------------------------------------------------
 const ELECTRIC = 'var(--data)';
@@ -45,24 +46,6 @@ function findCol(headers, ...names) {
     if (i >= 0) return i;
   }
   return -1;
-}
-
-function parseNumber(raw) {
-  if (raw == null) return null;
-  let s = String(raw).trim().replace(/[€$£%\s]/g, '');
-  if (s === '') return null;
-  const ld = s.lastIndexOf('.');
-  const lc = s.lastIndexOf(',');
-  if (ld >= 0 && lc >= 0) {
-    if (lc > ld) s = s.replace(/\./g, '').replace(',', '.');
-    else s = s.replace(/,/g, '');
-  } else if (lc >= 0) {
-    const p = s.split(',');
-    if (p.length === 2 && p[1].length !== 3) s = p.join('.');
-    else s = p.join('');
-  }
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
 }
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
