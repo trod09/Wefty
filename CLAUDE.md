@@ -120,9 +120,16 @@ Reglas del motor: todo determinista; el motor usa SIEMPRE el dataset completo
 datos suficientes se desactiva CON AVISO); cada resultado lleva su explicación
 ("¿Por qué esta recomendación?") cuyos números cuadran con el resultado final.
 
-**Pruebas del motor**: `node scripts/test-engine.mjs` (181 casos con resultados
-calculados a mano + extremo a extremo con `ventas_ejemplo_loop.csv`). Ejecútalas
-tras tocar cualquier fichero de `lib/engine/`.
+**Pruebas del motor**: `node scripts/test-engine.mjs` (212 casos: matemática
+calculada a mano + extremo a extremo con `ventas_ejemplo_loop.csv` + batería 360
+de robustez/coherencia). Ese comando ejecuta también `scripts/test-pipeline.mjs`
+(parseo de CSV; sus funciones son COPIA VERBATIM de `app/upload/page.jsx` y
+`SalesDashboard.jsx` — mantener en sync). Ejecútalas tras tocar `lib/engine/` o
+el pipeline de carga. Convención `casoPendiente(...)`: prueba xfail que documenta
+un BUG conocido (sale como `⊘ PENDIENTE`, no rompe el verde); al arreglar el bug,
+conviértela en `caso(...)`. Hoy hay pendientes: BUG1 (producto descatalogado sigue
+recomendando alto), BUG2 (`parseNumber('1.000')→1`), BUG3 (fecha inverosímil estira
+la serie).
 
 ### Conventions
 

@@ -13,7 +13,7 @@ import { ajustarEWMA } from '../lib/engine/forecast.mjs';
 import {
   curvaJerarquica, aplicarUmbralMinimo, repartoPorMayorResto, desgloseTallaColor,
 } from '../lib/engine/curvas.mjs';
-import { prepararMotor, recomendarReposicion, validacionGlobal } from '../lib/engine/motor.mjs';
+import { prepararMotor, recomendarReposicion, validacionGlobal, demandaProducto, productosOrdenados } from '../lib/engine/motor.mjs';
 import { planCortes, competirModelos, seleccionarModelo } from '../lib/engine/backtest.mjs';
 import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
 import { mulberry32, cuantil, simularDemanda } from '../lib/engine/bootstrap.mjs';
@@ -28,11 +28,33 @@ import {
 } from '../lib/engine/plan.mjs';
 
 let fallos = 0;
+let pendientes = 0;
 function caso(nombre, ok, detalle = '') {
   if (ok) console.log(`  ✓ ${nombre}`);
   else { fallos += 1; console.log(`  ✗ ${nombre}${detalle ? ` — ${detalle}` : ''}`); }
 }
+// xfail: documenta un BUG conocido. okDeseado = el comportamiento CORRECTO que
+// queremos tras el arreglo. Hoy NO se cumple → PENDIENTE (no rompe el verde).
+// Cuando el arreglo lo ponga en verde, conviértelo en caso().
+function casoPendiente(nombre, okDeseado, detalle = '') {
+  if (okDeseado) { fallos += 1; console.log(`  ⚠ XPASS (conviértela en caso()): ${nombre}`); }
+  else { pendientes += 1; console.log(`  ⊘ PENDIENTE (bug conocido, falla hoy): ${nombre}${detalle ? ` — ${detalle}` : ''}`); }
+}
 const cerca = (a, b, tol = 1e-9) => Math.abs(a - b) <= tol;
+// Escaneo profundo de números no finitos (NaN/±Inf) en cualquier resultado.
+function noFin(o) {
+  const m = []; const seen = new Set();
+  (function w(v, p) {
+    if (v == null) return;
+    if (typeof v === 'number') { if (!Number.isFinite(v)) m.push(p); return; }
+    if (typeof v !== 'object') return;
+    if (seen.has(v)) return; seen.add(v);
+    if (v instanceof Map) { for (const [k, val] of v) w(val, p + '[' + k + ']'); return; }
+    if (Array.isArray(v)) { for (let i = 0; i < v.length && i < 3000; i++) w(v[i], p + '[' + i + ']'); return; }
+    for (const k of Object.keys(v)) { if (k === '_p' || k === 'sims' || k === 'ordenadas') continue; w(v[k], p ? p + '.' + k : k); }
+  })(o, ''); return m;
+}
+const sinPetar = (fn) => { try { return { ok: true, val: fn() }; } catch (e) { return { ok: false, err: String(e && e.message || e) }; } };
 
 // Genera filas de venta semanales: un registro por semana (lunes consecutivos).
 const LUNES_0 = parseDia('2026-01-05'); // lunes real
@@ -911,5 +933,143 @@ console.log('\n— Extremo a extremo con ventas_ejemplo_loop.csv —');
     `lead8=${rLargo.recomendado} vs lead4=${r.recomendado}`);
 }
 
-console.log(fallos === 0 ? '\nTODO OK — la matemática del motor cuadra.\n' : `\n${fallos} CASO(S) FALLARON.\n`);
-process.exit(fallos === 0 ? 0 : 1);
+// ════════════════════════════════════════════════════════════════════════
+// BATERÍA 360 — ROBUSTEZ Y COHERENCIA (motor). Robustez/coherencia en verde;
+// los bugs conocidos como casoPendiente (xfail) hasta su arreglo.
+// ════════════════════════════════════════════════════════════════════════
+const catSano = (nProd, nSem) => {
+  const r = [];
+  for (let p = 0; p < nProd; p++) {
+    const ritmo = 5 + p * 3, precio = 20 + p * 5;
+    for (let w = 0; w < nSem; w++) {
+      const tot = Math.max(0, Math.round(ritmo * (1 + 0.25 * Math.sin(w * 0.5 + p))));
+      ['S', 'M', 'L'].forEach((t, ti) => { const u = Math.round(tot * [0.5, 0.3, 0.2][ti]); if (u > 0) r.push({ fecha: fechaSemana(w), producto: `P${p + 1}`, categoria: `C${1 + (p % 2)}`, talla: t, color: 'Negro', unidades: u, precio, ingresos: u * precio }); });
+    }
+  }
+  return r;
+};
+
+console.log('\n══════ BATERÍA 360 · Robustez (motor no peta, degrada con aviso) ══════');
+{
+  const m0 = sinPetar(() => prepararMotor([]));
+  caso('dataset vacío: prepararMotor no peta y marca almacén vacío', m0.ok && m0.val.almacen.vacio === true, m0.err);
+  caso('dataset vacío: plan → sin-datos (aviso honesto)', m0.ok && generarPlanCompra(m0.val, { presupuesto: 20000 }).motivo === 'sin-datos');
+
+  const m1 = sinPetar(() => prepararMotor([{ fecha: fechaSemana(0), producto: 'Uno', categoria: 'C', talla: 'M', color: 'N', unidades: 3, precio: 20, ingresos: 60 }]));
+  caso('una sola fila: no peta; reposición → pocos-datos; plan → sin-productos',
+    m1.ok && recomendarReposicion(m1.val, { producto: 'Uno' }).motivo === 'pocos-datos' && generarPlanCompra(m1.val, { presupuesto: 20000 }).motivo === 'sin-productos', m1.err);
+
+  // Todas las ventas en una única fecha
+  const unaFecha = [];
+  for (let k = 0; k < 30; k++) unaFecha.push({ fecha: fechaSemana(0), producto: 'A', categoria: 'C', talla: 'M', color: 'N', unidades: 4, precio: 20, ingresos: 80 });
+  const mUF = sinPetar(() => prepararMotor(unaFecha));
+  const repUF = mUF.ok ? sinPetar(() => recomendarReposicion(mUF.val, { producto: 'A' })) : { ok: false };
+  const plUF = mUF.ok ? sinPetar(() => generarPlanCompra(mUF.val, { presupuesto: 20000 })) : { ok: false };
+  caso('todas en una fecha: no peta, sin no-finitos, plan gastado ≤ presupuesto',
+    mUF.ok && repUF.ok && plUF.ok && noFin(repUF.val).length === 0 && (!plUF.val.ok || plUF.val.gastado <= 20000 + 1e-6),
+    (mUF.err || repUF.err || plUF.err || ''));
+
+  // Outlier puro: una venta gigante
+  const out = [{ fecha: fechaSemana(0), producto: 'Big', categoria: 'C', talla: 'M', color: 'N', unidades: 5000, precio: 30, ingresos: 150000 }];
+  const mO = sinPetar(() => prepararMotor(out));
+  const repO = mO.ok ? sinPetar(() => recomendarReposicion(mO.val, { producto: 'Big' })) : { ok: false };
+  caso('outlier puro (5000): no peta, sin no-finitos, confianza NO es ALTA',
+    mO.ok && repO.ok && noFin(repO.val).length === 0 && repO.val.confianza?.nivel !== 'ALTA', repO.err || '');
+
+  // Intermitencia extrema: casi siempre 0
+  const inter = [];
+  for (let w = 0; w < 60; w++) { const u = (w % 9 === 0) ? 12 : 0; if (u > 0) inter.push({ fecha: fechaSemana(w), producto: 'Inter', categoria: 'C', talla: 'M', color: 'N', unidades: u, precio: 20, ingresos: u * 20 }); }
+  const mI = sinPetar(() => prepararMotor(inter));
+  const repI = mI.ok ? sinPetar(() => recomendarReposicion(mI.val, { producto: 'Inter' })) : { ok: false };
+  caso('intermitencia extrema: no peta y sin no-finitos', mI.ok && repI.ok && noFin(repI.val).length === 0, mI.err || repI.err || '');
+
+  // Negativos / cero en unidades
+  const neg = [];
+  for (let w = 0; w < 40; w++) neg.push({ fecha: fechaSemana(w), producto: 'Dev', categoria: 'C', talla: 'M', color: 'N', unidades: w % 2 ? -5 : 0, precio: 20, ingresos: 0 });
+  const mN = sinPetar(() => prepararMotor(neg));
+  caso('unidades negativas/cero: no peta y sin no-finitos en el perfil', mN.ok && noFin(mN.val.perfil).length === 0, mN.err || '');
+
+  // Dos productos de escalas temporales muy distintas (104 sem vs 1 sem)
+  const mix = [];
+  for (let w = 0; w < 104; w++) mix.push({ fecha: fechaSemana(w), producto: 'Largo', categoria: 'C', talla: 'M', color: 'N', unidades: 8, precio: 20, ingresos: 160 });
+  mix.push({ fecha: fechaSemana(103), producto: 'Corto', categoria: 'C', talla: 'M', color: 'N', unidades: 6, precio: 20, ingresos: 120 });
+  const mMix = sinPetar(() => prepararMotor(mix));
+  caso('2 años + 1 semana mezclados: no peta y maneja ambos productos', mMix.ok && mMix.val.perfil.nProductos === 2, mMix.err || '');
+
+  // Catálogo sano: cero números no finitos en TODO el recorrido
+  const sano = catSano(5, 60);
+  const mS = prepararMotor(sano);
+  let nf = noFin(mS.perfil).concat(noFin(validacionGlobal(mS)));
+  for (const p of productosOrdenados(mS)) nf = nf.concat(noFin(recomendarReposicion(mS, { producto: p.nombre })));
+  nf = nf.concat(noFin({ ...generarPlanCompra(mS, { presupuesto: 20000 }), filas: undefined }));
+  caso('catálogo sano: NINGÚN número no finito en reposición/plan/validación', nf.length === 0, nf.slice(0, 3).join(', '));
+}
+
+console.log('\n══════ BATERÍA 360 · Coherencia (no contradice lo obvio) ══════');
+{
+  const sano = catSano(5, 60);
+  const m = prepararMotor(sano);
+
+  // Misma demanda en Reposición y Plan al mismo horizonte (12 sem): P50 idéntico
+  let cruceOk = true, detCruce = '';
+  for (const nombre of productosOrdenados(m).slice(0, 5).map((p) => p.nombre)) {
+    const rep = recomendarReposicion(m, { producto: nombre, leadSemanas: 8 }); // 8 + cobertura 4 = 12
+    const dem = demandaProducto(m, nombre, 12);
+    if (rep.escenarios.esperado !== Math.round(dem.q(0.5))) { cruceOk = false; detCruce = `${nombre}: ${rep.escenarios.esperado} vs ${Math.round(dem.q(0.5))}`; }
+  }
+  caso('demanda P50 coincide entre Reposición(lead8) y Plan/demandaProducto(,12)', cruceOk, detCruce);
+
+  // Plan invariante al orden de las filas
+  const pA = generarPlanCompra(m, { presupuesto: 20000, horizonte: 12 });
+  const pB = generarPlanCompra(prepararMotor([...sano].reverse()), { presupuesto: 20000, horizonte: 12 });
+  const igualOrden = pA.filas.length === pB.filas.length && pA.filas.every((f) => pB.filas.find((g) => g.producto === f.producto)?.unidades === f.unidades) && cerca(pA.margenEsperado, pB.margenEsperado, 0.01);
+  caso('plan invariante al orden de las filas del CSV', igualOrden);
+
+  // El superventas (mayor volumen) recibe inversión, no queda en 0 oculto
+  const top = productosOrdenados(m)[0].nombre;
+  const filaTop = pA.filas.find((f) => f.producto === top);
+  caso('el superventas recibe inversión (no queda en 0 sin estar en excluidos)', Boolean(filaTop && filaTop.unidades > 0) || pA.excluidos.some((e) => e.producto === top));
+
+  // Declive NO recibe más presupuesto que crecimiento de volumen similar
+  const dc = [];
+  for (let w = 0; w < 60; w++) { const d = Math.max(0, Math.round(30 - w * 0.4)); const c = Math.max(0, Math.round(6 + w * 0.4)); if (d > 0) dc.push({ fecha: fechaSemana(w), producto: 'Dec', categoria: 'X', talla: 'M', color: 'N', unidades: d, precio: 40, ingresos: d * 40 }); if (c > 0) dc.push({ fecha: fechaSemana(w), producto: 'Cre', categoria: 'X', talla: 'M', color: 'N', unidades: c, precio: 40, ingresos: c * 40 }); }
+  const mDC = prepararMotor(dc);
+  const plDC = generarPlanCompra(mDC, { presupuesto: 20000, horizonte: 12, margenPct: 60 });
+  const invDec = plDC.filas.find((f) => f.producto === 'Dec')?.inversion || 0;
+  const invCre = plDC.filas.find((f) => f.producto === 'Cre')?.inversion || 0;
+  caso('declive NO recibe más presupuesto que crecimiento (mismo precio/volumen)', invDec <= invCre, `Dec=${Math.round(invDec)}€ Cre=${Math.round(invCre)}€`);
+}
+
+console.log('\n══════ BATERÍA 360 · BUGS CONOCIDOS (pendientes de arreglo) ══════');
+{
+  // BUG 1 — producto descatalogado (vendió 20 sem, 0 las últimas 40)
+  const dz = [];
+  for (let w = 0; w < 60; w++) {
+    dz.push({ fecha: fechaSemana(w), producto: 'Vivo', categoria: 'C', talla: 'M', color: 'N', unidades: 10, precio: 20, ingresos: 200 });
+    if (w < 20) { dz.push({ fecha: fechaSemana(w), producto: 'Muerto', categoria: 'C', talla: 'S', color: 'N', unidades: 14, precio: 25, ingresos: 350 }); dz.push({ fecha: fechaSemana(w), producto: 'Muerto', categoria: 'C', talla: 'M', color: 'N', unidades: 10, precio: 25, ingresos: 250 }); }
+  }
+  const mD = prepararMotor(dz);
+  const repD = recomendarReposicion(mD, { producto: 'Muerto', leadSemanas: 4 });
+  const plD = generarPlanCompra(mD, { presupuesto: 50000, horizonte: 12, margenPct: 60 });
+  const planExcluye = plD.excluidos?.some((e) => e.producto === 'Muerto');
+  const avisoApagado = (repD.avisos || []).some((a) => /sin ventas|descatalog|apagad|no se ha vendido|semanas sin/i.test(a));
+  casoPendiente('BUG1: descatalogado → confianza NO es ALTA', repD.confianza?.nivel !== 'ALTA', `hoy=${repD.confianza?.nivel}`);
+  casoPendiente('BUG1: descatalogado → recomendado bajo/0', repD.recomendado <= 40, `hoy=${repD.recomendado}`);
+  casoPendiente('BUG1: descatalogado → aviso honesto o excluido del plan', avisoApagado || planExcluye, `avisos=${(repD.avisos || []).length}, enExcluidos=${!!planExcluye}`);
+
+  // BUG 3 — fecha futura inverosímil estira la serie sin descartarla
+  const fut = [];
+  for (let w = 0; w < 40; w++) fut.push({ fecha: fechaSemana(w), producto: 'Normal', categoria: 'C', talla: 'M', color: 'N', unidades: 8, precio: 20, ingresos: 160 });
+  for (let k = 0; k < 6; k++) fut.push({ fecha: '2204-03-04', producto: 'Normal', categoria: 'C', talla: 'M', color: 'N', unidades: 8, precio: 20, ingresos: 160 });
+  const mF = prepararMotor(fut);
+  casoPendiente('BUG3: fecha inverosímil (2204) no estira la serie a cientos de años', mF.perfil.semanas <= 60, `hoy semanas=${mF.perfil.semanas}, descartadas=${mF.perfil.descartadas}`);
+}
+
+// ── Integra la batería del PIPELINE de CSV (scripts/test-pipeline.mjs) ──
+const pipe = await import('./test-pipeline.mjs');
+const totalFallos = fallos + pipe.contador.fallos;
+const totalPend = pendientes + pipe.contador.pendientes;
+console.log('\n════════════════════════════════════════════════════');
+if (totalFallos === 0) console.log(`TODO OK — motor + pipeline en verde. ${totalPend} prueba(s) PENDIENTE(S) (bugs conocidos sin arreglar todavía).\n`);
+else console.log(`${totalFallos} CASO(S) FALLARON (motor + pipeline).\n`);
+process.exit(totalFallos === 0 ? 0 : 1);
