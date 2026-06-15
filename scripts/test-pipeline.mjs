@@ -7,7 +7,8 @@
 // funciones viven dentro de componentes React (no importables en Node), así que
 // se replican aquí. El parser de números YA se importa de lib/csv.mjs (BUG 2);
 // el resto (separador, fechas, mapeo) sigue siendo copia verbatim hasta extraerlo.
-import { prepararMotor } from '../lib/engine/motor.mjs';
+import { readFileSync } from 'node:fs';
+import { prepararMotor, recomendarReposicion, productosOrdenados, demandaProducto } from '../lib/engine/motor.mjs';
 import { generarPlanCompra } from '../lib/engine/plan.mjs';
 import { parseNumero as parseNumber } from '../lib/csv.mjs';
 
@@ -139,6 +140,43 @@ caso("BUG2: '10.000' → 10000 · '1.234' → 1234", parseNumber('10.000') === 1
   const gB = generarPlanCompra(prepararMotor(recordsDe(mk('1.000'))), { presupuesto: 50000, horizonte: 12, margenPct: 60 }).gastado;
   caso('BUG2 arreglado: "1000" vs "1.000" → el plan gasta lo MISMO (no ~1000× distinto)',
     Math.abs(gA - gB) < gA * 0.02, `gasta ${Math.round(gA)}€ vs ${Math.round(gB)}€`);
+}
+
+console.log('\n— E2E: ventas_semanales_moda.csv (dataset realista, 15 productos, 2 años) —');
+{
+  let txt = null;
+  try { txt = readFileSync(new URL('../ventas_semanales_moda.csv', import.meta.url), 'utf8'); } catch { /* fixture ausente */ }
+  if (!txt) {
+    console.log('  · (omitido: ventas_semanales_moda.csv no está en la raíz del repo)');
+  } else {
+    const pc = procesarCSV(txt);
+    caso('e2e: el CSV se reconoce (8 columnas, sin rechazo)', pc.ok === true);
+    const m = prepararMotor(parsearVentas(pc.headers, pc.rows).records);
+    caso('e2e: 104 semanas · 15 productos · 0 descartes · 0 fechas inverosímiles',
+      m.perfil.semanas === 104 && m.perfil.nProductos === 15 && m.perfil.descartadas === 0 && m.perfil.fechasInverosimiles === 0,
+      `${m.perfil.semanas}/${m.perfil.nProductos}/${m.perfil.descartadas}/${m.perfil.fechasInverosimiles}`);
+    const pl = generarPlanCompra(m, { presupuesto: 20000, horizonte: 12, margenPct: 60 });
+    caso('e2e: plan ok, no gasta de más, margen finito',
+      pl.ok === true && pl.gastado <= 20000 + 1e-6 && Number.isFinite(pl.margenEsperado));
+    // Coherencia: producto descatalogado detectado y excluido (BUG 1)
+    const rs = recomendarReposicion(m, { producto: 'Camiseta Estampada Sunset', leadSemanas: 4 });
+    const excl = pl.excluidos.some((e) => e.producto === 'Camiseta Estampada Sunset');
+    caso('e2e: descatalogado (Camiseta Estampada Sunset) → DESCATALOGADO, recomendado 0, confianza ≠ ALTA, excluido del plan',
+      rs.ciclo?.fase === 'DESCATALOGADO' && rs.recomendado === 0 && rs.confianza?.nivel !== 'ALTA' && excl);
+    // Superventas con inversión (no queda en 0 oculto)
+    const top = productosOrdenados(m)[0].nombre;
+    const filaTop = pl.filas.find((f) => f.producto === top);
+    caso('e2e: el superventas recibe inversión (no queda en 0)', Boolean(filaTop && filaTop.unidades > 0), `top=${top}`);
+    // Declive recibe menos que crecimiento
+    const invDecl = pl.filas.find((f) => f.producto === 'Sudadera Retro 90s')?.inversion || 0;
+    const invCrec = pl.filas.find((f) => f.producto === 'Abrigo Lana Premium')?.inversion || 0;
+    caso('e2e: declive (Sudadera Retro 90s) recibe ≤ que crecimiento (Abrigo Lana Premium)',
+      invDecl <= invCrec, `Retro=${Math.round(invDecl)}€ Abrigo=${Math.round(invCrec)}€`);
+    // Cruce de demanda Reposición(H12) == Plan/demandaProducto(,12)
+    const rep = recomendarReposicion(m, { producto: 'Vaquero Slim Comfort', leadSemanas: 8 });
+    const d = demandaProducto(m, 'Vaquero Slim Comfort', 12);
+    caso('e2e: demanda P50 coincide entre Reposición(H12) y Plan(,12)', rep.escenarios.esperado === Math.round(d.q(0.5)));
+  }
 }
 
 // Resumen propio + salida solo si se ejecuta directamente (no al integrarse).
