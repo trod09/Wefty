@@ -139,7 +139,7 @@ export function PanelConfiguracion({ perfil, configuracion }) {
         <p className="font-mono text-[11px] tracking-[0.04em] leading-relaxed" style={{ color: TXT2 }}>
           {perfil.semanas} semanas de histórico ({fmtFecha(perfil.fechaMin)} — {fmtFecha(perfil.fechaMax)}) ·{' '}
           {perfil.nProductos} productos · {perfil.nVariantes} variantes · {fmtInt(perfil.totalUnidades)} uds
-          {perfil.descartadas > 0 ? ` · ${perfil.descartadas} filas sin fecha válida (ignoradas)` : ''}
+          {perfil.descartadas > 0 ? ` · ${perfil.descartadas} filas ignoradas${perfil.fechasInverosimiles > 0 ? ` (${perfil.fechasInverosimiles} con fecha inverosímil — ¿typo de año?)` : ' (sin fecha válida)'}` : ''}
           {perfil.semanaParcial ? ` · última semana con solo ${perfil.semanaParcial.dias} día${perfil.semanaParcial.dias === 1 ? '' : 's'} de datos (no se usa para ajustar)` : ''}
         </p>
         <ul className="mt-4 space-y-2.5">

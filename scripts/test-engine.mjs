@@ -1040,7 +1040,7 @@ console.log('\n══════ BATERÍA 360 · Coherencia (no contradice lo o
   caso('declive NO recibe más presupuesto que crecimiento (mismo precio/volumen)', invDec <= invCre, `Dec=${Math.round(invDec)}€ Cre=${Math.round(invCre)}€`);
 }
 
-console.log('\n══════ BATERÍA 360 · BUGS CONOCIDOS (pendientes de arreglo) ══════');
+console.log('\n══════ BATERÍA 360 · BUGS HALLADOS (ya arreglados) ══════');
 {
   // BUG 1 — producto descatalogado (vendió 20 sem, 0 las últimas 40)
   const dz = [];
@@ -1078,7 +1078,9 @@ console.log('\n══════ BATERÍA 360 · BUGS CONOCIDOS (pendientes de 
   for (let w = 0; w < 40; w++) fut.push({ fecha: fechaSemana(w), producto: 'Normal', categoria: 'C', talla: 'M', color: 'N', unidades: 8, precio: 20, ingresos: 160 });
   for (let k = 0; k < 6; k++) fut.push({ fecha: '2204-03-04', producto: 'Normal', categoria: 'C', talla: 'M', color: 'N', unidades: 8, precio: 20, ingresos: 160 });
   const mF = prepararMotor(fut);
-  casoPendiente('BUG3: fecha inverosímil (2204) no estira la serie a cientos de años', mF.perfil.semanas <= 60, `hoy semanas=${mF.perfil.semanas}, descartadas=${mF.perfil.descartadas}`);
+  caso('BUG3 arreglado: fecha inverosímil (2204) NO estira la serie a cientos de años', mF.perfil.semanas <= 45, `semanas=${mF.perfil.semanas}`);
+  caso('BUG3 arreglado: las 6 filas inverosímiles se descartan con aviso, la serie real queda intacta',
+    mF.perfil.fechasInverosimiles === 6 && mF.perfil.semanas >= 39, `inverosimiles=${mF.perfil.fechasInverosimiles}, semanas=${mF.perfil.semanas}`);
 }
 
 // ── Integra la batería del PIPELINE de CSV (scripts/test-pipeline.mjs) ──
