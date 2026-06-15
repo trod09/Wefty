@@ -197,6 +197,28 @@ console.log('\n— E2E: ventas_semanales_moda.csv (dataset realista, 15 producto
   }
 }
 
+console.log('\n— E2E SUCIO: ventas_sucias_estres.csv (estrés del pipeline) —');
+{
+  let txt = null;
+  try { txt = readFileSync(new URL('../ventas_sucias_estres.csv', import.meta.url), 'utf8'); } catch { /* fixture ausente */ }
+  if (!txt) {
+    console.log('  · (omitido: ventas_sucias_estres.csv no está en la raíz del repo)');
+  } else {
+    const pc = procesarCSV(txt);
+    caso('e2e sucio: cabeceras sucias (inglés/Shopify + columnas basura) reconocidas, NO rechaza', pc.ok === true);
+    const m = prepararMotor(parsearVentas(pc.headers, pc.rows).records);
+    caso('e2e sucio: degrada con aviso — 13 filas descartadas (1 por fecha inverosímil, 12 por fecha inválida)',
+      m.perfil.descartadas === 13 && m.perfil.fechasInverosimiles === 1, `desc=${m.perfil.descartadas}, inv=${m.perfil.fechasInverosimiles}`);
+    const prods = productosOrdenados(m).map((p) => p.nombre);
+    const claves = prods.map((n) => n.trim().replace(/\s+/g, ' ').toLowerCase());
+    caso('e2e sucio: nombres unificados — ningún producto difiere solo en mayúsculas/espacios',
+      claves.length === new Set(claves).size, `${prods.length} productos`);
+    const pl = generarPlanCompra(m, { presupuesto: 20000, horizonte: 12, margenPct: 60 });
+    caso('e2e sucio: plan ok, no gasta de más, margen finito (negativos/duplicados/precios sucios no rompen)',
+      pl.ok === true && pl.gastado <= 20000 + 1e-6 && Number.isFinite(pl.margenEsperado));
+  }
+}
+
 // Resumen propio + salida solo si se ejecuta directamente (no al integrarse).
 const esMain = import.meta.url === `file://${process.argv[1]}`;
 if (esMain) {

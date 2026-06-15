@@ -120,8 +120,8 @@ Reglas del motor: todo determinista; el motor usa SIEMPRE el dataset completo
 datos suficientes se desactiva CON AVISO); cada resultado lleva su explicación
 ("¿Por qué esta recomendación?") cuyos números cuadran con el resultado final.
 
-**Pruebas del motor**: `node scripts/test-engine.mjs` (230 casos: matemática
-calculada a mano + extremo a extremo con `ventas_ejemplo_loop.csv` y `ventas_semanales_moda.csv` (dataset realista de 15 productos / 2 años) + batería 360
+**Pruebas del motor**: `node scripts/test-engine.mjs` (237 casos: matemática
+calculada a mano + extremo a extremo con `ventas_ejemplo_loop.csv` y `ventas_semanales_moda.csv` (realista, 15 prod./2 años) y `ventas_sucias_estres.csv` (estrés del pipeline: cabeceras raras, fechas/precios sucios, mayúsculas) + batería 360
 de robustez/coherencia). Ese comando ejecuta también `scripts/test-pipeline.mjs`
 (parseo de CSV; el parser de números se importa de `lib/csv.mjs`, el resto son
 copia verbatim de `app/upload/page.jsx`/`SalesDashboard.jsx` — mantener en sync).
