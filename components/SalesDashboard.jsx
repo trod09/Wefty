@@ -50,7 +50,6 @@ function findCol(headers, ...names) {
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
 const fmtEur = (n) => (Number(n) || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
-const fmtEur2 = (n) => (Number(n) || 0).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 });
 
 function garmentColor(name) {
   const k = String(name).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -102,14 +101,14 @@ function Kpi({ label, value, principal = false, hint }) {
   if (principal) {
     return (
       <div
-        className="relative col-span-2 lg:row-span-2 rounded-xl p-6 md:p-8 flex flex-col justify-between overflow-hidden border border-brandLine transition-all duration-300"
+        className="relative rounded-xl p-6 md:p-8 flex flex-col md:flex-row md:items-end md:justify-between gap-3 overflow-hidden border border-brandLine transition-all duration-300"
         style={{
-          background: 'linear-gradient(150deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 38%, var(--surface-2) 100%)',
+          background: 'linear-gradient(120deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 46%, var(--surface-2) 100%)',
           boxShadow: '0 0 60px -26px var(--glow-brand)',
         }}
       >
         <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: 'var(--brand-soft)' }} title={hint}>{label}</div>
-        <div className="mt-6 font-display text-[48px] md:text-[68px] leading-[0.92] tracking-[-0.025em] tnum break-words" style={{ color: TXT }}>
+        <div className="font-display text-[52px] md:text-[72px] leading-[0.92] tracking-[-0.025em] tnum break-words" style={{ color: TXT }}>
           {value}
         </div>
       </div>
@@ -245,7 +244,6 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
     const totalIngresos = records.reduce((a, r) => a + r.ingresos, 0);
     const productosDistintos = new Set(records.map((r) => r.producto).filter(Boolean)).size;
     const variantes = new Set(records.filter((r) => r.talla || r.color).map((r) => `${r.talla}|${r.color}`)).size;
-    const ticketMedio = records.length ? totalIngresos / records.length : 0;
 
     // Gráfico protagonista: unidades por talla (orden natural), color por intensidad
     const tallaAgg = groupSum(records, (r) => r.talla, (r) => r.unidades);
@@ -381,7 +379,6 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         { label: 'Unidades vendidas', value: fmtInt(totalUnidades) },
         { label: 'Productos distintos', value: fmtInt(productosDistintos) },
         { label: 'Combinaciones talla-color', value: fmtInt(variantes) },
-        { label: 'Ingreso medio / línea', value: fmtEur2(ticketMedio), hint: 'Por cada línea de tu CSV, no por pedido.' },
       ],
       totalUnidades, totalIngresos,
       insight, avgTalla, tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
@@ -647,9 +644,12 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         </div>
       ) : null}
 
-      {/* 2 · SIGNOS VITALES — KPIs con jerarquía (ingresos protagonista) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
-        {kpis.map((k, i) => <Kpi key={i} {...k} />)}
+      {/* 2 · SIGNOS VITALES — una cifra protagonista (ingresos) + tres de apoyo */}
+      <div className="space-y-4 md:space-y-5">
+        <Kpi {...kpis[0]} />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+          {kpis.slice(1).map((k, i) => <Kpi key={i} {...k} />)}
+        </div>
       </div>
 
       {/* 3 · PROTAGONISTA (talla) + 4 · APOYO (color) */}

@@ -331,7 +331,8 @@ export function initLanding(root) {
     const mouse = { x: -9999, y: -9999 };
 
     function resize() {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      // Fondo decorativo: 1.5x basta y abarata el repintado durante el scroll.
+      const dpr = Math.min(1.5, window.devicePixelRatio || 1);
       W = section.clientWidth; H = section.clientHeight;
       canvas.width = W * dpr; canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -361,27 +362,36 @@ export function initLanding(root) {
       last = now;
       ctx.clearRect(0, 0, W, H);
       const a = colA(), b = colB();
+      // Sin ratón (móvil, o mientras se hace scroll) saltamos toda su física.
+      const hasMouse = mouse.x > -9000;
       nodes.forEach((nd) => {
         nd.x += nd.vx * dt; nd.y += nd.vy * dt;
         if (nd.x < 0 || nd.x > W) nd.vx *= -1;
         if (nd.y < 0 || nd.y > H) nd.vy *= -1;
-        const dx = mouse.x - nd.x, dy = mouse.y - nd.y;
-        const d2 = dx * dx + dy * dy;
-        if (d2 < 220 * 220 && d2 > 1) {
-          const f = 6 / Math.sqrt(d2);
-          nd.x += dx * f * dt * 14;
-          nd.y += dy * f * dt * 14;
+        if (hasMouse) {
+          const dx = mouse.x - nd.x, dy = mouse.y - nd.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < 220 * 220 && d2 > 1) {
+            const f = 6 / Math.sqrt(d2);
+            nd.x += dx * f * dt * 14;
+            nd.y += dy * f * dt * 14;
+          }
         }
       });
       ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgb(140, 170, 200)';
       links.forEach(([i, j]) => {
         const n1 = nodes[i], n2 = nodes[j];
-        const d = Math.hypot(n1.x - n2.x, n1.y - n2.y);
-        if (d > 220) return;
-        const mx = (n1.x + n2.x) / 2, my = (n1.y + n2.y) / 2;
-        const md = Math.hypot(mouse.x - mx, mouse.y - my);
-        const boost = md < 200 ? (1 - md / 200) * 0.35 : 0;
-        ctx.strokeStyle = 'rgb(140, 170, 200)';
+        const lx = n1.x - n2.x, ly = n1.y - n2.y;
+        const d2 = lx * lx + ly * ly;
+        if (d2 > 220 * 220) return;          // distancia² evita Math.hypot por enlace
+        const d = Math.sqrt(d2);
+        let boost = 0;
+        if (hasMouse) {
+          const mx = (n1.x + n2.x) / 2, my = (n1.y + n2.y) / 2;
+          const md = Math.hypot(mouse.x - mx, mouse.y - my);
+          boost = md < 200 ? (1 - md / 200) * 0.35 : 0;
+        }
         ctx.globalAlpha = Math.max(0, 0.16 * (1 - d / 220)) + boost * 0.4;
         ctx.beginPath(); ctx.moveTo(n1.x, n1.y); ctx.lineTo(n2.x, n2.y); ctx.stroke();
       });
