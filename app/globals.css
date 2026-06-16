@@ -61,15 +61,15 @@
      acción es el azul (--brand); el azul marino es el texto y los acentos
      fuertes (--txt / --brand-soft). Los colores con significado (ok/warn/bad)
      se quedan: comunican, no decoran. */
-  --bg: #f6f8fb;
-  --bg-grad: radial-gradient(135% 90% at 50% 0%, #ffffff 0%, #eef2f8 60%);
-  --dash-grad: radial-gradient(120% 80% at 50% 0%, #ffffff 0%, #eff3f8 60%);
+  --bg: #e9eef6;
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #f3f6fc 0%, #e4eaf3 60%);
+  --dash-grad: radial-gradient(120% 80% at 50% 0%, #f3f6fc 0%, #e6ecf5 60%);
   --sidebar-grad: linear-gradient(180deg, #ffffff 0%, #f1f4f9 100%);
   --card-grad: linear-gradient(150deg, #ffffff 0%, #fafcfe 100%);
-  --panel-grad: linear-gradient(150deg, #ffffff 0%, #f3f6fb 100%);
-  --inset-grad: linear-gradient(150deg, #f7f9fc 0%, #eef2f8 100%);
+  --panel-grad: linear-gradient(150deg, #ffffff 0%, #eef2f8 100%);
+  --inset-grad: linear-gradient(150deg, #eef2f8 0%, #e1e8f2 100%);
   --surface-1: #ffffff;
-  --surface-2: #f6f8fb;
+  --surface-2: #eef2f8;
   --surface-input: #ffffff;
   --txt: #16243f;
   --txt-2: #5b6675;
@@ -91,7 +91,7 @@
   --bad: #bf3c27;
   --scrollbar: #c4cdda;
   --glow-brand: rgba(22, 36, 63, 0.12);
-  --tint-brand: rgba(37, 99, 235, 0.08);
+  --tint-brand: rgba(37, 99, 235, 0.09);
   --nav-bg: rgba(248, 250, 253, 0.97);
   --tooltip-bg: rgba(255, 255, 255, 0.98);
   --grid-noise: rgba(22, 36, 63, 0.05);
@@ -101,6 +101,27 @@
   --glow-brand-radial: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 60%);
   --fill-brand-strong: rgba(37, 99, 235, 0.13);
   --fill-chart-cursor: rgba(37, 99, 235, 0.07);
+}
+
+/* Barra de navegación azul marino SOLO en tema claro (sidebar de escritorio y
+   barra inferior de móvil). En vez de tocar cada componente, redefinimos los
+   tokens DENTRO de esta zona: todo lo que use txt/txt-2/brand/line… coge la
+   versión clara-sobre-marino automáticamente. El modo oscuro no la usa. */
+[data-theme='light'] .nav-navy {
+  --sidebar-grad: linear-gradient(180deg, #1f3057 0%, #16243f 100%);
+  --nav-bg: rgba(22, 36, 63, 0.97);
+  --txt: #ffffff;
+  --txt-2: #c4cee2;
+  --txt-3: #93a0bb;
+  --line: rgba(255, 255, 255, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.12);
+  --line-hover: rgba(255, 255, 255, 0.30);
+  --hairline-soft: rgba(255, 255, 255, 0.09);
+  --brand: #7aa2f0;
+  --brand-soft: #a9c4ff;
+  --tint-brand: rgba(255, 255, 255, 0.10);
+  --ok: #6bcb9a;
+  --warn: #e3c04b;
 }
 
 /* Fondo base oscuro: la landing y el producto comparten el mismo mundo

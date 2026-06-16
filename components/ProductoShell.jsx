@@ -181,7 +181,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
     <div className="relative flex min-h-screen">
       {/* ——— Sidebar (escritorio) ——— */}
       <aside
-        className="hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[230px] z-40 border-r border-lineSoft"
+        className="nav-navy hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[230px] z-40 border-r border-lineSoft"
         style={{ background: 'var(--sidebar-grad)' }}
       >
         <div className="px-0 lg:px-6 pt-7 text-center lg:text-left">
@@ -227,7 +227,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
       {/* ——— Nav móvil: barra inferior deslizable (todas las secciones visibles al deslizar) ——— */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex overflow-x-auto border-t border-lineSoft"
+        className="nav-navy md:hidden fixed bottom-0 inset-x-0 z-40 flex overflow-x-auto border-t border-lineSoft"
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(10px)',
