@@ -67,14 +67,17 @@ Tailwind + a large block of hand-written CSS in **`app/globals.css`** (~270 line
 
 Además de la landing (`/`), existe el producto: `/login` (Supabase auth) y `/upload`
 (estética "dark editorial premium"). `/upload` monta `components/ProductoShell.jsx`:
-**navegación lateral** por secciones — Inicio (onboarding por pasos,
-`components/InicioOnboarding.jsx`), Resumen, Insights, Reposición, Lanzamiento,
-Plan de compra y Datos y ajustes — con TODO siempre montado (las secciones inactivas
+**navegación lateral** agrupada — Inicio (onboarding por pasos,
+`components/InicioOnboarding.jsx`); grupo «Analiza»: Resumen y Hallazgos
+(etiqueta visible; el id interno y el valor de la prop siguen siendo `insights`);
+grupo «Decide stock»: Reposición, Lanzamiento, Plan de compra; grupo «Configura»:
+Cargar datos y Ajustes del motor — con TODO siempre montado (las secciones inactivas
 se ocultan con CSS para no perder filtros, plan generado ni costes al navegar). Una
 sola instancia de `SalesDashboard` (prop `seccion`: resumen/insights, filtros
 compartidos) y de `StockEngine` (prop `pestana` controlada por el sidebar); el motor
-se prepara UNA vez en el shell y se comparte con los paneles de Datos y ajustes
-(subida/guardado de CSV, costes de producto, configuración y validación). Móvil:
+se prepara UNA vez en el shell y se comparte con Ajustes del motor
+(costes de producto, configuración y validación) y Cargar datos
+(subida/guardado de CSV). Móvil:
 barra inferior fija; tablet: sidebar colapsado a iconos. El pie del sidebar lleva
 email y cerrar sesión. El aterrizaje depende del estado: usuario con datos guardados → Resumen; el resto → Inicio (los checks del onboarding salen del estado real: hayDatos, guardado, costes, secciones visitadas en sesión). Los datos viajan como `records` ya parseados: `{fecha, producto,
 categoria, talla, color, unidades, precio, ingresos}`. Tablas Supabase: `ventas`
