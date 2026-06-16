@@ -1479,9 +1479,9 @@ export default function StockEngine({
                     className={`${INPUT_CLS} min-w-[200px] cursor-pointer`}
                     style={{ background: 'var(--surface-input)' }}
                   >
-                    <option value="90">90% — ajustado</option>
-                    <option value="95">95% — equilibrado</option>
-                    <option value="99">99% — casi sin roturas</option>
+                    <option value="90">9 de cada 10 (ajustado)</option>
+                    <option value="95">19 de cada 20 (equilibrado)</option>
+                    <option value="99">99 de cada 100 (casi seguro)</option>
                   </select>
                 </Campo>
               ) : null}
@@ -1489,7 +1489,7 @@ export default function StockEngine({
               {!economiaActiva ? (
                 <Campo
                   etiqueta="Escenario de demanda"
-                  hint="Conservador planifica por si la venta viene floja; agresivo, por si viene fuerte (P25/P75 de las simulaciones)."
+                  hint="¿Preparar el pedido por si la venta viene floja, normal o fuerte?"
                 >
                   <Segmentos
                     valor={escenario}
@@ -1594,58 +1594,26 @@ export default function StockEngine({
                       </p>
                     ) : resultado.modoCantidad === 'economia' ? (
                       <p className="mt-5 text-[14px] leading-relaxed" style={{ color: TXT2 }}>
-                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda esperada
-                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> extra hasta el punto
-                        donde más margen ganas (cuantil óptimo <span style={{ color: TXT }}>{pct0(resultado.economia.cr)}</span>).
+                        ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda esperada,
+                        más <span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> de extra para llegar al punto donde más margen ganas.
                       </p>
                     ) : (
                       <p className="mt-5 text-[14px] leading-relaxed" style={{ color: TXT2 }}>
                         ≈ <span style={{ color: TXT }}>{fmtInt(resultado.esperado)}</span> de demanda{' '}
-                        {resultado.escenario === 'conservador' ? 'prudente — por si viene floja (P25)' : resultado.escenario === 'agresivo' ? 'ambiciosa — por si viene fuerte (P75)' : 'esperada (P50)'}
-                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> de colchón de
-                        seguridad (servicio {resultado.nivelServicio}%).
+                        {resultado.escenario === 'conservador' ? 'prudente (por si la venta viene floja)' : resultado.escenario === 'agresivo' ? 'ambiciosa (por si la venta viene fuerte)' : 'esperada'}
+                        {' + '}<span style={{ color: TXT }}>{fmtInt(resultado.colchon)}</span> de colchón para no quedarte sin stock.
                       </p>
                     )}
                     <p className="mt-2 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                       Cubre {resultado.horizonte.total} semanas: {resultado.horizonte.lead} de espera del
                       proveedor + {resultado.horizonte.cobertura} de venta.
                     </p>
-                    <p className="mt-2 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT3 }}>
-                      en 8 de cada 10 escenarios venderías {fmtInt(resultado.intervalo.p10)}–{fmtInt(resultado.intervalo.p90)} uds
-                      {' · '}floja {fmtInt(resultado.escenarios.conservador)} · esperada {fmtInt(resultado.escenarios.esperado)} · fuerte {fmtInt(resultado.escenarios.agresivo)}
-                      {' · '}{resultado.bootstrap.simulaciones} simulaciones
-                    </p>
-
-                    <div className="mt-5 font-mono text-[11px] tracking-[0.04em] space-y-1" style={{ color: TXT2 }}>
-                      <div>ritmo previsto ≈ <span className="tnum" style={{ color: TXT }}>{fmt1(resultado.tasaSemanal)}</span> uds/semana</div>
-                      <div>
-                        {resultado.semanasAjuste} semanas analizadas · {fmtInt(resultado.unidadesHistoricas)} uds históricas
-                        {resultado.semanaParcialExcluida ? ' · última semana parcial excluida' : ''}
-                      </div>
-                      <div>
-                        ciclo de vida: <span style={{ color: TXT }}>{resultado.ciclo.fase.toLowerCase()}</span> — {resultado.ciclo.detalle}
-                      </div>
-                      {resultado.estacionalidad ? (
-                        <div>
-                          estación: próximas {resultado.horizonte.total} semanas ≈{' '}
-                          <span style={{ color: TXT }}>
-                            {resultado.estacionalidad.factorHorizonte >= 1 ? '+' : '−'}
-                            {Math.abs(Math.round((resultado.estacionalidad.factorHorizonte - 1) * 100))}%
-                          </span>{' '}
-                          vs media anual
-                          {resultado.estacionalidad.usadaPorModelo ? ' · ya incluida en el pronóstico' : ' · informativa (el modelo ganador es plano)'}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {/* La credencial del motor: qué modelo ganó y contra qué se midió */}
-                    <div className="mt-4 pt-4 border-t border-hairline">
-                      <div className={LABEL} style={{ color: CIELO }}>Motor seleccionado</div>
-                      <p className="mt-1.5 text-[13px] leading-snug" style={{ color: TXT }}>{resultado.modelo.resumen}</p>
-                      <p className="mt-1 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT2 }}>
-                        {resultado.modelo.detalle}
+                    {resultado.recomendado > 0 ? (
+                      <p className="mt-3 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
+                        En 8 de cada 10 escenarios venderías entre <span style={{ color: TXT }}>{fmtInt(resultado.intervalo.p10)}</span> y <span style={{ color: TXT }}>{fmtInt(resultado.intervalo.p90)}</span> uds.
+                        <span style={{ color: TXT3 }}> Cómo lo calculamos, abajo en «¿Por qué esta recomendación?».</span>
                       </p>
-                    </div>
+                    ) : null}
 
                     <div className="mt-auto pt-5">
                       <BadgeConfianza confianza={resultado.confianza} />
