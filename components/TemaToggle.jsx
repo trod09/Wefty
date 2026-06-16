@@ -9,7 +9,7 @@ const CLAVE = 'wefty-tema';
 
 // Hook compartido: lee el tema actual del DOM y permite cambiarlo.
 export function useTema() {
-  const [tema, setTema] = useState('dark');
+  const [tema, setTema] = useState('light');
 
   useEffect(() => {
     const actual = document.documentElement.getAttribute('data-theme');

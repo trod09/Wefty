@@ -5,9 +5,9 @@
 /* ===========================================================================
    SISTEMA DE TEMA del PRODUCTO (/upload, /login). La landing (.wefty-root) NO
    usa estas variables, así que conserva su oscuro cyberpunk pase lo que pase.
-   El tema oscuro es el DEFECTO y cada variable vale EXACTAMENTE lo que el color
-   que reemplaza, así que el modo oscuro queda idéntico al de siempre. El tema
-   claro es una paleta editorial cálida (hueso/tinta) afín a la marca.
+   El tema CLARO es el DEFECTO (paleta editorial cálida hueso/tinta, limpia tipo
+   SaaS). El oscuro queda como opción en el interruptor; cada variable de :root
+   (oscuro) vale lo de siempre, así que ese modo no cambia.
    =========================================================================== */
 :root {
   color-scheme: dark;
@@ -50,41 +50,41 @@
 
 [data-theme='light'] {
   color-scheme: light;
-  --bg: #f3f0e9;
-  --bg-grad: radial-gradient(135% 90% at 50% 0%, #fbf9f4 0%, #efebe1 60%);
-  --dash-grad: radial-gradient(120% 80% at 50% 0%, #fbf9f4 0%, #f0ece2 60%);
-  --sidebar-grad: linear-gradient(180deg, #fbf9f4 0%, #f1ede3 100%);
-  --card-grad: linear-gradient(150deg, #ffffff 0%, #f7f4ec 100%);
-  --panel-grad: linear-gradient(150deg, #faf8f1 0%, #f2eee4 100%);
-  --inset-grad: linear-gradient(150deg, #f8f5ee 0%, #f1ede3 100%);
+  --bg: #f4f1ea;
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #fcfbf7 0%, #f1ede4 60%);
+  --dash-grad: radial-gradient(120% 80% at 50% 0%, #fcfbf7 0%, #f2efe6 60%);
+  --sidebar-grad: linear-gradient(180deg, #fbfaf5 0%, #f4f0e7 100%);
+  --card-grad: linear-gradient(150deg, #ffffff 0%, #faf8f2 100%);
+  --panel-grad: linear-gradient(150deg, #fbfaf4 0%, #f5f1e8 100%);
+  --inset-grad: linear-gradient(150deg, #faf7f0 0%, #f4f0e6 100%);
   --surface-1: #ffffff;
-  --surface-2: #f7f4ec;
+  --surface-2: #faf8f2;
   --surface-input: #ffffff;
   --txt: #1b1b1f;
-  --txt-2: #5d5c63;
-  --txt-3: #97938a;
+  --txt-2: #54535a;
+  --txt-3: #74706a;
   --muted: #b3aea2;
-  --line: #e4dfd2;
-  --line-soft: #ebe6da;
-  --line-hover: #d0c8b8;
-  --hairline: rgba(20, 18, 12, 0.1);
-  --hairline-soft: rgba(20, 18, 12, 0.06);
-  --grid-line: rgba(20, 18, 12, 0.08);
+  --line: #dacfbd;
+  --line-soft: #e6dfd1;
+  --line-hover: #c6bba6;
+  --hairline: rgba(20, 18, 12, 0.12);
+  --hairline-soft: rgba(20, 18, 12, 0.07);
+  --grid-line: rgba(20, 18, 12, 0.12);
   --brand: #c4632d;
-  --brand-soft: #b06a42;
-  --brand-line: #e7d8c5;
+  --brand-soft: #a8602f;
+  --brand-line: #e2cdb3;
   --data: #1d54bd;
   --data-2: #2f6be0;
   --ok: #2c8a55;
-  --warn: #9a7611;
+  --warn: #8f6c0f;
   --bad: #bf3c27;
   --scrollbar: #cdc6b8;
-  --glow-brand: rgba(196, 99, 45, 0.14);
+  --glow-brand: rgba(40, 33, 24, 0.1);
   --tint-brand: rgba(240, 140, 86, 0.09);
-  --nav-bg: rgba(251, 249, 244, 0.96);
+  --nav-bg: rgba(252, 251, 247, 0.97);
   --tooltip-bg: rgba(255, 255, 255, 0.98);
   --grid-noise: rgba(20, 18, 12, 0.05);
-  --pie-stroke: #e4dfd2;
+  --pie-stroke: #dacfbd;
 }
 
 /* Fondo base oscuro: la landing y el producto comparten el mismo mundo
