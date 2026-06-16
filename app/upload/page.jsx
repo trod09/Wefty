@@ -583,7 +583,7 @@ export default function UploadPage() {
             {/* Tabla de datos en bruto — plegable, al final */}
             {result.headers.length > 0 ? (
               <details className="mt-16 group">
-                <summary className="flex items-center gap-3 cursor-pointer select-none py-4 border-t border-white/10">
+                <summary className="flex items-center gap-3 cursor-pointer select-none py-4 border-t border-hairline">
                   <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
                     Ver datos en bruto · tabla
                   </span>
@@ -597,7 +597,7 @@ export default function UploadPage() {
                           {result.headers.map((h, i) => (
                             <th
                               key={i}
-                              className="font-mono text-[10px] tracking-[0.18em] uppercase font-normal py-3 pr-8 border-b border-white/10 whitespace-nowrap align-bottom"
+                              className="font-mono text-[10px] tracking-[0.18em] uppercase font-normal py-3 pr-8 border-b border-hairline whitespace-nowrap align-bottom"
                               style={{ color: 'var(--txt-2)' }}
                             >
                               {h || `Columna ${i + 1}`}
@@ -607,7 +607,7 @@ export default function UploadPage() {
                       </thead>
                       <tbody>
                         {result.rows.slice(0, 20).map((row, r) => (
-                          <tr key={r} className="border-b border-white/[0.06]">
+                          <tr key={r} className="border-b border-hairlineSoft">
                             {result.headers.map((_, c) => (
                               <td
                                 key={c}

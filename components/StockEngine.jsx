@@ -97,7 +97,7 @@ function BadgeCiclo({ ciclo }) {
   return (
     <span
       className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.14em] uppercase"
-      style={{ color: e.color, borderColor: `${e.color}55`, background: `${e.color}14` }}
+      style={{ color: e.color, borderColor: `color-mix(in srgb, ${e.color} 33%, transparent)`, background: `color-mix(in srgb, ${e.color} 8%, transparent)` }}
       title={ciclo.detalle}
     >
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: e.color }} />
@@ -111,7 +111,7 @@ function BadgeConfianza({ confianza }) {
   return (
     <span
       className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.14em] uppercase"
-      style={{ color: c, borderColor: `${c}55`, background: `${c}14` }}
+      style={{ color: c, borderColor: `color-mix(in srgb, ${c} 33%, transparent)`, background: `color-mix(in srgb, ${c} 8%, transparent)` }}
       title={confianza.motivo}
     >
       <span className="w-1.5 h-1.5 rounded-full" style={{ background: c }} />
@@ -764,7 +764,7 @@ export default function StockEngine({
                 </Campo>
               </div>
               {costesReales.size === 0 ? (
-                <div className="mt-4 rounded-lg border p-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1" style={{ borderColor: 'rgba(227,192,75,0.35)', background: 'var(--panel-grad)' }}>
+                <div className="mt-4 rounded-lg border p-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1" style={{ borderColor: 'color-mix(in srgb, var(--warn) 35%, transparent)', background: 'var(--panel-grad)' }}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: AMBAR }} />
                   <span className="text-[13px] leading-snug" style={{ color: TXT2 }}>
                     Estás usando un margen estimado del {Number(planMargenTxt) || 60}% para todo el catálogo. Para un plan más preciso, añade el coste real de cada producto.
@@ -776,7 +776,7 @@ export default function StockEngine({
                   ) : null}
                 </div>
               ) : (
-                <div className="mt-4 rounded-lg border p-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1" style={{ borderColor: 'rgba(107,203,154,0.35)', background: 'var(--panel-grad)' }}>
+                <div className="mt-4 rounded-lg border p-3.5 flex flex-wrap items-center gap-x-2.5 gap-y-1" style={{ borderColor: 'color-mix(in srgb, var(--ok) 35%, transparent)', background: 'var(--panel-grad)' }}>
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: VERDE }} />
                   <span className="text-[13px] leading-snug" style={{ color: VERDE }}>
                     Usando tus costes reales en {costesReales.size} de {productos.filter((p) => p.suficiente).length} productos.
@@ -1088,7 +1088,7 @@ export default function StockEngine({
                     type="button"
                     onClick={copiarPlan}
                     className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
-                    style={{ background: copiadoPlan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoPlan ? 'var(--ok)' : undefined, color: copiadoPlan ? VERDE : undefined }}
+                    style={{ background: copiadoPlan ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'transparent', borderColor: copiadoPlan ? 'var(--ok)' : undefined, color: copiadoPlan ? VERDE : undefined }}
                   >
                     {copiadoPlan ? 'Copiado ✓' : 'Copiar plan'}
                   </button>
@@ -1266,7 +1266,7 @@ export default function StockEngine({
                       {resultadoLan.tipo === 'capsula' ? (
                         <span
                           className="inline-flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-[10px] tracking-[0.14em] uppercase"
-                          style={{ color: AMBAR, borderColor: `${AMBAR}55`, background: `${AMBAR}14` }}
+                          style={{ color: AMBAR, borderColor: 'color-mix(in srgb, var(--warn) 33%, transparent)', background: 'color-mix(in srgb, var(--warn) 8%, transparent)' }}
                         >
                           Cápsula · {resultadoLan.semanasVenta} semanas
                         </span>
@@ -1356,7 +1356,7 @@ export default function StockEngine({
                           </div>
                           <span
                             className="flex-shrink-0 inline-flex items-center justify-center min-w-[44px] h-8 rounded-lg border font-mono text-[13px] tnum"
-                            style={{ color: 'var(--data)', borderColor: 'var(--line-hover)', background: 'rgba(45,107,228,0.10)' }}
+                            style={{ color: 'var(--data)', borderColor: 'var(--line-hover)', background: 'color-mix(in srgb, var(--data) 10%, transparent)' }}
                           >
                             {a.score}
                           </span>
@@ -1417,7 +1417,7 @@ export default function StockEngine({
                     type="button"
                     onClick={copiarLanzamiento}
                     className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
-                    style={{ background: copiadoLan ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiadoLan ? 'var(--ok)' : undefined, color: copiadoLan ? VERDE : undefined }}
+                    style={{ background: copiadoLan ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'transparent', borderColor: copiadoLan ? 'var(--ok)' : undefined, color: copiadoLan ? VERDE : undefined }}
                   >
                     {copiadoLan ? 'Copiado ✓' : 'Copiar pedido'}
                   </button>
@@ -1740,7 +1740,7 @@ export default function StockEngine({
                     type="button"
                     onClick={copiarPedido}
                     className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
-                    style={{ background: copiado ? 'rgba(107,203,154,0.12)' : 'transparent', borderColor: copiado ? 'var(--ok)' : undefined, color: copiado ? VERDE : undefined }}
+                    style={{ background: copiado ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'transparent', borderColor: copiado ? 'var(--ok)' : undefined, color: copiado ? VERDE : undefined }}
                   >
                     {copiado ? 'Copiado ✓' : 'Copiar pedido'}
                   </button>

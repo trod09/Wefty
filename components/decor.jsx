@@ -127,7 +127,7 @@ export function Annotation({ label, side = 'right', dark = false }) {
     <span className="inline-flex items-center gap-2">
       <span
         className="inline-block w-1.5 h-1.5 rounded-full"
-        style={{ background: 'var(--data)', boxShadow: `0 0 0 4px rgba(45,107,228,0.12)` }}
+        style={{ background: 'var(--data)', boxShadow: '0 0 0 4px color-mix(in srgb, var(--data) 12%, transparent)' }}
       />
       <span className="inline-block w-8 h-px" style={{ background: color }} />
       <span className={`font-mono text-[10px] tracking-[0.18em] uppercase ${dark ? 'text-ash-300' : 'text-ash-500'}`}>{label}</span>

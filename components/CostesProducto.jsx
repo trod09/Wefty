@@ -243,8 +243,8 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
             disabled={guardando}
             className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors disabled:opacity-60"
             style={{
-              background: mensaje?.tipo === 'ok' ? 'rgba(107,203,154,0.12)' : 'transparent',
-              borderColor: mensaje?.tipo === 'ok' ? `${VERDE}66` : undefined,
+              background: mensaje?.tipo === 'ok' ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'transparent',
+              borderColor: mensaje?.tipo === 'ok' ? 'color-mix(in srgb, var(--ok) 40%, transparent)' : undefined,
               color: mensaje?.tipo === 'ok' ? VERDE : undefined,
             }}
           >

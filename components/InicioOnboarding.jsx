@@ -14,7 +14,7 @@ const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 
 function IconoCheck() {
   return (
-    <span className="flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0" style={{ background: 'rgba(107,203,154,0.16)' }}>
+    <span className="flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0" style={{ background: 'color-mix(in srgb, var(--ok) 16%, transparent)' }}>
       <svg viewBox="0 0 14 14" className="w-3.5 h-3.5" fill="none" stroke={OK} strokeWidth="1.6" aria-hidden="true">
         <path d="M3 7.5 L6 10.5 L11 4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -33,7 +33,7 @@ function Tarjeta({ paso, onIr }) {
     <div
       className="rounded-xl border p-5 md:p-6 flex flex-col transition-all duration-300"
       style={{
-        borderColor: paso.hecho ? 'rgba(107,203,154,0.3)' : 'var(--brand-line)',
+        borderColor: paso.hecho ? 'color-mix(in srgb, var(--ok) 30%, transparent)' : 'var(--brand-line)',
         background: 'var(--card-grad)',
         opacity: paso.hecho ? 0.72 : 1,
       }}
