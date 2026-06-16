@@ -1,10 +1,9 @@
 'use client';
 
-// Estructura del producto: NAVEGACIÓN LATERAL por secciones. Cada sección
-// responde una pregunta del usuario. Clave anti-riesgo: todo queda SIEMPRE
-// montado (las secciones inactivas se ocultan con CSS), así los filtros, el
-// plan generado y los costes sobreviven al navegar — igual que en la página
-// infinita anterior, solo que enseñando un trozo cada vez.
+// Estructura del producto: NAVEGACIÓN LATERAL agrupada (Analiza · Decide ·
+// Configura). Cada sección responde UNA pregunta. Clave anti-riesgo: todo queda
+// SIEMPRE montado (las secciones inactivas se ocultan con CSS), así filtros,
+// plan generado y costes sobreviven al navegar.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -29,7 +28,8 @@ function Icono({ id }) {
     reposicion: <><rect x="2" y="6" width="10" height="6.5" /><path d="M7 1 V4.8 M4.8 3 L7 5.2 L9.2 3" /></>,
     lanzamiento: <><path d="M2 12 L11.5 2.5" /><path d="M6 2.5 H11.5 V8" /></>,
     plan: <><path d="M11 3.2 A4.8 4.8 0 1 0 11 10.8" /><path d="M1.5 5.6 H8 M1.5 8.4 H8" /></>,
-    datos: <><ellipse cx="7" cy="3.4" rx="4.6" ry="1.9" /><path d="M2.4 3.4 V10.6 A4.6 1.9 0 0 0 11.6 10.6 V3.4" /><path d="M2.4 7 A4.6 1.9 0 0 0 11.6 7" /></>,
+    cargar: <><path d="M7 1.5 V8.5 M4.2 4.3 L7 1.5 L9.8 4.3" /><path d="M2 9 V12.5 H12 V9" /></>,
+    ajustes: <><path d="M1.5 4 H12.5 M1.5 10 H12.5" /><circle cx="5" cy="4" r="1.7" /><circle cx="9" cy="10" r="1.7" /></>,
   };
   return (
     <svg viewBox="0 0 14 14" className="w-[14px] h-[14px] flex-shrink-0" fill="none"
@@ -39,19 +39,21 @@ function Icono({ id }) {
   );
 }
 
-// Cada sección se presenta en UNA línea de negocio: qué pregunta responde.
+// Secciones agrupadas. grupo=null → fuera de grupo (arriba del todo).
 const SECCIONES = [
-  { id: 'inicio', etiqueta: 'Inicio', corta: 'Inicio', linea: 'Tus primeros pasos con Wefty.' },
-  { id: 'resumen', etiqueta: 'Resumen', corta: 'Resumen', linea: 'Cómo va tu negocio, de un vistazo.' },
-  { id: 'insights', etiqueta: 'Insights', corta: 'Insights', linea: 'Qué está pasando en tus ventas — explóralo con filtros.' },
-  { id: 'reposicion', etiqueta: 'Reposición', corta: 'Repos.', linea: 'Cuánto pedir de los productos que ya vendes.' },
-  { id: 'lanzamiento', etiqueta: 'Lanzamiento', corta: 'Lanz.', linea: 'Cuánto fabricar de un producto nuevo, sin histórico.' },
-  { id: 'plan', etiqueta: 'Plan de compra', corta: 'Plan', linea: 'Reparte tu presupuesto entre todo el catálogo para maximizar margen.' },
-  { id: 'datos', etiqueta: 'Datos y ajustes', corta: 'Datos', linea: 'Tus datos, tus costes y la maquinaria del motor.' },
+  { id: 'inicio', grupo: null, etiqueta: 'Inicio', corta: 'Inicio', linea: 'Tus primeros pasos con Wefty.' },
+  { id: 'resumen', grupo: 'Analiza', etiqueta: 'Resumen', corta: 'Resumen', linea: 'Cómo va tu negocio, de un vistazo.' },
+  { id: 'insights', grupo: 'Analiza', etiqueta: 'Insights', corta: 'Insights', linea: 'Qué está pasando en tus ventas — explóralo con filtros.' },
+  { id: 'reposicion', grupo: 'Decide stock', etiqueta: 'Reposición', corta: 'Repos.', linea: 'Cuánto pedir de los productos que ya vendes.' },
+  { id: 'lanzamiento', grupo: 'Decide stock', etiqueta: 'Lanzamiento', corta: 'Lanz.', linea: 'Cuánto fabricar de un producto nuevo, sin histórico.' },
+  { id: 'plan', grupo: 'Decide stock', etiqueta: 'Plan de compra', corta: 'Plan', linea: 'Reparte tu presupuesto entre todo el catálogo para maximizar margen.' },
+  { id: 'cargar', grupo: 'Configura', etiqueta: 'Cargar datos', corta: 'Datos', linea: 'Sube o actualiza tu CSV de ventas y guárdalo en tu cuenta.' },
+  { id: 'ajustes', grupo: 'Configura', etiqueta: 'Ajustes del motor', corta: 'Motor', linea: 'Tus costes reales y la maquinaria del motor (configuración y validación).' },
 ];
+const sec = (id) => SECCIONES.find((x) => x.id === id);
 
 // Estado vacío amable para secciones que aún no tienen datos.
-function VacioAmable({ irADatos }) {
+function VacioAmable({ irACargar }) {
   return (
     <div
       className="rounded-xl border border-line p-12 md:p-16 text-center"
@@ -65,10 +67,10 @@ function VacioAmable({ irADatos }) {
       </p>
       <button
         type="button"
-        onClick={irADatos}
+        onClick={irACargar}
         className="btn-sheen mt-8 h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors"
       >
-        Ir a Datos y ajustes
+        Ir a cargar datos
       </button>
     </div>
   );
@@ -85,17 +87,15 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
     [hayDatos, headers, rows]
   );
 
-  // EL motor: una sola instancia por dataset (una sola caché de demanda),
-  // compartida por las secciones del motor y los paneles de Datos y ajustes.
+  // EL motor: una sola instancia por dataset (una sola caché de demanda).
   const motor = useMemo(() => (parsed ? prepararMotor(parsed.records) : null), [parsed]);
 
-  // Costes reales y margen global por defecto: el panel vive en Datos y
-  // ajustes; el plan de compra y Reposición los consumen en sus secciones.
+  // Costes reales y margen global por defecto: el panel vive en Ajustes; el plan
+  // de compra y Reposición los consumen en sus secciones.
   const [costesReales, setCostesReales] = useState(() => new Map());
   const onCostes = useCallback((mapa) => setCostesReales(mapa), []);
   const [margenTxt, setMargenTxt] = useState('60');
 
-  // Sesión para el pie del sidebar (sustituye al antiguo SessionBadge).
   useEffect(() => {
     let activo = true;
     supabase.auth.getSession().then(({ data }) => {
@@ -107,8 +107,6 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
     return () => { activo = false; sub.subscription.unsubscribe(); };
   }, []);
 
-  // Al des-ocultar una sección: recharts re-mide su contenedor (el resize lo
-  // garantiza) y la vista vuelve arriba (cada sección empieza por su titular).
   useEffect(() => {
     window.dispatchEvent(new Event('resize'));
     window.scrollTo(0, 0);
@@ -117,40 +115,73 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
   const esDashboard = seccion === 'resumen' || seccion === 'insights';
   const esMotor = seccion === 'reposicion' || seccion === 'lanzamiento' || seccion === 'plan';
-  // Última pestaña del motor: al salir y volver, el motor no cambia de modo
-  // (y su contenido no se desmonta — el plan generado sigue donde estaba).
   const [pestanaMotor, setPestanaMotor] = useState('reposicion');
   useEffect(() => { if (esMotor) setPestanaMotor(seccion); }, [esMotor, seccion]);
-  const irADatos = () => setSeccion('datos');
+  const irACargar = () => setSeccion('cargar');
 
-  // Hay un CSV procesado sin guardar: puntito ámbar en "Datos" como recordatorio.
+  // CSV procesado sin guardar → puntito ámbar en "Cargar datos".
   const pendienteGuardar = Boolean(estadoDatos?.filas && !estadoDatos.guardado);
 
-  // Pasos del onboarding — el estado de cada uno SALE del estado real del
-  // usuario (datos, guardado, costes, secciones visitadas). No es decorativo.
+  // Pasos del onboarding (estado real del usuario).
   const imprescindibles = [
-    { id: 'subir', titulo: 'Sube tus ventas', desc: 'Importa tu CSV de ventas para que Wefty lo analice.', hecho: hayDatos, destino: 'datos', cta: 'Subir ventas' },
-    { id: 'guardar', titulo: 'Guarda tus datos', desc: 'Guárdalas en tu cuenta para no subirlas cada vez.', hecho: Boolean(estadoDatos?.guardado), destino: 'datos', cta: 'Ir a guardar' },
+    { id: 'subir', titulo: 'Sube tus ventas', desc: 'Importa tu CSV de ventas para que Wefty lo analice.', hecho: hayDatos, destino: 'cargar', cta: 'Subir ventas' },
+    { id: 'guardar', titulo: 'Guarda tus datos', desc: 'Guárdalas en tu cuenta para no subirlas cada vez.', hecho: Boolean(estadoDatos?.guardado), destino: 'cargar', cta: 'Ir a guardar' },
     { id: 'recom', titulo: 'Pide tu primera recomendación', desc: 'Cuánto pedir de cada producto, talla y color.', hecho: visitadas.has('reposicion') || visitadas.has('plan'), destino: 'reposicion', cta: 'Ver recomendación' },
   ];
   const recomendados = [
-    { id: 'costes', titulo: 'Añade tus costes reales', desc: 'El coste real de cada producto afina el plan de compra.', hecho: costesReales.size > 0, destino: 'datos', cta: 'Añadir costes' },
+    { id: 'costes', titulo: 'Añade tus costes reales', desc: 'El coste real de cada producto afina el plan de compra.', hecho: costesReales.size > 0, destino: 'ajustes', cta: 'Añadir costes' },
     { id: 'insights', titulo: 'Explora tus insights', desc: 'Patrones de tus ventas y qué hacer con ellos.', hecho: visitadas.has('insights'), destino: 'insights', cta: 'Ver insights' },
     { id: 'lanz', titulo: 'Simula un lanzamiento', desc: 'Cuánto fabricar de un producto nuevo, sin histórico.', hecho: visitadas.has('lanzamiento'), destino: 'lanzamiento', cta: 'Simular lanzamiento' },
   ];
   const completadosImpr = imprescindibles.filter((p) => p.hecho).length;
   const progresoInicio = Math.round((completadosImpr / imprescindibles.length) * 100);
 
-  const itemCls = (activa) =>
-    `relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors text-left ${
-      activa ? 'text-txt' : 'text-txt2 hover:text-txt'
-    }`;
+  // Botón de sección del sidebar (escritorio).
+  const ItemNav = ({ s }) => {
+    const activa = seccion === s.id;
+    const dot = s.id === 'cargar' && pendienteGuardar;
+    return (
+      <button
+        type="button"
+        onClick={() => setSeccion(s.id)}
+        className={`relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2 font-mono text-[11px] tracking-[0.12em] uppercase transition-colors text-left ${activa ? 'text-txt' : 'text-txt2 hover:text-txt'}`}
+        style={{
+          background: activa ? 'var(--tint-brand)' : 'transparent',
+          boxShadow: activa ? 'inset 2px 0 0 var(--brand)' : 'none',
+        }}
+        aria-current={activa ? 'page' : undefined}
+        title={dot ? `${s.etiqueta} — datos sin guardar` : s.etiqueta}
+      >
+        <span style={{ color: activa ? 'var(--brand)' : 'currentColor' }}><Icono id={s.id} /></span>
+        <span className="hidden lg:inline">{s.etiqueta}</span>
+        {dot ? <span className="absolute top-1.5 right-2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} /> : null}
+      </button>
+    );
+  };
+
+  // Sidebar agrupado: cabecera de grupo (solo lg) cuando cambia el grupo.
+  const sidebarItems = [];
+  let grupoPrev = '__';
+  for (const s of SECCIONES) {
+    if (s.grupo && s.grupo !== grupoPrev) {
+      sidebarItems.push(
+        <div key={`g-${s.grupo}`} className="hidden lg:block px-3 pt-4 pb-1 font-mono text-[9px] tracking-[0.2em] uppercase" style={{ color: TXT3 }}>
+          {s.grupo}
+        </div>
+      );
+    }
+    if (!s.grupo && grupoPrev !== '__') {
+      sidebarItems.push(<div key={`sep-${s.id}`} className="my-2 mx-3 border-t border-hairlineSoft" />);
+    }
+    grupoPrev = s.grupo || grupoPrev;
+    sidebarItems.push(<ItemNav key={s.id} s={s} />);
+  }
 
   return (
     <div className="relative flex min-h-screen">
       {/* ——— Sidebar (escritorio) ——— */}
       <aside
-        className="hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[220px] z-40 border-r border-lineSoft"
+        className="hidden md:flex flex-col fixed inset-y-0 left-0 md:w-16 lg:w-[230px] z-40 border-r border-lineSoft"
         style={{ background: 'var(--sidebar-grad)' }}
       >
         <div className="px-0 lg:px-6 pt-7 text-center lg:text-left">
@@ -161,31 +192,8 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
           <div className={`${MONO} mt-1.5 hidden lg:block`} style={{ color: TXT3 }}>panel de stock</div>
         </div>
 
-        <nav className="mt-8 flex-1 px-2 lg:px-3 space-y-1" aria-label="Secciones">
-          {SECCIONES.map((sec) => {
-            const activa = seccion === sec.id;
-            return (
-              <button
-                key={sec.id}
-                type="button"
-                onClick={() => setSeccion(sec.id)}
-                className={itemCls(activa)}
-                style={{
-                  background: activa ? 'var(--tint-brand)' : 'transparent',
-                  boxShadow: activa ? 'inset 2px 0 0 var(--brand)' : 'none',
-                  color: activa ? 'var(--txt)' : undefined,
-                }}
-                aria-current={activa ? 'page' : undefined}
-                title={sec.id === 'datos' && pendienteGuardar ? `${sec.etiqueta} — datos sin guardar` : sec.etiqueta}
-              >
-                <span style={{ color: activa ? 'var(--brand)' : 'currentColor' }}><Icono id={sec.id} /></span>
-                <span className="hidden lg:inline">{sec.etiqueta}</span>
-                {sec.id === 'datos' && pendienteGuardar ? (
-                  <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
-                ) : null}
-              </button>
-            );
-          })}
+        <nav className="mt-6 flex-1 px-2 lg:px-3 space-y-0.5 overflow-y-auto" aria-label="Secciones">
+          {sidebarItems}
         </nav>
 
         <div className="px-3 lg:px-6 py-5 border-t border-lineSoft space-y-3">
@@ -217,9 +225,9 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
         </div>
       </aside>
 
-      {/* ——— Nav móvil: barra inferior fija (área táctil generosa) ——— */}
+      {/* ——— Nav móvil: barra inferior deslizable (todas las secciones visibles al deslizar) ——— */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 grid grid-cols-7 border-t border-lineSoft"
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 flex overflow-x-auto border-t border-lineSoft"
         style={{
           background: 'var(--nav-bg)',
           backdropFilter: 'blur(10px)',
@@ -228,21 +236,21 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
         }}
         aria-label="Secciones"
       >
-        {SECCIONES.map((sec) => {
-          const activa = seccion === sec.id;
+        {SECCIONES.map((s) => {
+          const activa = seccion === s.id;
           return (
             <button
-              key={sec.id}
+              key={s.id}
               type="button"
-              onClick={() => setSeccion(sec.id)}
-              className="relative flex flex-col items-center gap-1 pt-2.5 pb-2 transition-colors"
+              onClick={() => setSeccion(s.id)}
+              className="relative flex flex-col items-center gap-1 pt-2.5 pb-2 flex-shrink-0 min-w-[64px] transition-colors"
               style={{ color: activa ? 'var(--txt)' : TXT2 }}
               aria-current={activa ? 'page' : undefined}
             >
-              <span style={{ color: activa ? 'var(--brand)' : 'currentColor' }}><Icono id={sec.id} /></span>
-              <span className="font-mono text-[8.5px] tracking-[0.04em] uppercase">{sec.corta}</span>
-              {sec.id === 'datos' && pendienteGuardar ? (
-                <span className="absolute top-1.5 right-[22%] w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
+              <span style={{ color: activa ? 'var(--brand)' : 'currentColor' }}><Icono id={s.id} /></span>
+              <span className="font-mono text-[9px] tracking-[0.04em] uppercase">{s.corta}</span>
+              {s.id === 'cargar' && pendienteGuardar ? (
+                <span className="absolute top-1.5 right-3 w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
               ) : null}
             </button>
           );
@@ -255,41 +263,41 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
       </div>
 
       {/* ——— Contenido ——— */}
-      <div className="flex-1 min-w-0 md:pl-16 lg:pl-[220px] pb-24 md:pb-0">
+      <div className="flex-1 min-w-0 md:pl-16 lg:pl-[230px] pb-24 md:pb-0">
         <div className="max-w-[1280px] mx-auto px-5 md:px-10 py-8 md:py-12">
           {/* Cabecera de la sección activa (Inicio trae su propia cabecera rica) */}
           {seccion !== 'inicio' ? (
-          <header key={seccion} className="seccion-panel mb-6 md:mb-8 flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="font-display font-bold text-[28px] md:text-[36px] tracking-[-0.02em] leading-none" style={{ color: TXT }}>
-                {SECCIONES.find((x) => x.id === seccion)?.etiqueta}
-              </h1>
-              <p className="mt-2.5 text-[14px] md:text-[15px] leading-relaxed" style={{ color: TXT2 }}>
-                {SECCIONES.find((x) => x.id === seccion)?.linea}
-              </p>
-            </div>
-            {estadoDatos ? (
-              <button
-                type="button"
-                onClick={() => setSeccion('datos')}
-                title="De dónde salen los datos que ves. Pulsa para ir a Datos y ajustes."
-                className="flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-[10px] tracking-[0.1em] uppercase transition-colors hover:border-lineHover"
-                style={{ borderColor: 'var(--line)', background: 'var(--surface-input)', color: TXT2 }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: estadoDatos.guardado ? 'var(--ok)' : 'var(--warn)' }} />
-                <span style={{ color: TXT3 }}>Fuente:</span>
-                <span style={{ color: TXT }} className="normal-case tracking-normal max-w-[220px] truncate">
-                  {estadoDatos.fuente === 'db' ? 'datos guardados' : estadoDatos.nombre}
-                </span>
-                <span style={{ color: TXT3 }}>
-                  · {estadoDatos.filas.toLocaleString('es-ES')} filas{estadoDatos.fuente === 'csv' && !estadoDatos.guardado ? ' · sin guardar' : ''}
-                </span>
-              </button>
-            ) : null}
-          </header>
+            <header key={seccion} className="seccion-panel mb-6 md:mb-8 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h1 className="font-display font-bold text-[28px] md:text-[36px] tracking-[-0.02em] leading-none" style={{ color: TXT }}>
+                  {sec(seccion)?.etiqueta}
+                </h1>
+                <p className="mt-2.5 text-[14px] md:text-[15px] leading-relaxed" style={{ color: TXT2 }}>
+                  {sec(seccion)?.linea}
+                </p>
+              </div>
+              {estadoDatos ? (
+                <button
+                  type="button"
+                  onClick={() => setSeccion('cargar')}
+                  title="De dónde salen los datos que ves. Pulsa para ir a Cargar datos."
+                  className="flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-[10px] tracking-[0.1em] uppercase transition-colors hover:border-lineHover"
+                  style={{ borderColor: 'var(--line)', background: 'var(--surface-input)', color: TXT2 }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: estadoDatos.guardado ? 'var(--ok)' : 'var(--warn)' }} />
+                  <span style={{ color: TXT3 }}>Fuente:</span>
+                  <span style={{ color: TXT }} className="normal-case tracking-normal max-w-[220px] truncate">
+                    {estadoDatos.fuente === 'db' ? 'datos guardados' : estadoDatos.nombre}
+                  </span>
+                  <span style={{ color: TXT3 }}>
+                    · {estadoDatos.filas.toLocaleString('es-ES')} filas{estadoDatos.fuente === 'csv' && !estadoDatos.guardado ? ' · sin guardar' : ''}
+                  </span>
+                </button>
+              ) : null}
+            </header>
           ) : null}
 
-          {/* Inicio: onboarding por pasos (estado real del usuario) */}
+          {/* Inicio: onboarding por pasos */}
           <section className={`seccion-panel ${seccion === 'inicio' ? '' : 'hidden'}`}>
             <InicioOnboarding
               progreso={progresoInicio}
@@ -301,7 +309,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
             />
           </section>
 
-          {/* Resumen + Insights: UNA instancia del dashboard (los filtros se comparten) */}
+          {/* Resumen + Insights: UNA instancia del dashboard (filtros compartidos) */}
           <section className={`seccion-panel ${esDashboard ? '' : 'hidden'}`}>
             {hayDatos ? (
               <SalesDashboard
@@ -312,12 +320,11 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 onNavegar={setSeccion}
               />
             ) : (
-              <VacioAmable irADatos={irADatos} />
+              <VacioAmable irACargar={irACargar} />
             )}
           </section>
 
-          {/* Motor de stock: una instancia para las tres secciones (parte 2: el
-              sidebar controlará la pestaña activa) */}
+          {/* Motor de stock: una instancia para Reposición/Lanzamiento/Plan */}
           <section className={`seccion-panel ${esMotor ? '' : 'hidden'}`}>
             {hayDatos ? (
               <StockEngine
@@ -331,18 +338,17 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 onNavegar={setSeccion}
               />
             ) : (
-              <VacioAmable irADatos={irADatos} />
+              <VacioAmable irACargar={irACargar} />
             )}
           </section>
 
-          {/* Datos y ajustes: la subida/guardado vive en la página (los
-              manejadores del CSV no se mueven) y entra aquí como contenido */}
-          <section className={`seccion-panel ${seccion === 'datos' ? '' : 'hidden'}`}>
+          {/* Cargar datos: subida/guardado/tabla (slot de la página) + banner */}
+          <section className={`seccion-panel ${seccion === 'cargar' ? '' : 'hidden'}`}>
             {estadoDatos?.filas ? (
               <div
                 className="mb-8 rounded-xl border p-4 md:p-5 flex flex-wrap items-center gap-x-5 gap-y-3"
                 style={{
-                  borderColor: estadoDatos.guardado ? 'rgba(107,203,154,0.35)' : 'rgba(227,192,75,0.35)',
+                  borderColor: estadoDatos.guardado ? 'rgba(44,138,85,0.4)' : 'rgba(143,108,15,0.4)',
                   background: 'var(--panel-grad)',
                 }}
               >
@@ -362,9 +368,12 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
               </div>
             ) : null}
             {seccionDatos}
+          </section>
+
+          {/* Ajustes del motor: costes + configuración + validación */}
+          <section className={`seccion-panel ${seccion === 'ajustes' ? '' : 'hidden'}`}>
             {hayDatos && motor ? (
-              <div className="mt-12 rounded-xl border border-line p-6 md:p-8" style={{ background: 'var(--card-grad)' }}>
-                <div className={`${MONO}`} style={{ color: TXT2 }}>Ajustes del motor</div>
+              <div className="rounded-xl border border-line p-6 md:p-8" style={{ background: 'var(--card-grad)' }}>
                 <CostesProducto
                   motor={motor}
                   margenTxt={margenTxt}
@@ -374,7 +383,9 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} />
                 <PanelValidacion motor={motor} />
               </div>
-            ) : null}
+            ) : (
+              <VacioAmable irACargar={irACargar} />
+            )}
           </section>
         </div>
       </div>

@@ -455,35 +455,8 @@ export default function UploadPage() {
         estadoDatos={result ? { filas: result.dataRows, guardado: result.source === 'db' || saveState === 'done', fuente: result.source, nombre: result.name } : null}
         seccionDatos={(
         <>
-        {/* Section label row */}
+        {/* La cabecera ("Cargar datos") la pinta el shell; aquí va directo el flujo. */}
         <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12 md:col-span-7 flex items-baseline gap-4">
-            <span className="font-mono text-[11px] tracking-[0.18em] tnum" style={{ color: 'var(--txt-3)' }}>00 //</span>
-            <span className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: 'var(--txt-2)' }}>
-              Upload — Tus datos de ventas.
-            </span>
-          </div>
-          <div className="col-span-12 md:col-span-5 md:text-right">
-            <span
-              className={MONO}
-              style={{ color: result?.source === 'db' || saveState === 'done' ? 'var(--ok)' : result ? 'var(--warn)' : 'var(--txt-2)' }}
-            >
-              {result?.source === 'db' || saveState === 'done'
-                ? 'guardado en tu cuenta ✓'
-                : result ? 'procesado · sin guardar' : 'paso 01 · sube tu CSV'}
-            </span>
-          </div>
-        </div>
-
-        {/* Title: protagonista SOLO sin datos (con datos, esta sección es de gestión) */}
-        {!result ? (
-        <h1 className="mt-8 font-display font-bold leading-[1.02] tracking-[-0.03em] text-[12vw] md:text-[84px] lg:text-[100px] max-w-[14ch] [text-wrap:balance]">
-          <TituloDecodificado texto="Sube tu archivo" acento="de ventas." />
-        </h1>
-        ) : null}
-
-        {/* Description + upload card */}
-        <div className={`grid grid-cols-12 gap-6 ${result ? 'mt-8' : 'mt-12 md:mt-16'}`}>
           <div className="col-span-12 md:col-span-5">
             <Reveal>
               <p className="text-[18px] md:text-[20px] leading-[1.45] max-w-[34ch]" style={{ color: 'var(--txt-2)' }}>
