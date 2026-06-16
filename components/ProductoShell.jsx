@@ -124,9 +124,9 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
 
   // Pasos del onboarding (estado real del usuario).
   const imprescindibles = [
-    { id: 'subir', titulo: 'Sube tus ventas', desc: 'Importa tu CSV de ventas para que Wefty lo analice.', hecho: hayDatos, destino: 'cargar', cta: 'Subir ventas' },
+    { id: 'subir', titulo: 'Sube tus ventas', desc: 'Importa tu CSV de ventas para que Wefty lo analice.', ejemplo: 'Vale un Excel guardado como CSV: una fila por venta con fecha, producto, talla, color y unidades.', hecho: hayDatos, hechoDetalle: hayDatos && estadoDatos?.filas ? `${estadoDatos.filas.toLocaleString('es-ES')} ventas cargadas` : null, destino: 'cargar', cta: 'Subir ventas' },
     { id: 'guardar', titulo: 'Guarda tus datos', desc: 'Guárdalas en tu cuenta para no subirlas cada vez.', hecho: Boolean(estadoDatos?.guardado), destino: 'cargar', cta: 'Ir a guardar' },
-    { id: 'recom', titulo: 'Pide tu primera recomendación', desc: 'Cuánto pedir de cada producto, talla y color.', hecho: visitadas.has('reposicion') || visitadas.has('plan'), destino: 'reposicion', cta: 'Ver recomendación' },
+    { id: 'recom', titulo: 'Pide tu primera recomendación', desc: 'Cuánto pedir de cada producto, talla y color.', ejemplo: 'Te diremos las unidades por talla y color, y el porqué de cada número.', hecho: visitadas.has('reposicion') || visitadas.has('plan'), destino: 'reposicion', cta: 'Ver recomendación' },
   ];
   const recomendados = [
     { id: 'costes', titulo: 'Añade tus costes reales', desc: 'El coste real de cada producto afina el plan de compra.', hecho: costesReales.size > 0, destino: 'ajustes', cta: 'Añadir costes' },

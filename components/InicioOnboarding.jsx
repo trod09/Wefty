@@ -8,6 +8,7 @@ import React from 'react';
 
 const TXT = 'var(--txt)';
 const TXT2 = 'var(--txt-2)';
+const TXT3 = 'var(--txt-3)';
 const OK = 'var(--ok)';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 
@@ -42,11 +43,16 @@ function Tarjeta({ paso, onIr }) {
         <div className="min-w-0">
           <div className="text-[15px] leading-snug" style={{ color: TXT }}>{paso.titulo}</div>
           <p className="mt-1 text-[13px] leading-snug" style={{ color: TXT2 }}>{paso.desc}</p>
+          {!paso.hecho && paso.ejemplo ? (
+            <p className="mt-2 text-[12px] leading-snug" style={{ color: TXT3 }}>{paso.ejemplo}</p>
+          ) : null}
         </div>
       </div>
       <div className="mt-4">
         {paso.hecho ? (
-          <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: OK }}>Hecho ✓</span>
+          <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: OK }}>
+            Hecho ✓{paso.hechoDetalle ? <span style={{ color: TXT3 }}> · {paso.hechoDetalle}</span> : null}
+          </span>
         ) : (
           <button
             type="button"
@@ -64,13 +70,7 @@ function Tarjeta({ paso, onIr }) {
 
 export default function InicioOnboarding({ progreso, completados, total, imprescindibles, recomendados, onIr }) {
   const todoListo = completados >= total;
-  const motivador = progreso === 0
-    ? 'Empieza por subir tus ventas.'
-    : progreso < 67
-      ? 'Buen comienzo, sigue así.'
-      : progreso < 100
-        ? 'Casi lo tienes.'
-        : '¡Listo! Wefty ya trabaja con tus datos.';
+  const pasosTexto = `${completados} de ${total} pasos`;
 
   return (
     <div className="space-y-8">
@@ -88,7 +88,7 @@ export default function InicioOnboarding({ progreso, completados, total, impresc
         <div className="mt-6">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <span className="font-mono text-[12px] tracking-[0.1em] uppercase tnum" style={{ color: TXT }}>{progreso}% completado</span>
-            <span className="font-mono text-[11px] tracking-[0.04em]" style={{ color: TXT2 }}>{motivador}</span>
+            <span className="font-mono text-[11px] tracking-[0.04em] tnum" style={{ color: TXT2 }}>{pasosTexto}</span>
           </div>
           <div className="mt-2.5 h-2 rounded-full overflow-hidden" style={{ background: 'var(--hairline)' }}>
             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${progreso}%`, background: 'linear-gradient(90deg, var(--brand), var(--brand-soft))' }} />
