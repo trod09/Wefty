@@ -73,7 +73,7 @@ function Segmentos({ valor, onChange, opciones }) {
           className={`h-11 md:h-10 px-3.5 font-mono text-[11px] tracking-[0.08em] uppercase transition-colors ${
             valor === o.v ? 'text-txt' : 'text-txt2 hover:text-txt'
           }`}
-          style={{ background: valor === o.v ? 'rgba(240,140,86,0.22)' : 'var(--surface-input)' }}
+          style={{ background: valor === o.v ? 'var(--fill-brand-strong)' : 'var(--surface-input)' }}
         >
           {o.t}
         </button>
@@ -1257,7 +1257,7 @@ export default function StockEngine({
                   <div
                     className="lg:col-span-4 relative rounded-xl border border-brandLine p-7 md:p-8 overflow-hidden flex flex-col"
                     style={{
-                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, var(--surface-2) 100%)',
+                      background: 'var(--grad-brand-card)',
                       boxShadow: '0 0 60px -26px var(--glow-brand)',
                     }}
                   >
@@ -1575,7 +1575,7 @@ export default function StockEngine({
                   <div
                     className="lg:col-span-5 relative rounded-xl border border-brandLine p-7 md:p-8 overflow-hidden flex flex-col"
                     style={{
-                      background: 'linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, var(--surface-2) 100%)',
+                      background: 'var(--grad-brand-card)',
                       boxShadow: '0 0 60px -26px var(--glow-brand)',
                     }}
                   >

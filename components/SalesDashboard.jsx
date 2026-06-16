@@ -103,7 +103,7 @@ function Kpi({ label, value, principal = false, hint }) {
       <div
         className="relative rounded-xl p-6 md:p-8 flex flex-col md:flex-row md:items-end md:justify-between gap-3 overflow-hidden border border-brandLine transition-all duration-300"
         style={{
-          background: 'linear-gradient(120deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 46%, var(--surface-2) 100%)',
+          background: 'var(--grad-brand-hero)',
           boxShadow: '0 0 60px -26px var(--glow-brand)',
         }}
       >
@@ -617,7 +617,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         >
           <div
             className="absolute -top-24 -right-16 w-[420px] h-[420px] pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(240,140,86,0.16) 0%, transparent 60%)' }}
+            style={{ background: 'var(--glow-brand-radial)' }}
           />
           <div className={`${LABEL} flex items-center gap-2 relative`} style={{ color: ELECTRIC }}>
             <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: 'var(--brand)' }} />
@@ -672,7 +672,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                   <CartesianGrid vertical={false} stroke="var(--grid-line)" />
                   <XAxis dataKey="talla" tick={tickMono} axisLine={false} tickLine={false} />
                   <YAxis tick={tickMono} axisLine={false} tickLine={false} width={40} />
-                  <Tooltip cursor={{ fill: 'rgba(240,140,86,0.06)' }} content={<TallaTip />} />
+                  <Tooltip cursor={{ fill: 'var(--fill-chart-cursor)' }} content={<TallaTip />} />
                   <ReferenceLine
                     y={avgTalla} stroke="var(--txt)" strokeOpacity={0.32} strokeDasharray="4 4"
                     label={{ value: `media ${fmtInt(avgTalla)}`, position: 'right', fontSize: 10, fill: TXT2 }}

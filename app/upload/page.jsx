@@ -11,7 +11,6 @@ import { useRouter } from 'next/navigation';
 import { Reveal } from '@/components/hooks';
 import { CornerCrosshairs, Fn } from '@/components/decor';
 import ProductoShell from '@/components/ProductoShell';
-import TituloDecodificado from '@/components/TituloDecodificado';
 import { supabase } from '@/lib/supabase';
 import { parseNumeroLaxo as parseNumberLoose } from '@/lib/csv.mjs';
 
