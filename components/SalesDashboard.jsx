@@ -529,7 +529,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         sinResultados
       ) : insightsApoyo.length ? (
         <div>
-          <div className={LABEL} style={{ color: TXT2 }}>Insights accionables · {insightsApoyo.length}</div>
+          <div className={LABEL} style={{ color: TXT2 }}>Hallazgos accionables · {insightsApoyo.length}</div>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
             {insightsApoyo.map((it) => (
               <div
@@ -598,7 +598,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             ✕ quitar
           </button>
           <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--txt-3)' }}>
-            se ajusta en Insights
+            se ajusta en Hallazgos
           </span>
         </div>
       ) : null}
@@ -621,7 +621,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
           />
           <div className={`${LABEL} flex items-center gap-2 relative`} style={{ color: ELECTRIC }}>
             <span className="w-1.5 h-1.5 rounded-full live-dot" style={{ background: 'var(--brand)' }} />
-            Insight automático · patrón de tallas
+            Hallazgo automático · patrón de tallas
           </div>
           <p className="relative mt-6 font-display font-light text-[34px] md:text-[60px] leading-[1.08] tracking-[-0.025em] max-w-[24ch]" style={{ color: TXT }}>
             Las tallas <span style={{ color: ELECTRIC }}>{insight.a}</span> y{' '}

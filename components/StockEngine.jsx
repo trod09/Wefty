@@ -255,7 +255,7 @@ export function PanelValidacion({ motor }) {
   // En móvil la rejilla de 5 columnas no cabe (sus mínimos suman ~560px y el
   // overflow-hidden de la página la cortaría): cada fila pasa a tarjeta apilada.
   const textoMejora = (f) =>
-    f.mejora != null ? (f.mejora > 0 ? `−${pct0(f.mejora)} de error` : 'sin mejora') : 'es el baseline';
+    f.mejora != null ? (f.mejora > 0 ? `−${pct0(f.mejora)} de error` : 'sin mejora') : 'es la referencia';
   const FilaVal = ({ f }) => (
     <li className="border-b border-hairlineSoft">
       {/* Móvil: tarjeta apilada */}
@@ -274,7 +274,7 @@ export function PanelValidacion({ motor }) {
           <p className="mt-1 font-mono text-[11px] leading-relaxed" style={{ color: TXT2 }}>
             {f.modelo} ·{' '}
             <span style={{ color: f.mejora != null && f.mejora > 0 ? VERDE : TXT3 }}>{textoMejora(f)}</span>
-            {' · '}{f.cortes} cortes
+            {' · '}{f.cortes} pruebas
           </p>
         )}
       </div>
@@ -292,7 +292,7 @@ export function PanelValidacion({ motor }) {
             <span className="font-mono text-[11px] tnum text-right" style={{ color: f.mejora != null && f.mejora > 0 ? VERDE : TXT3 }}>
               {textoMejora(f)}
             </span>
-            <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT3 }}>{f.cortes} cortes</span>
+            <span className="font-mono text-[11px] tnum text-right" style={{ color: TXT3 }}>{f.cortes}</span>
           </>
         )}
       </div>
@@ -318,8 +318,8 @@ export function PanelValidacion({ motor }) {
           <>
             <p className="text-[13px] leading-relaxed max-w-[68ch]" style={{ color: TXT2 }}>
               El motor viaja a varios puntos de tu pasado, pronostica «a ciegas» las 4 semanas
-              siguientes y comprueba cuánto falló. El error se mide como desviación media ponderada (WAPE);
-              «−X% de error» = cuánto mejora al pronóstico ingenuo de extrapolar a ojo.
+              siguientes y comprueba cuánto falló. El error es cuánto se aleja de media la predicción
+              de lo que de verdad vendiste; «−X% de error» = cuánto mejora frente a extrapolar a ojo.
             </p>
             {v.global && !v.global.insuficiente ? (
               <p className="mt-4 text-[14px] leading-relaxed" style={{ color: TXT }}>
@@ -328,13 +328,13 @@ export function PanelValidacion({ motor }) {
                 {v.global.mejora != null && v.global.mejora > 0 ? (
                   <> — un <span style={{ color: VERDE }}>{pct0(v.global.mejora)}</span> mejor que extrapolar a ojo</>
                 ) : null}{' '}
-                <span style={{ color: TXT3 }}>({v.global.cortes} cortes)</span>.
+                <span style={{ color: TXT3 }}>({v.global.cortes} pruebas)</span>.
               </p>
             ) : null}
             {v.filas.length ? (
               <ul className="mt-4">
                 <li className="hidden md:grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-hairline">
-                  {['Categoría', 'Mejor modelo', 'Error', 'vs ingenuo', 'Cortes'].map((h, i) => (
+                  {['Categoría', 'Mejor modelo', 'Error', 'vs a ojo', 'Pruebas'].map((h, i) => (
                     <span key={h} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
                   ))}
                 </li>
@@ -579,7 +579,7 @@ export default function StockEngine({
     if (!resultado?.ok) return;
     const r = resultado;
     const criterio = r.modoCantidad === 'economia'
-      ? `punto de máximo margen (cuantil ${Math.round(r.economia.cr * 100)}%)`
+      ? `punto de máximo margen (apunta a cubrir el ${Math.round(r.economia.cr * 100)}% de la demanda probable)`
       : `nivel de servicio ${r.nivelServicio}% · escenario ${r.escenario}`;
     const lineas = [
       `Pedido recomendado — ${textoSeguro(r.producto)}`,
@@ -751,7 +751,7 @@ export default function StockEngine({
                     style={{ background: 'var(--surface-input)' }}
                   />
                 </Campo>
-                <Campo etiqueta="Escenario de demanda" hint="Conservador reparte por si la venta viene floja; agresivo, por si viene fuerte (P25/P75).">
+                <Campo etiqueta="Escenario de demanda" hint="Conservador reparte por si la venta viene floja; agresivo, por si viene fuerte.">
                   <Segmentos
                     valor={planEsc}
                     onChange={setPlanEsc}
@@ -1510,7 +1510,7 @@ export default function StockEngine({
                   resultado?.erroresCostes?.length
                     ? resultado.erroresCostes[0]
                     : economiaActiva
-                      ? `Pedido en el punto de máximo margen (cuantil ${pct0(resultado.economia.cr)}).`
+                      ? `Pedido en el punto de máximo margen (apunta a cubrir el ${pct0(resultado.economia.cr)} de la demanda probable).`
                       : 'Con coste y PVP, el pedido pasa a maximizar tu margen (liquidación: 30% del PVP si no la cambias).'
                 }
               >
@@ -1659,7 +1659,7 @@ export default function StockEngine({
 
                     {resultado.sellThrough ? (
                       <p className="mt-3 pt-3 border-t border-hairline font-mono text-[11px] tracking-[0.02em]" style={{ color: TXT2 }}>
-                        sell-through proyectado:{' '}
+                        venta proyectada:{' '}
                         <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st8)}</span> vendido a 8 semanas ·{' '}
                         <span style={{ color: TXT }}>{pct0(resultado.sellThrough.st12)}</span> a 12
                       </p>

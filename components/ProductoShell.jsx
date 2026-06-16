@@ -43,7 +43,7 @@ function Icono({ id }) {
 const SECCIONES = [
   { id: 'inicio', grupo: null, etiqueta: 'Inicio', corta: 'Inicio', linea: 'Tus primeros pasos con Wefty.' },
   { id: 'resumen', grupo: 'Analiza', etiqueta: 'Resumen', corta: 'Resumen', linea: 'Cómo va tu negocio, de un vistazo.' },
-  { id: 'insights', grupo: 'Analiza', etiqueta: 'Insights', corta: 'Insights', linea: 'Qué está pasando en tus ventas — explóralo con filtros.' },
+  { id: 'insights', grupo: 'Analiza', etiqueta: 'Hallazgos', corta: 'Hallazgos', linea: 'Qué está pasando en tus ventas — explóralo con filtros.' },
   { id: 'reposicion', grupo: 'Decide stock', etiqueta: 'Reposición', corta: 'Repos.', linea: 'Cuánto pedir de los productos que ya vendes.' },
   { id: 'lanzamiento', grupo: 'Decide stock', etiqueta: 'Lanzamiento', corta: 'Lanz.', linea: 'Cuánto fabricar de un producto nuevo, sin histórico.' },
   { id: 'plan', grupo: 'Decide stock', etiqueta: 'Plan de compra', corta: 'Plan', linea: 'Reparte tu presupuesto entre todo el catálogo para maximizar margen.' },
@@ -130,7 +130,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
   ];
   const recomendados = [
     { id: 'costes', titulo: 'Añade tus costes reales', desc: 'El coste real de cada producto afina el plan de compra.', hecho: costesReales.size > 0, destino: 'ajustes', cta: 'Añadir costes' },
-    { id: 'insights', titulo: 'Explora tus insights', desc: 'Patrones de tus ventas y qué hacer con ellos.', hecho: visitadas.has('insights'), destino: 'insights', cta: 'Ver insights' },
+    { id: 'insights', titulo: 'Explora tus hallazgos', desc: 'Patrones de tus ventas y qué hacer con ellos.', hecho: visitadas.has('insights'), destino: 'insights', cta: 'Ver hallazgos' },
     { id: 'lanz', titulo: 'Simula un lanzamiento', desc: 'Cuánto fabricar de un producto nuevo, sin histórico.', hecho: visitadas.has('lanzamiento'), destino: 'lanzamiento', cta: 'Simular lanzamiento' },
   ];
   const completadosImpr = imprescindibles.filter((p) => p.hecho).length;
