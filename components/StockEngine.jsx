@@ -1066,7 +1066,7 @@ export default function StockEngine({
                 {/* La frontera: la última unidad que entra y la primera que se queda fuera */}
                 {plan.frontera.ultimaComprada ? (
                   <div className="mt-4 rounded-xl border border-line p-5" style={{ background: 'var(--panel-grad)' }}>
-                    <div className={LABEL} style={{ color: TXT2 }}>La frontera del presupuesto</div>
+                    <div className={LABEL} style={{ color: TXT2 }}>¿Dónde paramos la compra?</div>
                     <p className="mt-2.5 text-[13px] leading-relaxed" style={{ color: TXT2 }}>
                       La última unidad comprada (<span style={{ color: TXT }}>{plan.frontera.ultimaComprada.nombre}</span>) rinde{' '}
                       <span style={{ color: VERDE }}>{fmt1(plan.frontera.ultimaComprada.margen)} €</span> de margen esperado
@@ -1341,7 +1341,8 @@ export default function StockEngine({
 
                   {/* Análogos con score transparente */}
                   <div className="lg:col-span-6 rounded-xl border border-line p-6 md:p-7" style={{ background: 'var(--panel-grad)' }}>
-                    <div className={`${LABEL} mb-4`} style={{ color: TXT2 }}>Basado en tus análogos · score transparente</div>
+                    <div className={`${LABEL} mb-1`} style={{ color: TXT2 }}>Productos parecidos en los que nos basamos</div>
+                    <p className="mb-4 text-[12px] leading-snug" style={{ color: TXT3 }}>El número de la derecha es cuánto se parece cada uno (a más alto, más se parece): suma de categoría, precio y temporada.</p>
                     <ul className="space-y-3">
                       {resultadoLan.analogos.map((a) => (
                         <li key={a.nombre} className="flex items-start justify-between gap-4 pb-3 border-b border-hairlineSoft">
