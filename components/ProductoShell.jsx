@@ -259,13 +259,33 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
         <div className="max-w-[1280px] mx-auto px-5 md:px-10 py-8 md:py-12">
           {/* Cabecera de la sección activa (Inicio trae su propia cabecera rica) */}
           {seccion !== 'inicio' ? (
-          <header key={seccion} className="seccion-panel mb-6 md:mb-8">
-            <h1 className="font-display font-bold text-[28px] md:text-[36px] tracking-[-0.02em] leading-none" style={{ color: TXT }}>
-              {SECCIONES.find((x) => x.id === seccion)?.etiqueta}
-            </h1>
-            <p className="mt-2.5 text-[14px] md:text-[15px] leading-relaxed" style={{ color: TXT2 }}>
-              {SECCIONES.find((x) => x.id === seccion)?.linea}
-            </p>
+          <header key={seccion} className="seccion-panel mb-6 md:mb-8 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="font-display font-bold text-[28px] md:text-[36px] tracking-[-0.02em] leading-none" style={{ color: TXT }}>
+                {SECCIONES.find((x) => x.id === seccion)?.etiqueta}
+              </h1>
+              <p className="mt-2.5 text-[14px] md:text-[15px] leading-relaxed" style={{ color: TXT2 }}>
+                {SECCIONES.find((x) => x.id === seccion)?.linea}
+              </p>
+            </div>
+            {estadoDatos ? (
+              <button
+                type="button"
+                onClick={() => setSeccion('datos')}
+                title="De dónde salen los datos que ves. Pulsa para ir a Datos y ajustes."
+                className="flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-[10px] tracking-[0.1em] uppercase transition-colors hover:border-lineHover"
+                style={{ borderColor: 'var(--line)', background: 'var(--surface-input)', color: TXT2 }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: estadoDatos.guardado ? 'var(--ok)' : 'var(--warn)' }} />
+                <span style={{ color: TXT3 }}>Fuente:</span>
+                <span style={{ color: TXT }} className="normal-case tracking-normal max-w-[220px] truncate">
+                  {estadoDatos.fuente === 'db' ? 'datos guardados' : estadoDatos.nombre}
+                </span>
+                <span style={{ color: TXT3 }}>
+                  · {estadoDatos.filas.toLocaleString('es-ES')} filas{estadoDatos.fuente === 'csv' && !estadoDatos.guardado ? ' · sin guardar' : ''}
+                </span>
+              </button>
+            ) : null}
           </header>
           ) : null}
 

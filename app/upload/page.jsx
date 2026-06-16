@@ -452,7 +452,7 @@ export default function UploadPage() {
         headers={result?.headers ?? []}
         rows={result?.rows ?? []}
         hayDatos={Boolean(result?.headers?.length)}
-        estadoDatos={result ? { filas: result.dataRows, guardado: result.source === 'db' || saveState === 'done' } : null}
+        estadoDatos={result ? { filas: result.dataRows, guardado: result.source === 'db' || saveState === 'done', fuente: result.source, nombre: result.name } : null}
         seccionDatos={(
         <>
         {/* Section label row */}
