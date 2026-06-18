@@ -13,7 +13,7 @@ import { ajustarEWMA } from '../lib/engine/forecast.mjs';
 import {
   curvaJerarquica, aplicarUmbralMinimo, repartoPorMayorResto, desgloseTallaColor,
 } from '../lib/engine/curvas.mjs';
-import { prepararMotor, recomendarReposicion, validacionGlobal, demandaProducto, productosOrdenados } from '../lib/engine/motor.mjs';
+import { prepararMotor, recomendarReposicion, validacionGlobal, demandaProducto, productosOrdenados, estacionalidadProxima, demandaAgregada } from '../lib/engine/motor.mjs';
 import { planCortes, competirModelos, seleccionarModelo } from '../lib/engine/backtest.mjs';
 import { indicesEstacionales } from '../lib/engine/estacionalidad.mjs';
 import { mulberry32, cuantil, simularDemanda } from '../lib/engine/bootstrap.mjs';
@@ -1081,6 +1081,42 @@ console.log('\n══════ BATERÍA 360 · BUGS HALLADOS (ya arreglados) 
   caso('BUG3 arreglado: fecha inverosímil (2204) NO estira la serie a cientos de años', mF.perfil.semanas <= 45, `semanas=${mF.perfil.semanas}`);
   caso('BUG3 arreglado: las 6 filas inverosímiles se descartan con aviso, la serie real queda intacta',
     mF.perfil.fechasInverosimiles === 6 && mF.perfil.semanas >= 39, `inverosimiles=${mF.perfil.fechasInverosimiles}, semanas=${mF.perfil.semanas}`);
+}
+
+console.log('\n— Estacionalidad próxima y demanda agregada (Resumen) —');
+{
+  // 3 años, muy estacional: el Abrigo vende fuerte las ~13 primeras semanas del
+  // año; el Básico es plano. Hay >52 semanas → estacionalidad activa y robusto.
+  const ventas = [];
+  for (let w = 0; w < 156; w++) {
+    const alta = (w % 52) < 13;
+    ventas.push({ fecha: fechaSemana(w), producto: 'AbrigoX', categoria: 'Abrigo', talla: 'M', color: 'Negro', unidades: alta ? 40 : 6, precio: 80, ingresos: (alta ? 40 : 6) * 80 });
+    ventas.push({ fecha: fechaSemana(w), producto: 'BasicoY', categoria: 'Camiseta', talla: 'M', color: 'Blanco', unidades: 12, precio: 15, ingresos: 180 });
+  }
+  const m = prepararMotor(ventas);
+
+  const est = estacionalidadProxima(m, 8);
+  caso('estacionalidadProxima: con ≥52 semanas devuelve un factor', est !== null);
+  // La semana 156 vuelve a comienzos de año → temporada alta del Abrigo.
+  caso('estacionalidadProxima: las próximas semanas salen en temporada alta', est && est.estado === 'alta' && est.factor > 1,
+    `estado=${est?.estado}, factor=${est?.factor?.toFixed(2)}`);
+  caso('estacionalidadProxima: el factor es finito y razonable', est && Number.isFinite(est.factor) && est.factor > 0.3 && est.factor < 3);
+  caso('estacionalidadProxima: con <52 semanas devuelve null',
+    estacionalidadProxima(prepararMotor(Array.from({ length: 20 }, (_, w) => ({ fecha: fechaSemana(w), producto: 'P', categoria: 'C', talla: 'M', color: 'N', unidades: 10, precio: 10, ingresos: 100 }))), 8) === null);
+  caso('estacionalidadProxima: motor vacío devuelve null', estacionalidadProxima(prepararMotor([])) === null);
+
+  const agg = demandaAgregada(m, 4);
+  caso('demandaAgregada: devuelve esperado y rango', agg !== null && agg.esperado > 0);
+  caso('demandaAgregada: el rango está ordenado P10 ≤ P50 ≤ P90', agg && agg.p10 <= agg.p50 && agg.p50 <= agg.p90,
+    `p10=${agg?.p10}, p50=${agg?.p50}, p90=${agg?.p90}`);
+  caso('demandaAgregada: lista el top de productos (1..5) ordenado por demanda',
+    agg && agg.top.length >= 1 && agg.top.length <= 5 && agg.top[0].esperado >= agg.top[agg.top.length - 1].esperado);
+  caso('demandaAgregada: con ≤5 productos, el esperado cuadra con la suma del top',
+    agg && agg.nProductos <= 5 && Math.abs(agg.top.reduce((s, t) => s + t.esperado, 0) - agg.esperado) <= agg.nProductos + 1,
+    `esperado=${agg?.esperado}, sumaTop=${agg?.top?.reduce((s, t) => s + t.esperado, 0)}`);
+  caso('demandaAgregada: es determinista (mismos datos → mismo pronóstico)',
+    agg && (() => { const b = demandaAgregada(prepararMotor(ventas), 4); return b.esperado === agg.esperado && b.p90 === agg.p90; })());
+  caso('demandaAgregada: motor vacío devuelve null', demandaAgregada(prepararMotor([])) === null);
 }
 
 // ── Integra la batería del PIPELINE de CSV (scripts/test-pipeline.mjs) ──

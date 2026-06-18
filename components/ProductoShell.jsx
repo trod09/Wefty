@@ -316,6 +316,9 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                 headers={headers}
                 rows={rows}
                 seccion={seccion === 'insights' ? 'insights' : 'resumen'}
+                motor={motor}
+                costesReales={costesReales}
+                margenTxt={margenTxt}
                 onHayFiltros={setHayFiltros}
                 onNavegar={setSeccion}
               />

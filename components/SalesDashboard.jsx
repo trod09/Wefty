@@ -12,6 +12,7 @@ import {
   Cell, PieChart, Pie, AreaChart, Area, LabelList, ReferenceLine,
 } from 'recharts';
 import { parseNumero as parseNumber, unificarNombres } from '@/lib/csv.mjs';
+import { demandaProducto, productosOrdenados, validacionGlobal, estacionalidadProxima, demandaAgregada } from '@/lib/engine/motor.mjs';
 
 // ---- Paleta ------------------------------------------------------------
 const ELECTRIC = 'var(--data)';
@@ -82,17 +83,42 @@ function tip(title, accent, lines) {
 }
 
 // ---- Piezas de UI -------------------------------------------------------
-function ChartCard({ title, subtitle, children, className = '' }) {
+function ChartCard({ title, subtitle, accion, children, className = '' }) {
   return (
     <div
-      className={`group relative rounded-xl border border-line p-6 md:p-7 transition-all duration-300 hover:border-lineHover ${className}`}
+      className={`card-elev group relative rounded-xl border border-line p-6 md:p-7 transition-all duration-300 hover:border-lineHover ${className}`}
       style={{ background: 'var(--card-grad)' }}
     >
       <div className="flex items-baseline justify-between gap-4 mb-5">
         <span className={LABEL} style={{ color: TXT2 }}>{title}</span>
-        {subtitle ? <span className={`${LABEL} whitespace-nowrap`} style={{ color: 'var(--txt-3)' }}>{subtitle}</span> : null}
+        <div className="flex items-baseline gap-3">
+          {subtitle ? <span className={`${LABEL} whitespace-nowrap`} style={{ color: 'var(--txt-3)' }}>{subtitle}</span> : null}
+          {accion || null}
+        </div>
       </div>
       {children}
+    </div>
+  );
+}
+
+// Interruptor minúsculo "uds | €" para alternar la métrica de un gráfico.
+function MetricToggle({ value, onChange }) {
+  return (
+    <div className="flex items-center rounded-md border border-hairlineSoft overflow-hidden self-center">
+      {[['uds', 'uds'], ['eur', '€']].map(([v, l]) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className="px-2 py-1 font-mono text-[10px] tracking-[0.1em] uppercase transition-colors"
+          style={{
+            background: value === v ? 'var(--tint-brand)' : 'transparent',
+            color: value === v ? 'var(--brand)' : 'var(--txt-2)',
+          }}
+        >
+          {l}
+        </button>
+      ))}
     </div>
   );
 }
@@ -116,7 +142,7 @@ function Kpi({ label, value, principal = false, hint }) {
   }
   return (
     <div
-      className="relative rounded-xl border border-line p-5 md:p-6 transition-all duration-300 hover:border-lineHover"
+      className="card-elev relative rounded-xl border border-line p-5 md:p-6 transition-all duration-300 hover:border-lineHover"
       style={{ background: 'var(--card-grad)' }}
     >
       <div className={`${LABEL} ${hint ? 'cursor-help' : ''}`} style={{ color: TXT2 }} title={hint}>{label}</div>
@@ -137,7 +163,7 @@ function FilterSelect({ label, value, onChange, options, allLabel }) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 md:h-10 min-w-[170px] rounded-lg border border-line px-3 text-[16px] md:text-[14px] text-txt outline-none transition-colors focus:border-brand cursor-pointer"
+        className="h-11 md:h-10 min-w-[170px] rounded-lg border field-bordered px-3 text-[16px] md:text-[14px] text-txt outline-none transition-colors cursor-pointer"
         style={{ background: 'var(--surface-input)' }}
       >
         <option value="">{allLabel}</option>
@@ -185,12 +211,14 @@ export function parsearVentas(headers, rows) {
 // seccion: 'resumen' (titular + KPIs + gráficos) o 'insights' (filtros +
 // insights accionables). Una sola instancia montada sirve a ambas secciones
 // del sidebar: los filtros viven aquí y afectan a las dos, como siempre.
-export default function SalesDashboard({ headers, rows, seccion = 'resumen', onHayFiltros, onNavegar }) {
+export default function SalesDashboard({ headers, rows, seccion = 'resumen', motor = null, costesReales = null, margenTxt = '60', onHayFiltros, onNavegar }) {
   const parsed = useMemo(() => parsearVentas(headers, rows), [headers, rows]);
 
   // 2) Estado de los filtros. Valor vacío significa "todos / sin filtrar".
   const [fCategoria, setFCategoria] = useState('');
   const [fProducto, setFProducto] = useState('');
+  // Métrica de los donuts de color/categoría: 'uds' (unidades) o 'eur' (euros).
+  const [metrica, setMetrica] = useState('uds');
 
   // Si cambian los datos cargados (otro CSV o el histórico), limpiamos filtros
   // para no esconder datos por un filtro que ya no aplica.
@@ -243,7 +271,6 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
     const totalUnidades = records.reduce((a, r) => a + r.unidades, 0);
     const totalIngresos = records.reduce((a, r) => a + r.ingresos, 0);
     const productosDistintos = new Set(records.map((r) => r.producto).filter(Boolean)).size;
-    const variantes = new Set(records.filter((r) => r.talla || r.color).map((r) => `${r.talla}|${r.color}`)).size;
 
     // Gráfico protagonista: unidades por talla (orden natural), color por intensidad
     const tallaAgg = groupSum(records, (r) => r.talla, (r) => r.unidades);
@@ -272,10 +299,11 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
       };
     }
 
-    // Apoyo: ventas (unidades) por color
+    // Apoyo: ventas por color (unidades e ingresos, para el toggle uds/€)
+    const colorIng = groupSum(records, (r) => r.color, (r) => r.ingresos);
     const colorData = [...groupSum(records, (r) => r.color, (r) => r.unidades).entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([color, unidades], i) => ({ color, unidades, fill: garmentColor(color) || PIE_PALETTE[i % PIE_PALETTE.length] }));
+      .map(([color, unidades], i) => ({ color, unidades, ingresos: colorIng.get(color) || 0, fill: garmentColor(color) || PIE_PALETTE[i % PIE_PALETTE.length] }));
     const totalColorU = colorData.reduce((a, d) => a + d.unidades, 0);
     const top3ColorPct = totalColorU ? Math.round(colorData.slice(0, 3).reduce((a, d) => a + d.unidades, 0) / totalColorU * 100) : 0;
 
@@ -286,10 +314,11 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
       .slice(0, 8)
       .map(([producto, ingresos]) => ({ producto, ingresos, unidades: unidProd.get(producto) || 0 }));
 
-    // Apoyo: ventas (unidades) por categoría
+    // Apoyo: ventas por categoría (unidades e ingresos, para el toggle uds/€)
+    const categoriaIng = groupSum(records, (r) => r.categoria, (r) => r.ingresos);
     const categoriaData = [...groupSum(records, (r) => r.categoria, (r) => r.unidades).entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([categoria, unidades], i) => ({ categoria, unidades, fill: PIE_PALETTE[i % PIE_PALETTE.length] }));
+      .map(([categoria, unidades], i) => ({ categoria, unidades, ingresos: categoriaIng.get(categoria) || 0, fill: PIE_PALETTE[i % PIE_PALETTE.length] }));
 
     // ---- Insights accionables (sobre los datos reales) ------------------
     // 1) Color que no rota: el color con menos unidades y su % del total.
@@ -373,24 +402,125 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         return { label: `${MESES[+m - 1]} '${y.slice(2)}`, ingresos: o.ingresos, unidades: o.unidades };
       });
 
+    // Beneficio bruto estimado: ingresos − coste×unidades. Coste real donde lo
+    // haya (panel de costes) y, si no, estimado por margen lineal. Si NO hay
+    // NINGÚN coste real, ingresos×margen no aporta información nueva: en vez de
+    // un número falso, se invita a cargar costes (honestidad).
+    const margenFrac = Math.min(0.95, Math.max(0, (Number(margenTxt) || 0) / 100));
+    const costesMap = costesReales || new Map();
+    let beneficioVal = 0;
+    let nReales = 0;
+    for (const [prod, ing] of prodPorIngresos) {
+      const uds = unidProd.get(prod) || 0;
+      const costeReal = costesMap.get(prod);
+      if (costeReal != null && costeReal !== '' && Number(costeReal) > 0) {
+        beneficioVal += ing - Number(costeReal) * uds;
+        nReales += 1;
+      } else {
+        beneficioVal += ing * margenFrac;
+      }
+    }
+    const beneficio = totalIngresos > 0 && prodPorIngresos.length > 0 ? {
+      valor: beneficioVal,
+      margenPct: Math.round((beneficioVal / totalIngresos) * 100),
+      nReales, nTotal: prodPorIngresos.length,
+      soloEstimado: nReales === 0,
+    } : null;
+
+    // Clasificación ABC (Pareto) del catálogo por ingresos: A suma el primer 80%,
+    // B del 80 al 95%, C el resto. Oculta con filtro de producto (sería trivial).
+    let abc = null;
+    if (!conFiltroProducto && prodPorIngresos.length >= 2 && totalIngresos > 0) {
+      const clases = { A: 0, B: 0, C: 0 };
+      let acum = 0;
+      for (const [, ing] of prodPorIngresos) {
+        const antes = acum / totalIngresos;
+        if (antes < 0.8) clases.A += 1;
+        else if (antes < 0.95) clases.B += 1;
+        else clases.C += 1;
+        acum += ing;
+      }
+      abc = { ...clases, total: prodPorIngresos.length };
+    }
+
     return {
       kpis: [
         { label: 'Ingresos totales', value: fmtEur(totalIngresos), principal: true },
         { label: 'Unidades vendidas', value: fmtInt(totalUnidades) },
         { label: 'Productos distintos', value: fmtInt(productosDistintos) },
-        { label: 'Combinaciones talla-color', value: fmtInt(variantes) },
+        { label: 'Ticket medio', value: fmtEur(totalUnidades ? totalIngresos / totalUnidades : 0), hint: 'Ingresos ÷ unidades vendidas: lo que vale de media cada prenda que vendes.' },
       ],
-      totalUnidades, totalIngresos,
+      totalUnidades, totalIngresos, beneficio, abc,
       insight, avgTalla, tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
       insightColor, insightEstrella, insightConcentracion, insightVariante, insightMuertas,
     };
-  }, [filtered, fCategoria, fProducto]);
+  }, [filtered, fCategoria, fProducto, costesReales, margenTxt]);
 
   const {
-    kpis, totalUnidades, totalIngresos, insight, avgTalla,
+    kpis, totalUnidades, totalIngresos, beneficio, abc, insight, avgTalla,
     tallaData, colorData, top3ColorPct, productoData, categoriaData, timeData,
     insightColor, insightEstrella, insightConcentracion, insightVariante, insightMuertas,
   } = data;
+
+  // Lectura del MOTOR sobre TODO el histórico (ignora los filtros del dashboard,
+  // igual que el resto del motor). Las tarjetas que lo usan se marcan "de todo tu
+  // histórico" para no confundirlas con los gráficos filtrados. Se calcula una
+  // vez por dataset (el trabajo caro queda memoizado en el propio motor).
+  const motorResumen = useMemo(() => {
+    if (!motor || motor.almacen?.vacio) return null;
+    const totales = motor.totales || {};
+
+    // Recuento de salud por fase de ciclo de vida (lee la clasificación del motor).
+    const fases = { CRECIMIENTO: 0, MADURO: 0, DECLIVE: 0, DESCATALOGADO: 0, LANZAMIENTO: 0 };
+    let sinDatos = 0;
+    for (const it of productosOrdenados(motor)) {
+      const d = it.suficiente ? demandaProducto(motor, it.nombre, 8) : null;
+      const fase = d?.ciclo?.fase;
+      if (fase && fases[fase] != null) fases[fase] += 1;
+      else sinDatos += 1;
+    }
+
+    // Fiabilidad del pronóstico: solo si el motor es robusto (si no, no se enseña).
+    const val = validacionGlobal(motor);
+    const fiabilidad = val.robusto && val.global ? Math.round(val.global.wape * 100) : null;
+
+    // Estacionalidad de las próximas semanas (null si <52 semanas) y pronóstico
+    // agregado del próximo mes (solo si el motor es robusto: honestidad).
+    const estacionalidad = estacionalidadProxima(motor, 8);
+    const pronostico = motor.robusto ? demandaAgregada(motor, 4) : null;
+
+    return {
+      perfil: motor.perfil,
+      fases, sinDatos,
+      enRiesgo: fases.DECLIVE + fases.DESCATALOGADO,
+      roturasAbiertas: totales.roturasAbiertas || 0,
+      outliers: totales.outliers || 0,
+      roturas: totales.roturas || 0,
+      robusto: motor.robusto,
+      fiabilidad, estacionalidad, pronostico,
+    };
+  }, [motor]);
+
+  // Fecha ISO (aaaa-mm-dd) → "mmm aaaa" para la cinta de contexto.
+  const fmtMesAnio = (iso) => {
+    if (!iso || !/^\d{4}-\d{2}/.test(iso)) return iso || '—';
+    const [y, m] = iso.split('-');
+    return `${MESES[+m - 1]} ${y}`;
+  };
+
+  // Toggle uds/€ de los donuts de color/categoría: la métrica activa.
+  const esEur = metrica === 'eur';
+  const valMetrica = (d) => (esEur ? d.ingresos : d.unidades);
+  const top3Pct = (arr) => {
+    const tot = arr.reduce((a, d) => a + valMetrica(d), 0);
+    if (!tot) return 0;
+    const top3 = [...arr].sort((a, b) => valMetrica(b) - valMetrica(a)).slice(0, 3).reduce((a, d) => a + valMetrica(d), 0);
+    return Math.round((top3 / tot) * 100);
+  };
+  const pctMetrica = (d, arr) => {
+    const tot = arr.reduce((a, x) => a + valMetrica(x), 0);
+    return tot ? Math.round((valMetrica(d) / tot) * 100) : 0;
+  };
 
   // Lista de insights de apoyo: dato real + qué implica para el inventario.
   // Cada uno solo aparece si hay datos suficientes para calcularlo.
@@ -448,14 +578,16 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
   const ColorTip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
-    const pct = totalUnidades ? Math.round((d.unidades / totalUnidades) * 100) : 0;
-    return tip(d.color, d.fill, [`${fmtInt(d.unidades)} uds`, `${pct}% del total`]);
+    const total = esEur ? totalIngresos : totalUnidades;
+    const pct = total ? Math.round((valMetrica(d) / total) * 100) : 0;
+    return tip(d.color, d.fill, [esEur ? fmtEur(d.ingresos) : `${fmtInt(d.unidades)} uds`, `${pct}% del total`]);
   };
   const CategoriaTip = ({ active, payload }) => {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
-    const pct = totalUnidades ? Math.round((d.unidades / totalUnidades) * 100) : 0;
-    return tip(d.categoria, d.fill, [`${fmtInt(d.unidades)} uds`, `${pct}% del total`]);
+    const total = esEur ? totalIngresos : totalUnidades;
+    const pct = total ? Math.round((valMetrica(d) / total) * 100) : 0;
+    return tip(d.categoria, d.fill, [esEur ? fmtEur(d.ingresos) : `${fmtInt(d.unidades)} uds`, `${pct}% del total`]);
   };
   const TimeTip = ({ active, payload, label }) => {
     if (!active || !payload?.length) return null;
@@ -472,6 +604,21 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
       <text x={x + width + 8} y={y + height / 2} dy={4}
         fontSize={10} fill={TXT2} fontFamily="var(--font-jetbrains), monospace">
         {fmtEur(d.ingresos)} · {fmtInt(d.unidades)} uds
+      </text>
+    );
+  };
+
+  // % de cada talla sobre el total, encima de la barra (apagado bajo la media).
+  const renderTallaPct = (props) => {
+    const { x, y, width, index } = props;
+    const d = tallaData[index];
+    if (!d) return null;
+    const pct = Math.round((d.pct || 0) * 100);
+    if (pct < 1) return null;
+    return (
+      <text x={x + width / 2} y={y - 7} textAnchor="middle"
+        fontSize={11} fill={d.above ? TXT2 : 'var(--txt-3)'} fontFamily="var(--font-jetbrains), monospace">
+        {pct}%
       </text>
     );
   };
@@ -595,11 +742,18 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
             onClick={limpiarFiltros}
             className="font-mono text-[11px] tracking-[0.1em] uppercase transition-colors text-txt2 hover:text-txt"
           >
-            ✕ quitar
+            ✕ quitar filtro
           </button>
-          <span className="font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: 'var(--txt-3)' }}>
-            se ajusta en Hallazgos
-          </span>
+          {onNavegar ? (
+            <button
+              type="button"
+              onClick={() => onNavegar('insights')}
+              className="font-mono text-[10px] tracking-[0.1em] uppercase transition-opacity hover:opacity-70"
+              style={{ color: ELECTRIC }}
+            >
+              Investígalo en Hallazgos →
+            </button>
+          ) : null}
         </div>
       ) : null}
       {filtered.length === 0 ? (
@@ -644,12 +798,226 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         </div>
       ) : null}
 
+      {/* 1b · CONTEXTO DEL DATASET — la ficha técnica (de todo tu histórico) */}
+      {motorResumen ? (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-1">
+          <span className={LABEL} style={{ color: 'var(--txt-3)' }}>Tus datos</span>
+          <span className="font-mono text-[11px] tnum" style={{ color: TXT2 }}>
+            {fmtMesAnio(motorResumen.perfil.fechaMin)} – {fmtMesAnio(motorResumen.perfil.fechaMax)}
+          </span>
+          <span style={{ color: 'var(--txt-3)' }}>·</span>
+          <span className="font-mono text-[11px] tnum" style={{ color: TXT2 }}>{fmtInt(motorResumen.perfil.semanas)} semanas</span>
+          <span style={{ color: 'var(--txt-3)' }}>·</span>
+          <span className="font-mono text-[11px] tnum" style={{ color: TXT2 }}>
+            {fmtInt(motorResumen.perfil.nProductos)} productos · {fmtInt(motorResumen.perfil.nVariantes)} variantes
+          </span>
+          {motorResumen.perfil.semanaParcial ? (
+            <>
+              <span style={{ color: 'var(--txt-3)' }}>·</span>
+              <span className="font-mono text-[11px]" style={{ color: 'var(--warn)' }}>la última semana está incompleta</span>
+            </>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* 1c · ALERTA — posibles agotados (roturas abiertas; de todo tu histórico) */}
+      {motorResumen && motorResumen.roturasAbiertas > 0 ? (
+        <div className="rounded-xl border p-5 md:p-6" style={{ borderColor: 'var(--warn)', background: 'var(--panel-grad)' }}>
+          <div className={`${LABEL} flex items-center gap-2`} style={{ color: 'var(--warn)' }}>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'var(--warn)' }} />
+            Posibles agotados · de todo tu histórico
+          </div>
+          <p className="mt-3 text-[15px] md:text-[16px] leading-[1.5]" style={{ color: TXT }}>
+            Detectamos {em(`${motorResumen.roturasAbiertas} ${motorResumen.roturasAbiertas === 1 ? 'variante' : 'variantes'}`, 'var(--warn)')} que llevan
+            semanas sin vender teniendo hermanas activas: puede que estés agotado. Conviene revisarlo antes de tu próxima compra.
+          </p>
+          {onNavegar ? (
+            <button
+              type="button"
+              onClick={() => onNavegar('reposicion')}
+              className="mt-4 font-mono text-[11px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70"
+              style={{ color: 'var(--warn)' }}
+            >
+              Revísalo en Reposición →
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* 1d · ESTACIONALIDAD — temporada alta/baja inminente (de todo tu histórico) */}
+      {motorResumen && motorResumen.estacionalidad && motorResumen.estacionalidad.estado !== 'normal' ? (
+        (() => {
+          const e = motorResumen.estacionalidad;
+          const alta = e.estado === 'alta';
+          const col = alta ? 'var(--ok)' : 'var(--warn)';
+          return (
+            <div className="rounded-xl border border-lineSoft p-5 flex flex-wrap items-center gap-x-3 gap-y-1.5" style={{ background: 'var(--inset-grad)' }}>
+              <span className={`${LABEL} flex items-center gap-2`} style={{ color: col }}>
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: col }} />
+                Estacionalidad · de todo tu histórico
+              </span>
+              <span className="text-[14px] leading-snug" style={{ color: TXT }}>
+                Las próximas semanas entran en {em(`temporada ${e.estado}`, col)} ({e.pct >= 0 ? '+' : ''}{e.pct}% sobre la media del año){alta ? ' — conviene pedir con antelación.' : ' — ajusta tus compras a la baja.'}
+              </span>
+            </div>
+          );
+        })()
+      ) : null}
+
       {/* 2 · SIGNOS VITALES — una cifra protagonista (ingresos) + tres de apoyo */}
       <div className="space-y-4 md:space-y-5">
         <Kpi {...kpis[0]} />
+        {beneficio ? (
+          beneficio.soloEstimado ? (
+            <div className="rounded-xl border border-lineSoft p-5 md:p-6 flex flex-wrap items-center gap-x-4 gap-y-2" style={{ background: 'var(--inset-grad)' }}>
+              <span className={LABEL} style={{ color: TXT2 }}>Beneficio bruto</span>
+              <span className="text-[14px] leading-snug" style={{ color: TXT2 }}>
+                Añade tus costes reales para ver cuánto <span style={{ color: TXT }}>ganas</span>, no solo cuánto vendes.
+              </span>
+              {onNavegar ? (
+                <button type="button" onClick={() => onNavegar('ajustes')} className="font-mono text-[11px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70" style={{ color: ELECTRIC }}>
+                  Añadir costes →
+                </button>
+              ) : null}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-lineSoft p-6 md:p-7 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3" style={{ background: 'var(--inset-grad)' }}>
+              <div>
+                <div className={LABEL} style={{ color: TXT2 }}>Beneficio bruto estimado</div>
+                <div className="mt-2 font-display text-[36px] md:text-[44px] leading-none tnum" style={{ color: TXT }}>{fmtEur(beneficio.valor)}</div>
+              </div>
+              <div className="font-mono text-[11px] leading-relaxed sm:text-right" style={{ color: TXT2 }}>
+                <div>margen {beneficio.margenPct}%</div>
+                <div style={{ color: 'var(--txt-3)' }}>coste real en {beneficio.nReales} de {beneficio.nTotal} productos</div>
+              </div>
+            </div>
+          )
+        ) : null}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
           {kpis.slice(1).map((k, i) => <Kpi key={i} {...k} />)}
         </div>
+      </div>
+
+      {/* 2b · SALUD DEL CATÁLOGO (ciclo de vida) + FIABILIDAD — de todo tu histórico */}
+      {motorResumen ? (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5">
+          <ChartCard title="Salud del catálogo" subtitle="de todo tu histórico · por fase" className="lg:col-span-8">
+            <div className="flex flex-wrap gap-x-8 gap-y-4">
+              {[
+                { key: 'CRECIMIENTO', label: 'Crecimiento', color: 'var(--ok)' },
+                { key: 'MADURO', label: 'Maduros', color: TXT2 },
+                { key: 'DECLIVE', label: 'En declive', color: 'var(--warn)' },
+                { key: 'DESCATALOGADO', label: 'Descatalogados', color: EMBER },
+                { key: 'LANZAMIENTO', label: 'Lanzamiento', color: ELECTRIC },
+              ].map((f) => (
+                <div key={f.key} className="flex flex-col gap-1">
+                  <span className="font-display text-[28px] md:text-[32px] leading-none tnum" style={{ color: motorResumen.fases[f.key] > 0 ? f.color : 'var(--txt-3)' }}>
+                    {fmtInt(motorResumen.fases[f.key])}
+                  </span>
+                  <span className={LABEL} style={{ color: TXT2 }}>{f.label}</span>
+                </div>
+              ))}
+              {motorResumen.sinDatos > 0 ? (
+                <div className="flex flex-col gap-1">
+                  <span className="font-display text-[28px] md:text-[32px] leading-none tnum" style={{ color: 'var(--txt-3)' }}>{fmtInt(motorResumen.sinDatos)}</span>
+                  <span className={LABEL} style={{ color: 'var(--txt-3)' }}>Sin datos</span>
+                </div>
+              ) : null}
+            </div>
+            {motorResumen.enRiesgo > 0 ? (
+              <p className="mt-5 pt-4 border-t border-hairlineSoft text-[13px] leading-snug" style={{ color: TXT2 }}>
+                {em(`${motorResumen.enRiesgo} ${motorResumen.enRiesgo === 1 ? 'producto' : 'productos'}`, 'var(--warn)')} en declive o descatalogados — conviene revisarlos antes de reponer.
+                {onNavegar ? (
+                  <button type="button" onClick={() => onNavegar('reposicion')} className="ml-2 font-mono text-[10px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70" style={{ color: 'var(--warn)' }}>
+                    en Reposición →
+                  </button>
+                ) : null}
+              </p>
+            ) : null}
+          </ChartCard>
+
+          <ChartCard title="Fiabilidad del motor" subtitle="de todo tu histórico" className="lg:col-span-4">
+            {motorResumen.fiabilidad != null ? (
+              <>
+                <div className="font-display text-[44px] md:text-[52px] leading-none tnum" style={{ color: TXT }}>{motorResumen.fiabilidad}%</div>
+                <p className="mt-3 text-[13px] leading-snug" style={{ color: TXT2 }}>
+                  Error medio del pronóstico en validación (cuanto más bajo, mejor): el motor se fía de tus datos para predecir.
+                </p>
+              </>
+            ) : (
+              <p className="text-[13px] leading-snug" style={{ color: TXT2 }}>
+                Pocos datos para pronosticar con garantías: por ahora el Resumen es descriptivo. Con ~6 meses de histórico el motor empieza a predecir.
+              </p>
+            )}
+          </ChartCard>
+        </div>
+      ) : null}
+
+      {/* 2b2 · QUÉ VIENE — pronóstico agregado del próximo mes (solo si robusto) */}
+      {motorResumen && motorResumen.pronostico ? (
+        <ChartCard title="Qué viene · próximas 4 semanas" subtitle="de todo tu histórico · pronóstico">
+          <div className="flex flex-col md:flex-row md:items-end gap-5 md:gap-10">
+            <div>
+              <div className="font-display text-[44px] md:text-[56px] leading-none tnum" style={{ color: TXT }}>
+                ~{fmtInt(motorResumen.pronostico.esperado)} <span className="text-[20px] md:text-[24px]" style={{ color: TXT2 }}>uds</span>
+              </div>
+              <div className="mt-2 font-mono text-[12px]" style={{ color: TXT2 }}>
+                rango probable {fmtInt(motorResumen.pronostico.p10)}–{fmtInt(motorResumen.pronostico.p90)} uds (P10–P90)
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className={LABEL} style={{ color: TXT2 }}>Más demanda esperada</div>
+              <ul className="mt-2.5 space-y-1.5">
+                {motorResumen.pronostico.top.map((t) => (
+                  <li key={t.nombre} className="flex items-center justify-between gap-3 font-mono text-[12px]">
+                    <span className="truncate" style={{ color: TXT }}>{t.nombre}</span>
+                    <span className="tnum flex-shrink-0" style={{ color: TXT2 }}>~{fmtInt(t.esperado)} uds</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          {onNavegar ? (
+            <button type="button" onClick={() => onNavegar('reposicion')} className="mt-5 font-mono text-[11px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70" style={{ color: ELECTRIC }}>
+              Cuánto pedir de cada uno → Reposición
+            </button>
+          ) : null}
+        </ChartCard>
+      ) : null}
+
+      {/* 2c · CONCENTRACIÓN ABC del catálogo (oculta con filtro de producto) */}
+      {abc ? (
+        <ChartCard title="Concentración del catálogo (ABC)" subtitle={`${abc.total} productos`}>
+          <p className="text-[15px] md:text-[16px] leading-[1.5] mb-5" style={{ color: TXT }}>
+            {em(`${abc.A} ${abc.A === 1 ? 'producto' : 'productos'}`, ELECTRIC)} ({Math.round((abc.A / abc.total) * 100)}% del catálogo) generan el grueso de tus ingresos — concentra ahí tu presupuesto de compra.
+          </p>
+          <div className="grid grid-cols-3 gap-3 md:gap-4">
+            {[
+              { k: 'A', label: 'Hasta el 80% de ingresos', color: ELECTRIC },
+              { k: 'B', label: 'Del 80 al 95%', color: TXT2 },
+              { k: 'C', label: 'El 5% restante', color: 'var(--txt-3)' },
+            ].map((c) => (
+              <div key={c.k} className="rounded-lg border border-hairlineSoft p-4" style={{ background: 'var(--inset-grad)' }}>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-display text-[22px] md:text-[24px] leading-none" style={{ color: c.color }}>{c.k}</span>
+                  <span className="font-display text-[22px] md:text-[24px] leading-none tnum" style={{ color: TXT }}>{fmtInt(abc[c.k])}</span>
+                </div>
+                <div className={`${LABEL} mt-2`} style={{ color: TXT2 }}>{c.label}</div>
+              </div>
+            ))}
+          </div>
+          {onNavegar ? (
+            <button type="button" onClick={() => onNavegar('plan')} className="mt-5 font-mono text-[11px] tracking-[0.12em] uppercase transition-opacity hover:opacity-70" style={{ color: ELECTRIC }}>
+              Reparte tu presupuesto en Plan de compra →
+            </button>
+          ) : null}
+        </ChartCard>
+      ) : null}
+
+      {/* Separador editorial: arriba la decisión, debajo el detalle gráfico */}
+      <div className="flex items-center gap-3 pt-3">
+        <span className={LABEL} style={{ color: 'var(--txt-3)' }}>El detalle de tus ventas</span>
+        <span className="flex-1 h-px" style={{ background: 'var(--hairline)' }} />
       </div>
 
       {/* 3 · PROTAGONISTA (talla) + 4 · APOYO (color) */}
@@ -679,6 +1047,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                   />
                   <Bar dataKey="unidades" name="Unidades" radius={[6, 6, 0, 0]} maxBarSize={64}>
                     {tallaData.map((d, i) => <Cell key={i} fill={d.above ? 'url(#gradTallaUp)' : 'url(#gradTallaDown)'} />)}
+                    <LabelList content={renderTallaPct} />
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
@@ -687,19 +1056,19 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         ) : null}
 
         {colorData.length ? (
-          <ChartCard title="Ventas por color" subtitle="unidades" className="lg:col-span-4">
+          <ChartCard title="Ventas por color" subtitle={esEur ? 'euros' : 'unidades'} accion={<MetricToggle value={metrica} onChange={setMetrica} />} className="lg:col-span-4">
             <div className="relative h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip content={<ColorTip />} />
-                  <Pie data={colorData} dataKey="unidades" nameKey="color" cx="50%" cy="50%"
+                  <Pie data={colorData} dataKey={esEur ? 'ingresos' : 'unidades'} nameKey="color" cx="50%" cy="50%"
                     innerRadius={58} outerRadius={92} paddingAngle={2} stroke={SURFACE} strokeWidth={2}>
                     {colorData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <div className="font-display text-[34px] leading-none tnum" style={{ color: TXT }}>{top3ColorPct}%</div>
+                <div className="font-display text-[34px] leading-none tnum" style={{ color: TXT }}>{top3Pct(colorData)}%</div>
                 <div className={`${LABEL} mt-1 text-center px-6`} style={{ color: TXT2 }}>Top 3 colores</div>
               </div>
             </div>
@@ -710,7 +1079,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                     <span className="w-2.5 h-2.5 rounded-sm border border-hairline flex-shrink-0" style={{ background: d.fill }} />
                     <span className="truncate">{d.color}</span>
                   </span>
-                  <span className="tnum flex-shrink-0" style={{ color: 'var(--txt-3)' }}>{fmtInt(d.unidades)}</span>
+                  <span className="tnum flex-shrink-0" style={{ color: 'var(--txt-3)' }}>{esEur ? fmtEur(d.ingresos) : fmtInt(d.unidades)} · {pctMetrica(d, colorData)}%</span>
                 </li>
               ))}
             </ul>
@@ -742,12 +1111,12 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
         ) : null}
 
         {categoriaData.length ? (
-          <ChartCard title="Ventas por categoría" subtitle="unidades" className="lg:col-span-4">
+          <ChartCard title="Ventas por categoría" subtitle={esEur ? 'euros' : 'unidades'} accion={<MetricToggle value={metrica} onChange={setMetrica} />} className="lg:col-span-4">
             <div className="h-[200px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Tooltip content={<CategoriaTip />} />
-                  <Pie data={categoriaData} dataKey="unidades" nameKey="categoria" cx="50%" cy="50%"
+                  <Pie data={categoriaData} dataKey={esEur ? 'ingresos' : 'unidades'} nameKey="categoria" cx="50%" cy="50%"
                     outerRadius={92} stroke={SURFACE} strokeWidth={2}>
                     {categoriaData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                   </Pie>
@@ -761,7 +1130,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                     <span className="w-2.5 h-2.5 rounded-sm border border-hairline flex-shrink-0" style={{ background: d.fill }} />
                     <span className="truncate">{d.categoria}</span>
                   </span>
-                  <span className="tnum flex-shrink-0" style={{ color: 'var(--txt-3)' }}>{fmtInt(d.unidades)}</span>
+                  <span className="tnum flex-shrink-0" style={{ color: 'var(--txt-3)' }}>{esEur ? fmtEur(d.ingresos) : fmtInt(d.unidades)} · {pctMetrica(d, categoriaData)}%</span>
                 </li>
               ))}
             </ul>
@@ -780,7 +1149,7 @@ export default function SalesDashboard({ headers, rows, seccion = 'resumen', onH
                       <stop offset="100%" stopColor={ELECTRIC} stopOpacity={0} />
                     </linearGradient>
                     <filter id="glowLine" x="-10%" y="-60%" width="120%" height="240%">
-                      <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="#2D6BE4" floodOpacity="0.45" />
+                      <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor="var(--data)" floodOpacity="0.45" />
                     </filter>
                   </defs>
                   <CartesianGrid vertical={false} stroke="var(--grid-line)" />
