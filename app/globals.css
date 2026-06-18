@@ -83,8 +83,10 @@
   --surface-2: #eaf0f9;
   --surface-input: #ffffff;
   --txt: #16243f;
-  --txt-2: #5b6675;
-  --txt-3: #677081;
+  /* Grises secundarios más oscuros (hacia el marino) para más contraste y mejor
+     lectura del texto gris en las pantallas de fondo claro. */
+  --txt-2: #3a4659;
+  --txt-3: #525d6f;
   --muted: #aab3c0;
   --line: #d4dbe6;
   --line-soft: #e4e9f0;
