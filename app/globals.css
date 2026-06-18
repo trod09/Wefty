@@ -53,6 +53,17 @@
   --glow-brand-radial: radial-gradient(circle, rgba(240,140,86,0.16) 0%, transparent 60%);
   --fill-brand-strong: rgba(240, 140, 86, 0.22);
   --fill-chart-cursor: rgba(240, 140, 86, 0.06);
+  /* Botón primario, borde de campos y sombra de tarjeta — tokens para que el
+     tema claro los cambie sin tocar los componentes. En oscuro valen lo de
+     siempre (relleno tenue, borde 1px, sin sombra), así ese modo no cambia. */
+  --btn-bg: var(--tint-brand);
+  --btn-bg-hover: var(--tint-brand);
+  --btn-txt: var(--txt);
+  --btn-border: var(--brand-line);
+  --input-bw: 1px;
+  --input-border: var(--line);
+  --input-focus: var(--brand);
+  --card-shadow: none;
 }
 
 [data-theme='light'] {
@@ -61,15 +72,15 @@
      acción es el azul (--brand); el azul marino es el texto y los acentos
      fuertes (--txt / --brand-soft). Los colores con significado (ok/warn/bad)
      se quedan: comunican, no decoran. */
-  --bg: #e9eef6;
-  --bg-grad: radial-gradient(135% 90% at 50% 0%, #f3f6fc 0%, #e4eaf3 60%);
-  --dash-grad: radial-gradient(120% 80% at 50% 0%, #f3f6fc 0%, #e6ecf5 60%);
+  --bg: #d6dfee;
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #eef3fb 0%, #d3dcec 60%);
+  --dash-grad: radial-gradient(120% 80% at 50% 0%, #eef3fb 0%, #d6dfed 60%);
   --sidebar-grad: linear-gradient(180deg, #ffffff 0%, #f1f4f9 100%);
   --card-grad: linear-gradient(150deg, #ffffff 0%, #fafcfe 100%);
   --panel-grad: linear-gradient(150deg, #ffffff 0%, #eef2f8 100%);
-  --inset-grad: linear-gradient(150deg, #eef2f8 0%, #e1e8f2 100%);
+  --inset-grad: linear-gradient(150deg, #eef3fa 0%, #e1e8f2 100%);
   --surface-1: #ffffff;
-  --surface-2: #eef2f8;
+  --surface-2: #eaf0f9;
   --surface-input: #ffffff;
   --txt: #16243f;
   --txt-2: #5b6675;
@@ -101,6 +112,39 @@
   --glow-brand-radial: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 60%);
   --fill-brand-strong: rgba(37, 99, 235, 0.13);
   --fill-chart-cursor: rgba(37, 99, 235, 0.07);
+  /* Botón marino sólido, bordes de campo gruesos y sombra de tarjeta: en claro
+     las superficies se SEPARAN del fondo y los controles se ven de verdad. */
+  --line: #cbd4e2;
+  --btn-bg: #16243f;
+  --btn-bg-hover: #1f3057;
+  --btn-txt: #ffffff;
+  --btn-border: #16243f;
+  --input-bw: 2px;
+  --input-border: #b3bfd2;
+  --input-focus: #16243f;
+  --card-shadow: 0 1px 2px rgba(22, 36, 63, 0.07), 0 10px 28px rgba(22, 36, 63, 0.08);
+}
+
+/* Controles del producto gobernados por tokens (ver arriba): el botón primario,
+   el borde de los campos y la sombra de las tarjetas cambian con el tema sin
+   tocar los componentes. En oscuro los tokens valen lo de siempre. */
+.btn-primary {
+  background: var(--btn-bg);
+  color: var(--btn-txt);
+  border-color: var(--btn-border);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--btn-bg-hover);
+}
+.field-bordered {
+  border-width: var(--input-bw);
+  border-color: var(--input-border);
+}
+.field-bordered:focus {
+  border-color: var(--input-focus);
+}
+.card-elev {
+  box-shadow: var(--card-shadow);
 }
 
 /* Barra de navegación azul marino SOLO en tema claro (sidebar de escritorio y
@@ -596,17 +640,17 @@ details[open] .acc-body {
    degradado naranja→lila cyberpunk. La landing no usa estas clases, así que
    no se ve afectada. El modo oscuro conserva el degradado original. */
 [data-theme='light'] .btn-neon {
-  background: #2563eb;
+  background: #16243f;
   color: #ffffff;
 }
 [data-theme='light'] .btn-neon-borde {
   color: #16243f;
 }
 [data-theme='light'] .btn-neon-borde::before {
-  border-color: #2563eb;
+  border-color: #16243f;
 }
 [data-theme='light'] .btn-neon-borde::after {
-  background: #2563eb;
+  background: #16243f;
 }
 @media (hover: hover) {
   [data-theme='light'] .btn-neon-borde:hover { color: #ffffff; }

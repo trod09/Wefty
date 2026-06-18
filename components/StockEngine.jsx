@@ -35,7 +35,7 @@ const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
 const CARD_BG = 'var(--card-grad)';
 // Inputs: 16px en móvil (iOS hace zoom forzado con cualquier input menor) y
 // 44px de alto táctil; en escritorio, el tamaño compacto de siempre.
-const INPUT_CLS = 'h-11 md:h-10 rounded-lg border border-line px-3 text-[16px] md:text-[14px] text-txt outline-none transition-colors focus:border-brand';
+const INPUT_CLS = 'h-11 md:h-10 rounded-lg border field-bordered px-3 text-[16px] md:text-[14px] text-txt outline-none transition-colors';
 
 const fmtInt = (n) => Math.round(Number(n) || 0).toLocaleString('es-ES');
 const fmt1 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -54,9 +54,19 @@ const textoSeguro = (s) => (/^[=+\-@]/.test(String(s).trim()) ? `'${s}` : String
 function Campo({ etiqueta, children, hint }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className={LABEL} style={{ color: TXT2 }}>{etiqueta}</span>
+      <span className="flex items-center gap-1.5">
+        <span className={LABEL} style={{ color: TXT2 }}>{etiqueta}</span>
+        {hint ? (
+          <span
+            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border text-[9px] font-mono cursor-help select-none"
+            style={{ color: TXT3, borderColor: 'var(--line)' }}
+            title={hint}
+          >
+            i
+          </span>
+        ) : null}
+      </span>
       {children}
-      {hint ? <span className="text-[11px] leading-snug max-w-[230px]" style={{ color: TXT3 }}>{hint}</span> : null}
     </div>
   );
 }
@@ -64,7 +74,7 @@ function Campo({ etiqueta, children, hint }) {
 // Control segmentado (escenarios de demanda).
 function Segmentos({ valor, onChange, opciones }) {
   return (
-    <div className="inline-flex rounded-lg border border-line overflow-hidden">
+    <div className="inline-flex rounded-lg border field-bordered overflow-hidden">
       {opciones.map((o) => (
         <button
           key={o.v}
@@ -700,7 +710,7 @@ export default function StockEngine({
         {pestana === 'plan' ? (
           <>
             {/* ① TU PRESUPUESTO — lo imprescindible, destacado */}
-            <div className="mt-6 rounded-xl border border-brandLine p-5 md:p-6" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 75%)' }}>
+            <div className="card-elev mt-6 rounded-xl border border-brandLine p-5 md:p-6" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 75%)' }}>
               <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Tu presupuesto de compra</div>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <div className="flex items-baseline gap-2">
@@ -723,9 +733,6 @@ export default function StockEngine({
                   </button>
                 ) : null}
               </div>
-              <p className="mt-2.5 text-[12px] leading-snug" style={{ color: TXT3 }}>
-                Lo único imprescindible: lo que vas a invertir en stock. El resto ya tiene valores sensatos.
-              </p>
             </div>
 
             {/* ② AJUSTES — opcional, secundario */}
@@ -795,14 +802,10 @@ export default function StockEngine({
                 type="button"
                 onClick={() => generarPlan()}
                 disabled={calculandoPlan || !(Number(planPresuTxt) > 0)}
-                className="btn-sheen h-11 px-6 rounded-lg border border-brandLine font-mono text-[11px] tracking-[0.12em] uppercase text-txt transition-colors disabled:opacity-60"
-                style={{ background: 'var(--tint-brand)' }}
+                className="btn-primary btn-sheen h-11 px-6 rounded-lg border font-mono text-[11px] tracking-[0.12em] uppercase transition-colors disabled:opacity-55"
               >
                 {calculandoPlan ? 'Calculando plan…' : Number(planPresuTxt) > 0 ? 'Generar plan' : 'Escribe tu presupuesto'}
               </button>
-              <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
-                recorre todo el catálogo — se calcula al pulsar, no a cada tecla
-              </span>
               {plan && planParams
                 && (planParams.presu !== planPresuTxt || planParams.horiz !== planHorizTxt
                   || planParams.margen !== planMargenTxt || planParams.esc !== planEsc
@@ -816,13 +819,11 @@ export default function StockEngine({
             {/* ③ ESTADO PREVIO — qué obtendrá y sobre qué trabaja (sin hueco muerto) */}
             {!plan ? (
               <div className="mt-6 space-y-4">
-                <div className="rounded-xl border border-brandLine p-6" style={{ background: 'var(--inset-grad)' }}>
-                  <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Lo que hará Wefty</div>
-                  <p className="mt-3 text-[15px] leading-relaxed max-w-[60ch]" style={{ color: TXT }}>
-                    Repartirá tu presupuesto entre tus{' '}
+                <div className="card-elev rounded-xl border border-brandLine p-6" style={{ background: 'var(--inset-grad)' }}>
+                  <p className="text-[15px] leading-relaxed max-w-[60ch]" style={{ color: TXT }}>
+                    Repartirá tu presupuesto entre los{' '}
                     <span style={{ color: 'var(--brand-soft)' }}>{productos.filter((p) => p.suficiente).length}</span>{' '}
-                    productos con histórico suficiente, priorizando los de mayor margen y rotación, y te dirá
-                    cuántas unidades pedir de cada uno.
+                    productos con histórico suficiente y te dirá cuántas unidades pedir de cada uno.
                   </p>
                   <div className="mt-4 flex flex-wrap gap-x-8 gap-y-2 font-mono text-[11px] tracking-[0.02em]" style={{ color: TXT2 }}>
                     <span><span style={{ color: TXT3 }}>productos · </span>{productos.filter((p) => p.suficiente).length}</span>
@@ -951,7 +952,7 @@ export default function StockEngine({
                 ) : null}
 
                 {/* Resumen global del plan */}
-                <div className="mt-4 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
+                <div className="card-elev mt-4 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
                   <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
                   {plan.costes ? (
                     <p className="mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>

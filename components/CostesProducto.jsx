@@ -15,7 +15,7 @@ const TXT = 'var(--txt)';
 const TXT2 = 'var(--txt-2)';
 const TXT3 = 'var(--txt-3)';
 const LABEL = 'font-mono text-[10px] tracking-[0.18em] uppercase';
-const INPUT_CLS = 'h-11 md:h-9 rounded-lg border border-line px-3 text-[16px] md:text-[13px] text-txt outline-none transition-colors focus:border-brand';
+const INPUT_CLS = 'h-11 md:h-9 rounded-lg border field-bordered px-3 text-[16px] md:text-[13px] text-txt outline-none transition-colors';
 
 const fmtEur2 = (n) => (Number(n) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const pctTxt = (x) => `${Math.round((Number(x) || 0) * 100)}%`;

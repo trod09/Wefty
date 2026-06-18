@@ -31,7 +31,7 @@ function IconoVacio() {
 function Tarjeta({ paso, onIr }) {
   return (
     <div
-      className="rounded-xl border p-5 md:p-6 flex flex-col transition-all duration-300"
+      className="card-elev rounded-xl border p-5 md:p-6 flex flex-col transition-all duration-300"
       style={{
         borderColor: paso.hecho ? 'color-mix(in srgb, var(--ok) 30%, transparent)' : 'var(--brand-line)',
         background: 'var(--card-grad)',
@@ -57,8 +57,7 @@ function Tarjeta({ paso, onIr }) {
           <button
             type="button"
             onClick={() => onIr(paso.destino)}
-            className="btn-sheen h-10 px-4 rounded-lg border border-brandLine font-mono text-[11px] tracking-[0.1em] uppercase text-txt transition-colors"
-            style={{ background: 'var(--tint-brand)' }}
+            className="btn-primary btn-sheen h-10 px-4 rounded-lg border font-mono text-[11px] tracking-[0.1em] uppercase transition-colors"
           >
             {paso.cta} →
           </button>
@@ -75,7 +74,7 @@ export default function InicioOnboarding({ progreso, completados, total, impresc
   return (
     <div className="space-y-8">
       {/* Cabecera + barra de progreso */}
-      <div className="rounded-2xl border border-brandLine p-6 md:p-8" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
+      <div className="card-elev rounded-2xl border border-brandLine p-6 md:p-8" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
         <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>
           {todoListo ? 'Todo en marcha' : 'Bienvenido a Wefty'}
         </div>
@@ -99,8 +98,7 @@ export default function InicioOnboarding({ progreso, completados, total, impresc
           <button
             type="button"
             onClick={() => onIr('resumen')}
-            className="btn-sheen mt-6 h-11 px-6 rounded-lg border border-brandLine font-mono text-[11px] tracking-[0.12em] uppercase text-txt transition-colors"
-            style={{ background: 'var(--tint-brand)' }}
+            className="btn-primary btn-sheen mt-6 h-11 px-6 rounded-lg border font-mono text-[11px] tracking-[0.12em] uppercase transition-colors"
           >
             Ir a mi Resumen →
           </button>
