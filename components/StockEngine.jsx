@@ -459,6 +459,7 @@ export default function StockEngine({
   const [plan, setPlan] = useState(null);
   const [calculandoPlan, setCalculandoPlan] = useState(false);
   const [copiadoPlan, setCopiadoPlan] = useState(false);
+  const [exportando, setExportando] = useState('');   // '' | 'plan' | 'reposicion' | 'lanzamiento'
   const [planParams, setPlanParams] = useState(null);
   const [planAnterior, setPlanAnterior] = useState(null); // totales del último plan, para comparar
   // Costes reales por producto: llegan del shell (el panel "Costes de
@@ -621,6 +622,26 @@ export default function StockEngine({
       setTimeout(() => setCopiadoPlan(false), 2000);
     } catch {
       /* sin permiso de portapapeles: no rompemos nada */
+    }
+  }
+
+  // Contexto común de los informes PDF: sobre qué datos se calculó.
+  function ctxInforme() {
+    const p = motor?.perfil;
+    return p ? { fechaMin: p.fechaMin, fechaMax: p.fechaMax, nProductos: p.nProductos } : {};
+  }
+  // Genera y descarga el PDF de la sección. La librería (jsPDF) se carga de
+  // forma diferida: solo se baja la primera vez que se pulsa "Exportar a PDF".
+  async function exportarPlanPDF() {
+    if (!plan?.ok || exportando) return;
+    setExportando('plan');
+    try {
+      const { descargarPlanPDF } = await import('@/lib/pdf/informe.mjs');
+      descargarPlanPDF(plan, ctxInforme());
+    } catch {
+      /* si algo falla al generar el PDF, no rompemos la app */
+    } finally {
+      setExportando('');
     }
   }
 
@@ -1092,6 +1113,15 @@ export default function StockEngine({
                     style={{ background: copiadoPlan ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'transparent', borderColor: copiadoPlan ? 'var(--ok)' : undefined, color: copiadoPlan ? VERDE : undefined }}
                   >
                     {copiadoPlan ? 'Copiado ✓' : 'Copiar plan'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportarPlanPDF}
+                    disabled={exportando === 'plan'}
+                    title="Descarga un informe PDF del plan, listo para enviar a tu proveedor."
+                    className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors disabled:opacity-60"
+                  >
+                    {exportando === 'plan' ? 'Generando…' : 'Exportar a PDF'}
                   </button>
                   <span className="font-mono text-[10px] tracking-[0.12em] uppercase" style={{ color: TXT3 }}>
                     producto · unidades · inversión — listo para pegar en una hoja de cálculo

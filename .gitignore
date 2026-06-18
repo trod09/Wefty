@@ -28,3 +28,6 @@ yarn-error.log*
 
 # claude code (configuracion local de herramienta)
 .claude/settings.local.json
+
+# Informes PDF generados en pruebas locales
+wefty-*.pdf
