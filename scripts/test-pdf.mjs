@@ -4,7 +4,8 @@
 import fs from 'node:fs';
 import { prepararMotor, recomendarReposicion } from '../lib/engine/motor.mjs';
 import { generarPlanCompra } from '../lib/engine/plan.mjs';
-import { construirPlanPDF } from '../lib/pdf/informe.mjs';
+import { recomendarLanzamiento } from '../lib/engine/lanzamiento.mjs';
+import { construirPlanPDF, construirReposicionPDF, construirLanzamientoPDF } from '../lib/pdf/informe.mjs';
 
 const FECHA = new Date(2026, 5, 18); // fija para una salida reproducible
 
@@ -37,4 +38,20 @@ if (!plan.ok) { console.error('  ✗ el plan no se generó:', plan.motivo); proc
 console.log(`  plan: ${plan.filas.length} productos con inversión · ${plan.unidadesTotales} uds · margen ${Math.round(plan.margenEsperado)} €`);
 guardar(construirPlanPDF(plan, ctx, FECHA), `wefty-plan-compra-${FECHA.getFullYear()}-06-18.pdf`);
 
-console.log('\nListo. Abre el PDF para revisarlo.');
+console.log('\n— Reposición —');
+const rep = recomendarReposicion(motor, { producto: 'Vaquero Slim Comfort', leadSemanas: 4, nivelServicio: 95 });
+if (!rep.ok) { console.error('  ✗ la reposición no se generó:', rep.motivo); }
+else {
+  console.log(`  ${rep.producto}: ${rep.recomendado} uds (${rep.esperado}+${rep.colchon}) · ${rep.reparto?.length || 0} tallas · matriz talla×color: ${rep.matriz ? 'sí' : 'no'}`);
+  guardar(construirReposicionPDF(rep, ctx, FECHA), `wefty-reposicion-vaquero-slim-comfort-${FECHA.getFullYear()}-06-18.pdf`);
+}
+
+console.log('\n— Lanzamiento —');
+const lan = recomendarLanzamiento(motor, { categoria: 'Abrigos', precioCentro: 120, mesLanzamiento: 1 });
+if (!lan.ok) { console.error('  ✗ el lanzamiento no se generó:', lan.motivo); }
+else {
+  console.log(`  ${lan.categoria}: ${lan.total} uds · ${lan.analogos.length} análogos · curva ${lan.curva.length} sem · matriz: ${lan.matriz ? 'sí' : 'no'}`);
+  guardar(construirLanzamientoPDF(lan, ctx, FECHA), `wefty-lanzamiento-abrigos-${FECHA.getFullYear()}-06-18.pdf`);
+}
+
+console.log('\nListo. Abre los PDF para revisarlos.');

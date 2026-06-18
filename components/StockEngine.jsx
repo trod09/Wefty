@@ -644,6 +644,30 @@ export default function StockEngine({
       setExportando('');
     }
   }
+  async function exportarReposicionPDF() {
+    if (!resultado?.ok || exportando) return;
+    setExportando('reposicion');
+    try {
+      const { descargarReposicionPDF } = await import('@/lib/pdf/informe.mjs');
+      descargarReposicionPDF(resultado, ctxInforme());
+    } catch {
+      /* si algo falla al generar el PDF, no rompemos la app */
+    } finally {
+      setExportando('');
+    }
+  }
+  async function exportarLanzamientoPDF() {
+    if (!resultadoLan?.ok || exportando) return;
+    setExportando('lanzamiento');
+    try {
+      const { descargarLanzamientoPDF } = await import('@/lib/pdf/informe.mjs');
+      descargarLanzamientoPDF(resultadoLan, ctxInforme());
+    } catch {
+      /* si algo falla al generar el PDF, no rompemos la app */
+    } finally {
+      setExportando('');
+    }
+  }
 
   const refResumenPlan = useRef(null);
 
@@ -1452,6 +1476,15 @@ export default function StockEngine({
                   >
                     {copiadoLan ? 'Copiado ✓' : 'Copiar pedido'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={exportarLanzamientoPDF}
+                    disabled={exportando === 'lanzamiento'}
+                    title="Descarga un informe PDF del lanzamiento, listo para presentar o enviar."
+                    className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors disabled:opacity-60"
+                  >
+                    {exportando === 'lanzamiento' ? 'Generando…' : 'Exportar a PDF'}
+                  </button>
                   <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
                     Un lanzamiento siempre es una apuesta — esto es tu mejor referencia interna, no una garantía.
                   </span>
@@ -1774,6 +1807,15 @@ export default function StockEngine({
                     style={{ background: copiado ? 'color-mix(in srgb, var(--ok) 12%, transparent)' : 'transparent', borderColor: copiado ? 'var(--ok)' : undefined, color: copiado ? VERDE : undefined }}
                   >
                     {copiado ? 'Copiado ✓' : 'Copiar pedido'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportarReposicionPDF}
+                    disabled={exportando === 'reposicion'}
+                    title="Descarga un informe PDF de la reposición, listo para enviar a tu proveedor."
+                    className="btn-sheen h-11 px-6 rounded-lg border border-lineHover font-mono text-[11px] tracking-[0.12em] uppercase text-txt hover:border-txt3 transition-colors disabled:opacity-60"
+                  >
+                    {exportando === 'reposicion' ? 'Generando…' : 'Exportar a PDF'}
                   </button>
                   <span className="font-mono text-[10px] tracking-[0.14em] uppercase" style={{ color: TXT3 }}>
                     Recomendación estadística basada en tu histórico — ajústala con tu criterio.
