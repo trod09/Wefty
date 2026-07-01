@@ -279,7 +279,7 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
                   {sec(seccion)?.linea}
                 </p>
               </div>
-              {estadoDatos ? (
+              {estadoDatos && seccion !== 'cuenta' ? (
                 <button
                   type="button"
                   onClick={() => setSeccion('cargar')}

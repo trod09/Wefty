@@ -43,6 +43,23 @@ export default function LoginPage() {
     };
   }, []);
 
+  // Si venimos de eliminar la cuenta/datos, lo confirmamos aquí (la nota la deja
+  // Ajustes de cuenta justo antes de cerrar sesión).
+  useEffect(() => {
+    let flag = null;
+    try {
+      flag = sessionStorage.getItem('wefty-adios');
+      if (flag) sessionStorage.removeItem('wefty-adios');
+    } catch {
+      flag = null;
+    }
+    if (flag === 'cuenta') {
+      showMessage('Tu cuenta y tus datos se han eliminado. Gracias por probar Wefty.', 'info');
+    } else if (flag === 'datos') {
+      showMessage('Tus datos se han eliminado y has cerrado sesión. Tu cuenta de acceso queda vacía.', 'info');
+    }
+  }, []);
+
   function showMessage(text, type) {
     setMessage(text);
     setMessageType(type);
