@@ -11,6 +11,7 @@ import SalesDashboard, { parsearVentas } from '@/components/SalesDashboard';
 import StockEngine, { CabeceraMotor, PanelConfiguracion, PanelValidacion } from '@/components/StockEngine';
 import CostesProducto from '@/components/CostesProducto';
 import InicioOnboarding from '@/components/InicioOnboarding';
+import AjustesCuenta from '@/components/AjustesCuenta';
 import TemaToggle from '@/components/TemaToggle';
 import { prepararMotor } from '@/lib/engine/motor.mjs';
 
@@ -30,6 +31,7 @@ function Icono({ id }) {
     plan: <><path d="M11 3.2 A4.8 4.8 0 1 0 11 10.8" /><path d="M1.5 5.6 H8 M1.5 8.4 H8" /></>,
     cargar: <><path d="M7 1.5 V8.5 M4.2 4.3 L7 1.5 L9.8 4.3" /><path d="M2 9 V12.5 H12 V9" /></>,
     ajustes: <><path d="M1.5 4 H12.5 M1.5 10 H12.5" /><circle cx="5" cy="4" r="1.7" /><circle cx="9" cy="10" r="1.7" /></>,
+    cuenta: <><circle cx="7" cy="4.3" r="2.6" /><path d="M2.2 12.6 C2.2 9.7 4.4 8.2 7 8.2 C9.6 8.2 11.8 9.7 11.8 12.6" strokeLinecap="round" /></>,
   };
   return (
     <svg viewBox="0 0 14 14" className="w-[14px] h-[14px] flex-shrink-0" fill="none"
@@ -49,6 +51,7 @@ const SECCIONES = [
   { id: 'plan', grupo: 'Decide stock', etiqueta: 'Plan de compra', corta: 'Plan', linea: 'Reparte tu presupuesto entre todo el catálogo para maximizar margen.' },
   { id: 'cargar', grupo: 'Configura', etiqueta: 'Cargar datos', corta: 'Datos', linea: 'Sube o actualiza tu CSV de ventas y guárdalo en tu cuenta.' },
   { id: 'ajustes', grupo: 'Configura', etiqueta: 'Ajustes del motor', corta: 'Motor', linea: 'Tus costes reales y la maquinaria del motor (configuración y validación).' },
+  { id: 'cuenta', grupo: 'Cuenta', etiqueta: 'Cuenta', corta: 'Cuenta', linea: 'Tu cuenta de Wefty: email, contraseña y tus datos.' },
 ];
 const sec = (id) => SECCIONES.find((x) => x.id === id);
 
@@ -404,6 +407,11 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
             ) : (
               <VacioAmable irACargar={irACargar} />
             )}
+          </section>
+
+          {/* Cuenta: gestión de la cuenta del usuario (auth), no del motor */}
+          <section className={`seccion-panel ${seccion === 'cuenta' ? '' : 'hidden'}`}>
+            <AjustesCuenta email={email} />
           </section>
         </div>
       </div>
