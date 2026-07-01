@@ -49,11 +49,11 @@ export default function RootLayout({ children }) {
     >
       <head>
         {/* Fija el tema del producto ANTES de pintar (sin parpadeo). Por
-            defecto CLARO; si el usuario eligió oscuro, se recuerda. */}
+            defecto OSCURO; si el usuario eligió claro, se recuerda. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('wefty-tema');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('wefty-tema-landing');if(l==='claro'){document.documentElement.classList.add('lz-claro');}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();",
+              "(function(){try{var t=localStorage.getItem('wefty-tema');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark');var l=localStorage.getItem('wefty-tema-landing');if(l==='claro'){document.documentElement.classList.add('lz-claro');}}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();",
           }}
         />
       </head>
