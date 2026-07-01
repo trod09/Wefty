@@ -28,7 +28,7 @@ export function parseCoste(txt) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes }) {
+export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes, primero = false }) {
   // Lo escrito por producto (texto tal cual; el número se deriva al usarlo).
   const [valores, setValores] = useState({});
   // Qué productos tienen fila en la base de datos (para borrar si se vacían).
@@ -36,6 +36,8 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
   const [avisoCarga, setAvisoCarga] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState(null); // { tipo: 'ok'|'error', texto }
+  // En la pantalla de Ajustes (primero) la tabla nace abierta; sigue plegable.
+  const [abierto, setAbierto] = useState(primero);
 
   const productos = useMemo(() => productosOrdenados(motor), [motor]);
   const margenPct = Math.min(90, Math.max(20, Number(margenTxt) || 60));
@@ -132,13 +134,25 @@ export default function CostesProducto({ motor, margenTxt, onMargenTxt, onCostes
   }
 
   return (
-    <details className="mt-8 group border-t border-hairline pt-5">
+    <details
+      open={abierto}
+      onToggle={(e) => setAbierto(e.currentTarget.open)}
+      className={`group ${primero ? '' : 'mt-8 border-t border-hairline pt-5'}`}
+    >
       <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
           Costes de producto — cuánto te cuesta cada unidad
         </span>
-        <span className="font-mono text-[10px] tracking-[0.1em]" style={{ color: nReales > 0 ? VERDE : TXT3 }}>
-          {nReales} de {productos.length} reales
+        <span className="ml-auto flex items-center gap-2">
+          <span className="hidden sm:block h-1.5 w-20 rounded-full overflow-hidden" style={{ background: 'var(--line)' }}>
+            <span
+              className="block h-full w-full rounded-full origin-left transition-transform duration-300 ease-out"
+              style={{ transform: `scaleX(${productos.length ? nReales / productos.length : 0})`, background: nReales > 0 ? VERDE : TXT3 }}
+            />
+          </span>
+          <span className="font-mono text-[10px] tracking-[0.1em]" style={{ color: nReales > 0 ? VERDE : TXT3 }}>
+            {nReales}/{productos.length} reales
+          </span>
         </span>
         <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
       </summary>

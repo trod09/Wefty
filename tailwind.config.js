@@ -35,6 +35,33 @@ module.exports = {
         surface1: 'var(--surface-1)',
         surface2: 'var(--surface-2)',
         surfaceInput: 'var(--surface-input)',
+        // Sistema editorial cálido (Fase 1): nombres nuevos que conviven con los
+        // de arriba. Apuntan a las mismas variables de globals.css.
+        canvas: 'var(--bg-canvas)',
+        surface: 'var(--bg-surface)',
+        'surface-2': 'var(--bg-surface-2)',
+        sidebar: 'var(--bg-sidebar)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          soft: 'var(--accent-soft)',
+          text: 'var(--accent-text)',
+        },
+        green: {
+          1: 'var(--green-1)',
+          2: 'var(--green-2)',
+          3: 'var(--green-3)',
+          4: 'var(--green-4)',
+        },
+        amber: 'var(--amber)',
+        violet: 'var(--violet)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        danger: 'var(--danger)',
+        info: 'var(--info)',
+        border: 'var(--border)',
+        'border-strong': 'var(--border-strong)',
+        divider: 'var(--divider)',
         ash: {
           50: '#F4F4F0',
           100: '#E9E9E3',

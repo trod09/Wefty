@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import SalesDashboard, { parsearVentas } from '@/components/SalesDashboard';
-import StockEngine, { PanelConfiguracion, PanelValidacion } from '@/components/StockEngine';
+import StockEngine, { CabeceraMotor, PanelConfiguracion, PanelValidacion } from '@/components/StockEngine';
 import CostesProducto from '@/components/CostesProducto';
 import InicioOnboarding from '@/components/InicioOnboarding';
 import TemaToggle from '@/components/TemaToggle';
@@ -59,7 +59,7 @@ function VacioAmable({ irACargar }) {
       className="rounded-xl border border-line p-12 md:p-16 text-center"
       style={{ background: 'var(--card-grad)' }}
     >
-      <p className="font-display text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
+      <p className="font-serif text-[22px] md:text-[28px] leading-snug" style={{ color: TXT }}>
         Sube tus ventas para ver esto.
       </p>
       <p className="mt-3 text-[14px]" style={{ color: TXT2 }}>
@@ -144,9 +144,9 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
       <button
         type="button"
         onClick={() => setSeccion(s.id)}
-        className={`relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2 font-mono text-[11px] tracking-[0.12em] uppercase transition-colors text-left ${activa ? 'text-txt' : 'text-txt2 hover:text-txt'}`}
+        className={`relative w-full flex items-center justify-center lg:justify-start gap-3 rounded-lg px-3 py-2 font-mono font-semibold text-[12px] tracking-[0.12em] uppercase transition-colors text-left ${activa ? 'text-txt' : 'text-txt hover:bg-hairlineSoft'}`}
         style={{
-          background: activa ? 'var(--tint-brand)' : 'transparent',
+          background: activa ? 'var(--tint-brand)' : undefined,
           boxShadow: activa ? 'inset 2px 0 0 var(--brand)' : 'none',
         }}
         aria-current={activa ? 'page' : undefined}
@@ -376,15 +376,30 @@ export default function ProductoShell({ headers, rows, hayDatos, seccionDatos, e
           {/* Ajustes del motor: costes + configuración + validación */}
           <section className={`seccion-panel ${seccion === 'ajustes' ? '' : 'hidden'}`}>
             {hayDatos && motor ? (
-              <div className="rounded-xl border border-line p-6 md:p-8" style={{ background: 'var(--card-grad)' }}>
-                <CostesProducto
-                  motor={motor}
-                  margenTxt={margenTxt}
-                  onMargenTxt={setMargenTxt}
-                  onCostes={onCostes}
-                />
-                <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} />
-                <PanelValidacion motor={motor} />
+              <div className="space-y-6">
+                {/* Cabecera — estado del motor de un vistazo (mosaicos) */}
+                <CabeceraMotor motor={motor} />
+                {/* Tarjeta 1 — tu acción: los costes reales */}
+                <div className="rounded-xl border border-line p-6 md:p-8" style={{ background: 'var(--card-grad)' }}>
+                  <CostesProducto
+                    motor={motor}
+                    margenTxt={margenTxt}
+                    onMargenTxt={setMargenTxt}
+                    onCostes={onCostes}
+                    primero
+                  />
+                </div>
+                {/* Tarjeta 2 — la maquinaria del motor: cómo trabaja y cómo de fiable es */}
+                <div className="rounded-xl border border-line p-6 md:p-8" style={{ background: 'var(--card-grad)' }}>
+                  <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-txt2">
+                    La maquinaria del motor
+                  </div>
+                  <p className="mt-2 text-[13px] leading-relaxed max-w-[640px] text-txt3">
+                    Cómo trabaja por dentro y cómo de fiable es sobre tu propio histórico.
+                  </p>
+                  <PanelConfiguracion perfil={motor.perfil} configuracion={motor.configuracion} primero />
+                  <PanelValidacion motor={motor} />
+                </div>
               </div>
             ) : (
               <VacioAmable irACargar={irACargar} />

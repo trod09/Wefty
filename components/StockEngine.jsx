@@ -130,45 +130,96 @@ function BadgeConfianza({ confianza }) {
   );
 }
 
+// Cabecera "panel de control": mosaicos con el estado del motor de un vistazo
+// (histórico, catálogo, volumen y fiabilidad). La fiabilidad sale del backtest
+// global, que ya viene cacheado en motor.cacheValidacion (no recalcula).
+export function CabeceraMotor({ motor }) {
+  const v = useMemo(() => validacionGlobal(motor), [motor]);
+  const { perfil } = motor;
+  const g = v.global;
+  const fiable = v.robusto && g && !g.insuficiente;
+  const tieneMejora = fiable && g.mejora != null && g.mejora > 0;
+
+  const tiles = [
+    {
+      valor: fmtInt(perfil.semanas),
+      etiqueta: 'semanas de histórico',
+      sub: perfil.fechaMin ? `${fmtFecha(perfil.fechaMin)} — ${fmtFecha(perfil.fechaMax)}` : null,
+      color: TXT,
+    },
+    {
+      valor: fmtInt(perfil.nProductos),
+      etiqueta: perfil.nProductos === 1 ? 'producto' : 'productos',
+      sub: `${fmtInt(perfil.nVariantes)} variantes`,
+      color: TXT,
+    },
+    {
+      valor: fmtInt(perfil.totalUnidades),
+      etiqueta: 'unidades vendidas',
+      sub: perfil.descartadas > 0 ? `${fmtInt(perfil.descartadas)} filas ignoradas` : null,
+      color: TXT,
+    },
+    tieneMejora
+      ? { valor: pct0(g.mejora), etiqueta: 'mejor que pedir a ojo', sub: `${pct0(g.wape)} de error real`, color: VERDE }
+      : fiable
+        ? { valor: pct0(g.wape), etiqueta: 'de error real', sub: `validado con ${g.cortes} pruebas`, color: TXT }
+        : { valor: '—', etiqueta: 'fiabilidad en progreso', sub: 'sube más semanas de ventas', color: TXT3 },
+  ];
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {tiles.map((t) => (
+        <div key={t.etiqueta} className="rounded-xl border border-line p-4 md:p-5" style={{ background: 'var(--panel-grad)' }}>
+          <div className="font-mono tnum leading-none" style={{ color: t.color, fontSize: 'clamp(22px, 4vw, 30px)' }}>{t.valor}</div>
+          <div className="mt-2.5 font-mono text-[10px] tracking-[0.16em] uppercase leading-snug" style={{ color: TXT2 }}>{t.etiqueta}</div>
+          {t.sub ? <div className="mt-1 font-mono text-[10px] tracking-[0.02em] leading-snug" style={{ color: TXT3 }}>{t.sub}</div> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Panel "Configuración del motor": qué técnica está activa, cuál no y POR QUÉ.
-export function PanelConfiguracion({ perfil, configuracion }) {
+export function PanelConfiguracion({ perfil, configuracion, primero = false }) {
   const ESTADO = {
     activa: { color: VERDE, texto: 'activa' },
     desactivada: { color: TXT3, texto: 'desactivada' },
     proximamente: { color: CIELO, texto: 'próximamente' },
   };
+  const caveats = [];
+  if (perfil.descartadas > 0) {
+    caveats.push(
+      `${fmtInt(perfil.descartadas)} filas ignoradas`
+      + (perfil.fechasInverosimiles > 0 ? ` (${perfil.fechasInverosimiles} con fecha inverosímil — ¿typo de año?)` : ' (sin fecha válida)'),
+    );
+  }
+  if (perfil.semanaParcial) {
+    caveats.push(`última semana con solo ${perfil.semanaParcial.dias} día${perfil.semanaParcial.dias === 1 ? '' : 's'} de datos (no se usa para ajustar)`);
+  }
   return (
-    <details className="mt-8 group border-t border-hairline pt-5">
-      <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
-          Configuración del motor — qué está activo y por qué
-        </span>
-        <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
-      </summary>
-      <div className="mt-5 acc-body">
-        <p className="font-mono text-[11px] tracking-[0.04em] leading-relaxed" style={{ color: TXT2 }}>
-          {perfil.semanas} semanas de histórico ({fmtFecha(perfil.fechaMin)} — {fmtFecha(perfil.fechaMax)}) ·{' '}
-          {perfil.nProductos} productos · {perfil.nVariantes} variantes · {fmtInt(perfil.totalUnidades)} uds
-          {perfil.descartadas > 0 ? ` · ${perfil.descartadas} filas ignoradas${perfil.fechasInverosimiles > 0 ? ` (${perfil.fechasInverosimiles} con fecha inverosímil — ¿typo de año?)` : ' (sin fecha válida)'}` : ''}
-          {perfil.semanaParcial ? ` · última semana con solo ${perfil.semanaParcial.dias} día${perfil.semanaParcial.dias === 1 ? '' : 's'} de datos (no se usa para ajustar)` : ''}
+    <div className={primero ? '' : 'mt-8 border-t border-hairline pt-5'}>
+      <span className={LABEL} style={{ color: TXT2 }}>Qué técnica usa el motor — y por qué</span>
+      <ul className="mt-4 space-y-2.5">
+        {configuracion.map((f) => {
+          const e = ESTADO[f.estado] || ESTADO.desactivada;
+          return (
+            <li key={f.nombre} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+              <span className="flex items-center gap-2 min-w-[290px]">
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: e.color }} />
+                <span className="text-[13px]" style={{ color: TXT }}>{f.nombre}</span>
+              </span>
+              <span className="font-mono text-[10px] tracking-[0.14em] uppercase flex-shrink-0" style={{ color: e.color }}>{e.texto}</span>
+              <span className="text-[12px] leading-snug" style={{ color: TXT2 }}>— {f.detalle}</span>
+            </li>
+          );
+        })}
+      </ul>
+      {caveats.length ? (
+        <p className="mt-4 font-mono text-[11px] tracking-[0.02em] leading-relaxed" style={{ color: TXT3 }}>
+          {caveats.join(' · ')}
         </p>
-        <ul className="mt-4 space-y-2.5">
-          {configuracion.map((f) => {
-            const e = ESTADO[f.estado] || ESTADO.desactivada;
-            return (
-              <li key={f.nombre} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                <span className="flex items-center gap-2 min-w-[290px]">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: e.color }} />
-                  <span className="text-[13px]" style={{ color: TXT }}>{f.nombre}</span>
-                </span>
-                <span className="font-mono text-[10px] tracking-[0.14em] uppercase flex-shrink-0" style={{ color: e.color }}>{e.texto}</span>
-                <span className="text-[12px] leading-snug" style={{ color: TXT2 }}>— {f.detalle}</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </details>
+      ) : null}
+    </div>
   );
 }
 
@@ -310,39 +361,40 @@ export function PanelValidacion({ motor }) {
   );
 
   return (
-    <details className="mt-4 group border-t border-hairline pt-5">
-      <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
-        <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
-          Validación del motor — error real sobre tu histórico
-        </span>
-        <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
-      </summary>
-      <div className="mt-5 acc-body">
-        {!v.robusto ? (
-          <p className="text-[13px] leading-relaxed max-w-[62ch]" style={{ color: TXT2 }}>
-            Tu histórico aún no da para una validación robusta: hacen falta {v.minSemanas} semanas
-            y {fmtInt(v.minUnidades)} unidades (tienes {v.semanas} y {fmtInt(v.unidades)}). Antes que
-            enseñarte números débiles, preferimos decírtelo — cada semana de ventas que subas afina el motor.
-          </p>
-        ) : (
-          <>
-            <p className="text-[13px] leading-relaxed max-w-[68ch]" style={{ color: TXT2 }}>
-              El motor viaja a varios puntos de tu pasado, pronostica «a ciegas» las 4 semanas
-              siguientes y comprueba cuánto falló. El error es cuánto se aleja de media la predicción
-              de lo que de verdad vendiste; «−X% de error» = cuánto mejora frente a extrapolar a ojo.
+    <div className="mt-8 border-t border-hairline pt-5">
+      <span className={LABEL} style={{ color: TXT2 }}>Fiabilidad — error real sobre tu histórico</span>
+      {!v.robusto ? (
+        <p className="mt-4 text-[13px] leading-relaxed max-w-[62ch]" style={{ color: TXT2 }}>
+          Tu histórico aún no da para una validación robusta: hacen falta {v.minSemanas} semanas
+          y {fmtInt(v.minUnidades)} unidades (tienes {v.semanas} y {fmtInt(v.unidades)}). Antes que
+          enseñarte números débiles, preferimos decírtelo — cada semana de ventas que subas afina el motor.
+        </p>
+      ) : (
+        <>
+          {v.global && !v.global.insuficiente ? (
+            <p className="mt-4 text-[14px] leading-relaxed" style={{ color: TXT }}>
+              Toda la marca: error del <span style={{ color: CIELO }}>{pct0(v.global.wape)}</span> con{' '}
+              {v.global.modelo}
+              {v.global.mejora != null && v.global.mejora > 0 ? (
+                <> — un <span style={{ color: VERDE }}>{pct0(v.global.mejora)}</span> mejor que extrapolar a ojo</>
+              ) : null}{' '}
+              <span style={{ color: TXT3 }}>({v.global.cortes} pruebas)</span>.
             </p>
-            {v.global && !v.global.insuficiente ? (
-              <p className="mt-4 text-[14px] leading-relaxed" style={{ color: TXT }}>
-                Toda la marca: error del <span style={{ color: CIELO }}>{pct0(v.global.wape)}</span> con{' '}
-                {v.global.modelo}
-                {v.global.mejora != null && v.global.mejora > 0 ? (
-                  <> — un <span style={{ color: VERDE }}>{pct0(v.global.mejora)}</span> mejor que extrapolar a ojo</>
-                ) : null}{' '}
-                <span style={{ color: TXT3 }}>({v.global.cortes} pruebas)</span>.
-              </p>
-            ) : null}
-            {v.filas.length ? (
-              <ul className="mt-4">
+          ) : null}
+          <p className="mt-3 text-[12px] leading-relaxed max-w-[68ch]" style={{ color: TXT3 }}>
+            El motor viaja a varios puntos de tu pasado, pronostica «a ciegas» las 4 semanas
+            siguientes y comprueba cuánto falló. El error es cuánto se aleja de media la predicción
+            de lo que de verdad vendiste; «−X% de error» = cuánto mejora frente a extrapolar a ojo.
+          </p>
+          {v.filas.length ? (
+            <details className="mt-4 group">
+              <summary className="flex items-center gap-3 cursor-pointer select-none py-2 md:py-0">
+                <span className="font-mono text-[11px] tracking-[0.18em] uppercase transition-colors text-txt2 group-hover:text-txt">
+                  Ver validación por categoría
+                </span>
+                <span className="font-mono text-[11px] transition-transform group-open:rotate-90" style={{ color: TXT3 }}>›</span>
+              </summary>
+              <ul className="mt-4 acc-body">
                 <li className="hidden md:grid grid-cols-[minmax(120px,1.4fr)_minmax(150px,2fr)_72px_110px_60px] gap-3 pb-2 border-b border-hairline">
                   {['Categoría', 'Mejor modelo', 'Error', 'vs a ojo', 'Pruebas'].map((h, i) => (
                     <span key={h} className={`${LABEL} ${i >= 2 ? 'text-right' : ''}`} style={{ color: TXT3 }}>{h}</span>
@@ -350,11 +402,11 @@ export function PanelValidacion({ motor }) {
                 </li>
                 {v.filas.map((f) => <FilaVal key={f.etiqueta} f={f} />)}
               </ul>
-            ) : null}
-          </>
-        )}
-      </div>
-    </details>
+            </details>
+          ) : null}
+        </>
+      )}
+    </div>
   );
 }
 
@@ -720,7 +772,7 @@ export default function StockEngine({
     }`;
 
   return (
-    <div>
+    <div className="decide-stock">
       {/* Cabecera de la sección */}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         {/* Con el sidebar de pestañas, la cabecera de sección ya presenta el
@@ -755,8 +807,8 @@ export default function StockEngine({
         {pestana === 'plan' ? (
           <>
             {/* ① TU PRESUPUESTO — lo imprescindible, destacado */}
-            <div className="card-elev mt-6 rounded-xl border border-brandLine p-5 md:p-6" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 75%)' }}>
-              <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Tu presupuesto de compra</div>
+            <div className="card-elev mt-6 rounded-xl border border-line p-5 md:p-6" style={{ background: 'var(--surface-1)' }}>
+              <div className={LABEL} style={{ color: TXT2 }}>Tu presupuesto de compra</div>
               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
                 <div className="flex items-baseline gap-2">
                   <input
@@ -925,7 +977,7 @@ export default function StockEngine({
               <>
                 {/* Titular del resultado: que se lea como recomendación, no como tabla */}
                 <div ref={refResumenPlan} className="mt-6 scroll-mt-6">
-                  <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Esto es lo que te recomiendo comprar</div>
+                  <div className={LABEL} style={{ color: TXT2 }}>Esto es lo que te recomiendo comprar</div>
                   <p className="mt-2 font-display text-[20px] md:text-[26px] leading-snug tracking-[-0.01em] max-w-[40ch]" style={{ color: TXT }}>
                     {plan.filas.length} productos · {fmtInt(plan.unidadesTotales)} unidades ·{' '}
                     <span style={{ color: VERDE }}>{fmtEur(plan.margenEsperado)}</span> de margen esperado con tus {fmtEur(plan.presupuesto)}.
@@ -997,8 +1049,8 @@ export default function StockEngine({
                 ) : null}
 
                 {/* Resumen global del plan */}
-                <div className="card-elev mt-4 rounded-xl border border-brandLine p-6 md:p-7" style={{ background: 'linear-gradient(150deg, var(--tint-brand) 0%, var(--surface-2) 70%)' }}>
-                  <div className={LABEL} style={{ color: 'var(--brand-soft)' }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
+                <div className="card-elev mt-4 rounded-xl border border-line p-6 md:p-7" style={{ background: 'var(--surface-1)' }}>
+                  <div className={LABEL} style={{ color: TXT2 }}>Plan de compra · {plan.horizonte} semanas · escenario {plan.escenario}</div>
                   {plan.costes ? (
                     <p className="mt-1.5 font-mono text-[10px] tracking-[0.1em] uppercase" style={{ color: TXT3 }}>
                       calculado con <span style={{ color: plan.costes.reales > 0 ? VERDE : TXT3 }}>{plan.costes.reales} coste{plan.costes.reales === 1 ? '' : 's'} real{plan.costes.reales === 1 ? '' : 'es'}</span> y {plan.costes.estimados} estimado{plan.costes.estimados === 1 ? '' : 's'}

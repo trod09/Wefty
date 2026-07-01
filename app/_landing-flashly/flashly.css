@@ -1,0 +1,324 @@
+/* ===========================================================================
+   PILOTO del rediseño "Flashly" — estilos AISLADOS a la vista previa (.lf-root).
+
+   Un solo sistema de diseño, dos temas (claro/oscuro) gobernados por TOKENS:
+   - El modo CLARO hereda los tokens Flashly globales ([data-theme='light'] de
+     globals.css): fondo blanco azulado, azul de acción #2563EB, texto marino.
+   - El modo OSCURO se define AQUÍ (navy = familia del claro), pero SOLO dentro
+     de .lf-root. Así el modo oscuro del PRODUCTO no se toca hasta que apruebes
+     el piloto y lo propaguemos.
+
+   Movimiento: hay efectos "wow" (aurora, escaneo, descodificado del titular,
+   luz en el borde, barrido del botón) pero TODOS se apagan con
+   prefers-reduced-motion (ver el bloque final).
+   =========================================================================== */
+
+/* Ángulo animado para la luz que viaja por el borde de la tarjeta del hero */
+@property --lf-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.lf-root {
+  /* Tokens EXTRA del piloto (los globales no los tienen). Valores del modo
+     CLARO; el oscuro los redefine abajo. */
+  --grad-heading: linear-gradient(100deg, #1e3a64 0%, #2563eb 100%);
+  --card-relief: 0 1px 2px rgba(22, 36, 63, 0.06), 0 14px 34px rgba(22, 36, 63, 0.09);
+  --hero-glow: radial-gradient(60% 55% at 50% -5%, rgba(37, 99, 235, 0.10), transparent 70%);
+  --pill-bg: rgba(37, 99, 235, 0.07);
+  --aurora-op: 0.20;
+
+  min-height: 100dvh;
+  background: var(--bg-grad, var(--bg));
+  color: var(--txt);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ——— Modo OSCURO del piloto: navy, hermano frío del claro ——— */
+[data-theme='dark'] .lf-root {
+  --bg: #0a0f1c;
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #101a30 0%, #0a0f1c 60%);
+  --card-grad: linear-gradient(150deg, #16203a 0%, #121a2e 100%);
+  --surface-1: #121a2e;
+  --surface-2: #0e1626;
+  --surface-input: #0e1525;
+  --txt: #eef2f9;
+  --txt-2: #9fb0c9;
+  --txt-3: #6b7a93;
+  --line: #233048;
+  --line-soft: #1a2438;
+  --line-hover: #33476a;
+  --hairline: rgba(255, 255, 255, 0.10);
+  --hairline-soft: rgba(255, 255, 255, 0.06);
+  --grid-noise: rgba(150, 180, 230, 0.05);
+  --brand: #3b82f6;          /* mismo azul, un punto más luminoso para el oscuro */
+  --brand-soft: #9ec1ff;
+  --brand-line: #2a3f63;
+  --data: #4d8bf0;
+  --data-2: #79a6f5;
+  --ok: #5cd699;
+  --warn: #e8c44d;
+  --bad: #f1715f;
+  --glow-brand: rgba(59, 130, 246, 0.45);
+  --tint-brand: rgba(59, 130, 246, 0.12);
+  --nav-bg: rgba(10, 15, 28, 0.82);
+
+  --grad-heading: linear-gradient(100deg, #9ec1ff 0%, #ffffff 62%);
+  --card-relief: inset 0 1px 0 rgba(255, 255, 255, 0.06);   /* relieve = borde luminoso, no sombra */
+  --hero-glow: radial-gradient(60% 55% at 50% -5%, rgba(59, 130, 246, 0.16), transparent 70%);
+  --pill-bg: rgba(59, 130, 246, 0.13);
+  --aurora-op: 0.42;
+}
+
+/* Titular en degradado (marino→azul en claro; azul claro→blanco en oscuro) */
+.lf-grad {
+  background: var(--grad-heading);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Relieve de tarjeta: sombra difusa en claro, luz superior + borde en oscuro */
+.lf-card {
+  box-shadow: var(--card-relief);
+}
+
+/* Tarjeta del hero con luz que VIAJA por el borde (guiño cyberpunk) */
+.lf-card-glow {
+  position: relative;
+}
+.lf-card-glow::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: conic-gradient(
+    from var(--lf-angle),
+    transparent 0deg,
+    var(--brand) 55deg,
+    transparent 130deg,
+    transparent 235deg,
+    var(--brand-soft) 290deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0.65;
+  pointer-events: none;
+  animation: lf-rotate 6s linear infinite;
+}
+@keyframes lf-rotate {
+  to {
+    --lf-angle: 360deg;
+  }
+}
+
+/* Barra de la talla pico: glow que respira */
+.lf-peak {
+  animation: lf-peak-pulse 2.6s ease-in-out infinite;
+}
+@keyframes lf-peak-pulse {
+  0%, 100% {
+    box-shadow: 0 0 14px -3px var(--glow-brand);
+  }
+  50% {
+    box-shadow: 0 0 26px 0 var(--glow-brand);
+  }
+}
+
+/* Aurora: dos manchas de luz azul que flotan despacio detrás del hero */
+.lf-aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lf-aurora::before,
+.lf-aurora::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(72px);
+  opacity: var(--aurora-op);
+}
+.lf-aurora::before {
+  width: 460px;
+  height: 460px;
+  top: -150px;
+  left: -40px;
+  background: radial-gradient(circle, var(--brand), transparent 65%);
+  animation: lf-float-a 17s ease-in-out infinite alternate;
+}
+.lf-aurora::after {
+  width: 540px;
+  height: 540px;
+  top: -190px;
+  right: -80px;
+  background: radial-gradient(circle, var(--brand-soft), transparent 65%);
+  animation: lf-float-b 21s ease-in-out infinite alternate;
+}
+@keyframes lf-float-a {
+  to {
+    transform: translate(90px, 70px) scale(1.18);
+  }
+}
+@keyframes lf-float-b {
+  to {
+    transform: translate(-70px, 50px) scale(1.12);
+  }
+}
+
+/* Línea de escaneo que recorre el hero de arriba abajo (guiño a scanlines) */
+.lf-scan {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.lf-scan::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 150px;
+  top: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--brand) 20%, transparent),
+    transparent
+  );
+  opacity: 0.55;
+  transform: translateY(-150px);
+  animation: lf-scan-move 7.5s linear infinite;
+}
+@keyframes lf-scan-move {
+  0% {
+    transform: translateY(-150px);
+  }
+  100% {
+    transform: translateY(760px);
+  }
+}
+
+/* Glow ambiental detrás del hero */
+.lf-hero-glow {
+  background: var(--hero-glow);
+}
+
+/* Botón primario: azul de acento con glow (sutil en claro, marcado en oscuro) */
+.lf-btn {
+  background: var(--brand);
+  color: #ffffff;
+  box-shadow: 0 8px 24px -8px var(--glow-brand), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, filter 0.2s ease;
+}
+@media (hover: hover) {
+  .lf-btn:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 12px 30px -8px var(--glow-brand), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    transform: translateY(-1px);
+  }
+}
+.lf-btn:active {
+  transform: translateY(0) scale(0.985);
+}
+
+/* Tarjetas de «El problema»: se elevan al pasar el cursor */
+.lf-tile {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  will-change: transform;
+}
+@media (hover: hover) {
+  .lf-tile:hover {
+    transform: translateY(-4px);
+    border-color: var(--line-hover);
+    box-shadow: 0 1px 2px rgba(22, 36, 63, 0.06), 0 20px 44px -12px var(--glow-brand);
+  }
+}
+
+/* Cambio de escenario: el bloque de riesgos entra con un fundido corto */
+.lf-swap {
+  animation: lf-fade 0.4s ease both;
+}
+@keyframes lf-fade {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* «Buscando análogos»: puntos que parpadean en secuencia */
+.lf-dots span {
+  animation: lf-dot 1.4s ease-in-out infinite;
+}
+.lf-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.lf-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes lf-dot {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Mini-gráfico que se "dibuja" solo al entrar en pantalla (paso 02) */
+.lf-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.lf-draw.in {
+  animation: lf-draw 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes lf-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Marca de agua gigante "Wefty" del pie */
+.lf-giant {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 700;
+  line-height: 0.8;
+  letter-spacing: -0.04em;
+  background: linear-gradient(180deg, var(--txt) 0%, transparent 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0.05;
+}
+
+/* ——— Freno general: si el sistema pide reducir movimiento, todo en calma ——— */
+@media (prefers-reduced-motion: reduce) {
+  .lf-aurora::before,
+  .lf-aurora::after,
+  .lf-card-glow::before,
+  .lf-peak,
+  .lf-swap,
+  .lf-dots span,
+  .lf-draw.in {
+    animation: none;
+  }
+  .lf-draw {
+    stroke-dashoffset: 0;
+  }
+  .lf-scan {
+    display: none;
+  }
+}

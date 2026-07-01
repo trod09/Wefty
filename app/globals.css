@@ -11,48 +11,90 @@
    =========================================================================== */
 :root {
   color-scheme: dark;
-  --bg: #05060a;
-  --bg-grad: radial-gradient(135% 90% at 50% 0%, #0a0d15 0%, #05060a 55%);
-  --dash-grad: radial-gradient(120% 80% at 50% 0%, #090c12 0%, #05060a 60%);
-  --sidebar-grad: linear-gradient(180deg, #0a0d14 0%, #07090e 100%);
-  --card-grad: linear-gradient(150deg, #0c0f16 0%, #090b11 100%);
-  --panel-grad: linear-gradient(150deg, #0b0e15 0%, #080a10 100%);
-  --inset-grad: linear-gradient(150deg, #0a0c12 0%, #07090d 100%);
-  --surface-1: #0c0f16;
-  --surface-2: #090b11;
-  --surface-input: #090c12;
-  --txt: #f5f5f7;
-  --txt-2: #8a8a8f;
-  --txt-3: #5d5e63;
-  --muted: #43464d;
-  --line: #1d2330;
-  --line-soft: #161b26;
-  --line-hover: #2e3850;
-  --hairline: rgba(255, 255, 255, 0.1);
+
+  /* ——— Paleta · modo OSCURO del producto ———
+     Gris/negro neutro (sin tinte verde) + acento verde petróleo claro. Cero azul.
+     Tokens NUEVOS (semánticos), compartidos por el producto y los gráficos. */
+  --bg-canvas:      #111111;
+  --bg-surface:     #1b1b1b;
+  --bg-surface-2:   #242424;
+  --bg-sidebar:     #161616;
+  --text-primary:   #f2f2f3;
+  --text-secondary: #a6a6a6;
+  --text-tertiary:  #7c7c7c;
+  --accent:         #6fb3a0;
+  --accent-hover:   #84c2b0;
+  --accent-soft:    #25372f;
+  --accent-text:    #8fc7b8;
+  --green-1:        #6fb3a0;
+  --green-2:        #4e8576;
+  --green-3:        #366156;
+  --green-4:        #25372f;
+  --amber:          #e8b65a;
+  --violet:         #a89fe0;
+  --success:        #5fa37c;
+  --warning:        #d9a348;
+  --danger:         #cc6b58;
+  --info:           #6fb3a0;
+  --border:         #2a2a2a;
+  --border-strong:  #383838;
+  --divider:        #212121;
+  /* Radios / sombras / motion (disponibles para componentes; NO remapeo la
+     escala de Tailwind todavía, para no restyle-ar nada en esta fase). */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.20);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.34);
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 400ms;
+
+  /* ——— Tokens EXISTENTES del producto, ahora sobre la paleta cálida ———
+     Los nombres y los componentes no cambian; solo el valor. */
+  --bg: var(--bg-canvas);
+  --bg-grad: radial-gradient(135% 90% at 50% 0%, #191919 0%, #111111 55%);
+  --dash-grad: radial-gradient(120% 80% at 50% 0%, #171717 0%, #111111 60%);
+  --sidebar-grad: linear-gradient(180deg, #171717 0%, #121212 100%);
+  --card-grad: linear-gradient(150deg, #202020 0%, #1a1a1a 100%);
+  --panel-grad: linear-gradient(150deg, #1a1a1a 0%, #151515 100%);
+  --inset-grad: linear-gradient(150deg, #151515 0%, #101010 100%);
+  --surface-1: var(--bg-surface);
+  --surface-2: var(--bg-sidebar);
+  --surface-input: #161616;
+  --txt: var(--text-primary);
+  --txt-2: var(--text-secondary);
+  --txt-3: var(--text-tertiary);
+  --muted: #565656;
+  --line: var(--border);
+  --line-soft: var(--divider);
+  --line-hover: var(--border-strong);
+  --hairline: rgba(255, 255, 255, 0.10);
   --hairline-soft: rgba(255, 255, 255, 0.06);
-  --grid-line: rgba(255, 255, 255, 0.06);
-  --brand: #f08c56;
-  --brand-soft: #f0a987;
-  --brand-line: #3a2b20;
-  --data: #2d6be4;
-  --data-2: #3f7bec;
-  --ok: #6bcb9a;
-  --warn: #e3c04b;
-  --bad: #e07a5f;
-  --scrollbar: #2a2c31;
-  --glow-brand: rgba(240, 140, 86, 0.5);
-  --tint-brand: rgba(240, 140, 86, 0.08);
-  --nav-bg: rgba(7, 9, 14, 0.96);
-  --tooltip-bg: rgba(25, 26, 30, 0.97);
-  --grid-noise: rgba(250, 250, 247, 0.06);
-  --pie-stroke: #0b0e14;
-  /* Acentos de marca antes escritos a pelo en los componentes (ahora tokens
-     para que el tema claro los pueda cambiar). En oscuro = el naranja de siempre. */
-  --grad-brand-hero: linear-gradient(120deg, rgba(240,140,86,0.14) 0%, rgba(240,140,86,0.04) 46%, var(--surface-2) 100%);
-  --grad-brand-card: linear-gradient(150deg, rgba(240,140,86,0.12) 0%, rgba(240,140,86,0.03) 40%, var(--surface-2) 100%);
-  --glow-brand-radial: radial-gradient(circle, rgba(240,140,86,0.16) 0%, transparent 60%);
-  --fill-brand-strong: rgba(240, 140, 86, 0.22);
-  --fill-chart-cursor: rgba(240, 140, 86, 0.06);
+  --grid-line: rgba(255, 255, 255, 0.05);
+  --brand: var(--accent);
+  --brand-soft: var(--accent-text);
+  --brand-line: #2f4a40;
+  --data: var(--accent);
+  --data-2: var(--green-2);
+  --ok: var(--success);
+  --warn: var(--warning);
+  --bad: var(--danger);
+  --scrollbar: #2e2e2e;
+  --glow-brand: rgba(111, 179, 160, 0.45);
+  --tint-brand: rgba(111, 179, 160, 0.10);
+  --nav-bg: rgba(17, 17, 17, 0.96);
+  --tooltip-bg: rgba(28, 28, 28, 0.97);
+  --grid-noise: rgba(255, 255, 255, 0.045);
+  --pie-stroke: #111111;
+  --grad-brand-hero: linear-gradient(120deg, rgba(111,179,160,0.16) 0%, rgba(111,179,160,0.05) 46%, var(--surface-2) 100%);
+  --grad-brand-card: linear-gradient(150deg, rgba(111,179,160,0.12) 0%, rgba(111,179,160,0.03) 40%, var(--surface-2) 100%);
+  --glow-brand-radial: radial-gradient(circle, rgba(111,179,160,0.18) 0%, transparent 60%);
+  --fill-brand-strong: rgba(111, 179, 160, 0.22);
+  --fill-chart-cursor: rgba(111, 179, 160, 0.07);
   /* Botón primario, borde de campos y sombra de tarjeta — tokens para que el
      tema claro los cambie sin tocar los componentes. En oscuro valen lo de
      siempre (relleno tenue, borde 1px, sin sombra), así ese modo no cambia. */
@@ -68,63 +110,89 @@
 
 [data-theme='light'] {
   color-scheme: light;
-  /* Paleta CLARA: azul marino · azul · gris · blanco. Sin crema. El acento de
-     acción es el azul (--brand); el azul marino es el texto y los acentos
-     fuertes (--txt / --brand-soft). Los colores con significado (ok/warn/bad)
-     se quedan: comunican, no decoran. */
-  --bg: #d6dfee;
-  --bg-grad: radial-gradient(135% 90% at 50% 0%, #eef3fb 0%, #d3dcec 60%);
-  --dash-grad: radial-gradient(120% 80% at 50% 0%, #eef3fb 0%, #d6dfed 60%);
-  --sidebar-grad: linear-gradient(180deg, #ffffff 0%, #f1f4f9 100%);
-  --card-grad: linear-gradient(150deg, #ffffff 0%, #fafcfe 100%);
-  --panel-grad: linear-gradient(150deg, #ffffff 0%, #eef2f8 100%);
-  --inset-grad: linear-gradient(150deg, #eef3fa 0%, #e1e8f2 100%);
-  --surface-1: #ffffff;
-  --surface-2: #eaf0f9;
-  --surface-input: #ffffff;
-  --txt: #16243f;
-  /* Grises secundarios más oscuros (hacia el marino) para más contraste y mejor
-     lectura del texto gris en las pantallas de fondo claro. */
-  --txt-2: #3a4659;
-  --txt-3: #525d6f;
-  --muted: #aab3c0;
-  --line: #d4dbe6;
-  --line-soft: #e4e9f0;
-  --line-hover: #bcc6d6;
-  --hairline: rgba(22, 36, 63, 0.12);
-  --hairline-soft: rgba(22, 36, 63, 0.07);
-  --grid-line: rgba(22, 36, 63, 0.10);
-  --brand: #2563eb;
-  --brand-soft: #1e3a64;
-  --brand-line: #c5d6f5;
-  --data: #2f6fe4;
-  --data-2: #6699f0;
-  --ok: #2c8a55;
-  --warn: #8f6c0f;
-  --bad: #bf3c27;
-  --scrollbar: #c4cdda;
-  --glow-brand: rgba(22, 36, 63, 0.12);
-  --tint-brand: rgba(37, 99, 235, 0.09);
-  --nav-bg: rgba(248, 250, 253, 0.97);
-  --tooltip-bg: rgba(255, 255, 255, 0.98);
-  --grid-noise: rgba(22, 36, 63, 0.05);
-  --pie-stroke: #d4dbe6;
-  --grad-brand-hero: linear-gradient(120deg, rgba(37,99,235,0.10) 0%, rgba(37,99,235,0.03) 46%, var(--surface-2) 100%);
-  --grad-brand-card: linear-gradient(150deg, rgba(37,99,235,0.08) 0%, rgba(37,99,235,0.022) 40%, var(--surface-2) 100%);
-  --glow-brand-radial: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 60%);
-  --fill-brand-strong: rgba(37, 99, 235, 0.13);
-  --fill-chart-cursor: rgba(37, 99, 235, 0.07);
-  /* Botón marino sólido, bordes de campo gruesos y sombra de tarjeta: en claro
+
+  /* ——— Paleta editorial cálida · modo CLARO (defecto) ———
+     Crema cálido + acento verde petróleo. Cero blanco puro, cero azul.
+     Los colores con significado (ok/warn/bad) se quedan: comunican, no decoran. */
+  --bg-canvas:      #ffffff;
+  --bg-surface:     #ffffff;
+  --bg-surface-2:   #f6f6f4;
+  --bg-sidebar:     #f8f7f3;
+  --text-primary:   #0a0a0a;
+  --text-secondary: #34312b;
+  --text-tertiary:  #4d4840;
+  --accent:         #2e4e48;
+  --accent-hover:   #243e39;
+  --accent-soft:    #dce7e2;
+  --accent-text:    #2e4e48;
+  --green-1:        #2e4e48;
+  --green-2:        #5e8b7e;
+  --green-3:        #9bc1b5;
+  --green-4:        #cfe3db;
+  --amber:          #e2a33f;
+  --violet:         #8c82ce;
+  --success:        #3e7d5a;
+  --warning:        #c98a2e;
+  --danger:         #b4503f;
+  --info:           #5e8b7e;
+  --border:         #e6e1d6;
+  --border-strong:  #d6d0c2;
+  --divider:        #ece8df;
+  --shadow-sm: 0 1px 2px rgba(28, 27, 23, 0.04);
+  --shadow-md: 0 4px 16px rgba(28, 27, 23, 0.05);
+  --shadow-lg: 0 8px 40px rgba(28, 27, 23, 0.06);
+
+  /* Tokens existentes → paleta cálida clara */
+  --bg: var(--bg-canvas);
+  --bg-grad: var(--bg-canvas);
+  --dash-grad: var(--bg-canvas);
+  --sidebar-grad: #f8f7f3;
+  --card-grad: #ffffff;
+  --panel-grad: #ffffff;
+  --inset-grad: #f6f6f4;
+  --surface-1: var(--bg-surface);
+  --surface-2: var(--bg-surface-2);
+  --surface-input: var(--bg-surface);
+  --txt: var(--text-primary);
+  --txt-2: var(--text-secondary);
+  --txt-3: var(--text-tertiary);
+  --muted: #b8b2a6;
+  --line: #ded8cb;
+  --line-soft: var(--divider);
+  --line-hover: #cfc8ba;
+  --hairline: rgba(28, 27, 23, 0.10);
+  --hairline-soft: rgba(28, 27, 23, 0.06);
+  --grid-line: rgba(28, 27, 23, 0.08);
+  --brand: var(--accent);
+  --brand-soft: var(--accent-hover);
+  --brand-line: #c7d6cf;
+  --data: var(--accent);
+  --data-2: var(--green-2);
+  --ok: var(--success);
+  --warn: var(--warning);
+  --bad: var(--danger);
+  --scrollbar: #d2ccbe;
+  --glow-brand: rgba(46, 78, 72, 0.14);
+  --tint-brand: rgba(46, 78, 72, 0.08);
+  --nav-bg: rgba(248, 247, 243, 0.97);
+  --tooltip-bg: rgba(251, 250, 246, 0.98);
+  --grid-noise: transparent;
+  --pie-stroke: var(--bg-canvas);
+  --grad-brand-hero: linear-gradient(120deg, rgba(46,78,72,0.10) 0%, rgba(46,78,72,0.03) 46%, var(--surface-2) 100%);
+  --grad-brand-card: linear-gradient(150deg, rgba(46,78,72,0.08) 0%, rgba(46,78,72,0.022) 40%, var(--surface-2) 100%);
+  --glow-brand-radial: radial-gradient(circle, rgba(46,78,72,0.12) 0%, transparent 60%);
+  --fill-brand-strong: rgba(46, 78, 72, 0.13);
+  --fill-chart-cursor: rgba(46, 78, 72, 0.07);
+  /* Botón petróleo sólido, bordes de campo gruesos y sombra de tarjeta cálida:
      las superficies se SEPARAN del fondo y los controles se ven de verdad. */
-  --line: #cbd4e2;
-  --btn-bg: #16243f;
-  --btn-bg-hover: #1f3057;
-  --btn-txt: #ffffff;
-  --btn-border: #16243f;
+  --btn-bg: var(--accent);
+  --btn-bg-hover: var(--accent-hover);
+  --btn-txt: #fbfaf6;
+  --btn-border: var(--accent);
   --input-bw: 2px;
-  --input-border: #b3bfd2;
-  --input-focus: #16243f;
-  --card-shadow: 0 1px 2px rgba(22, 36, 63, 0.07), 0 10px 28px rgba(22, 36, 63, 0.08);
+  --input-border: var(--border-strong);
+  --input-focus: var(--accent);
+  --card-shadow: 0 1px 2px rgba(28, 27, 23, 0.04), 0 8px 40px rgba(28, 27, 23, 0.06);
 }
 
 /* Controles del producto gobernados por tokens (ver arriba): el botón primario,
@@ -149,26 +217,9 @@
   box-shadow: var(--card-shadow);
 }
 
-/* Barra de navegación azul marino SOLO en tema claro (sidebar de escritorio y
-   barra inferior de móvil). En vez de tocar cada componente, redefinimos los
-   tokens DENTRO de esta zona: todo lo que use txt/txt-2/brand/line… coge la
-   versión clara-sobre-marino automáticamente. El modo oscuro no la usa. */
-[data-theme='light'] .nav-navy {
-  --sidebar-grad: linear-gradient(180deg, #1f3057 0%, #16243f 100%);
-  --nav-bg: rgba(22, 36, 63, 0.97);
-  --txt: #ffffff;
-  --txt-2: #c4cee2;
-  --txt-3: #93a0bb;
-  --line: rgba(255, 255, 255, 0.16);
-  --line-soft: rgba(255, 255, 255, 0.12);
-  --line-hover: rgba(255, 255, 255, 0.30);
-  --hairline-soft: rgba(255, 255, 255, 0.09);
-  --brand: #7aa2f0;
-  --brand-soft: #a9c4ff;
-  --tint-brand: rgba(255, 255, 255, 0.10);
-  --ok: #6bcb9a;
-  --warn: #e3c04b;
-}
+/* La barra lateral del producto ahora va al MISMO tono cálido que el lienzo
+   (crema en claro), sin barra marino. Por eso ya no redefinimos tokens aquí:
+   .nav-navy hereda la paleta normal (--sidebar-grad de crema, texto --txt). */
 
 /* Fondo base oscuro: la landing y el producto comparten el mismo mundo
    visual; así el rebote del scroll (overscroll) nunca enseña un flash claro.
@@ -184,6 +235,14 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-feature-settings: "ss01", "cv11";
+  /* Texto base del producto un punto más grueso (más presencia/contraste).
+     La landing conserva su peso propio con la regla de abajo. */
+  font-weight: 450;
+}
+/* La landing (.wefty-root, siempre oscura y con su propia tipografía) mantiene
+   el peso normal: no hereda el grosor extra del producto. */
+.wefty-root {
+  font-weight: 400;
 }
 
 .font-serif {
@@ -191,19 +250,50 @@ body {
   letter-spacing: -0.02em;
 }
 
-::selection {
-  background: #f08c56;
-  color: #05060a;
+/* Etiqueta editorial (mayúsculas + tracking) y números tabulares — los usará
+   el sistema nuevo de pantallas. Van en sans (Figtree) por defecto. */
+.overline {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
 }
-/* En el producto claro, la selección es azul; la landing (.wefty-root, siempre
-   oscura) conserva su naranja con la última regla. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chips / badges editoriales — píldora con acento suave. Variantes semánticas
+   (ok/warn/bad) en versión suave para estados de dato, sin gritar. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.chip-ok   { background: color-mix(in srgb, var(--ok) 16%, transparent);   color: var(--ok); }
+.chip-warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.chip-bad  { background: color-mix(in srgb, var(--bad) 16%, transparent);  color: var(--bad); }
+
+::selection {
+  background: var(--accent);
+  color: var(--bg-canvas);
+}
+/* En el producto la selección es verde petróleo; la landing (.wefty-root,
+   siempre oscura) conserva su acento con la última regla. */
 [data-theme='light'] ::selection {
-  background: #2563eb;
-  color: #ffffff;
+  background: var(--accent);
+  color: #fbfaf6;
 }
 .wefty-root ::selection {
-  background: #f08c56;
-  color: #05060a;
+  background: #3b82f6;
+  color: #0a0f1c;
 }
 
 /* Generic fade/blur-in for scroll-revealed blocks (lo usa el producto) */
@@ -262,7 +352,7 @@ input:focus {
 }
 .underline-input:focus-within::after {
   transform: scaleX(1);
-  background: #2d6be4;
+  background: var(--accent);
 }
 
 /* FAQ accordion details */
@@ -482,8 +572,8 @@ details[open] .acc-body {
   background-position: 50% 22%;
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow:
-    0 0 32px -8px rgba(240, 140, 86, 0.55),
-    0 0 14px -6px rgba(240, 140, 86, 0.35),
+    0 0 32px -8px rgba(59, 130, 246, 0.55),
+    0 0 14px -6px rgba(59, 130, 246, 0.35),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.95),
     inset 0 -2px 6px rgba(16, 22, 44, 0.5),
     inset 0 -14px 18px rgba(27, 45, 107, 0.22);
@@ -505,9 +595,9 @@ details[open] .acc-body {
 @media (hover: hover) {
   .btn-cromo:hover {
     box-shadow:
-      0 0 42px -6px rgba(240, 140, 86, 0.65),
-      0 0 30px -8px rgba(167, 139, 250, 0.6),
-      0 0 18px -4px rgba(240, 140, 86, 0.45),
+      0 0 42px -6px rgba(59, 130, 246, 0.65),
+      0 0 30px -8px rgba(158, 193, 255, 0.6),
+      0 0 18px -4px rgba(59, 130, 246, 0.45),
       inset 0 1.5px 0 rgba(255, 255, 255, 1),
       inset 0 -2px 6px rgba(16, 22, 44, 0.45),
       inset 0 -14px 18px rgba(27, 45, 107, 0.2);
@@ -529,10 +619,10 @@ details[open] .acc-body {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 15px 30px;
-  color: #000;
+  color: #16170f;
   cursor: pointer;
   overflow: hidden;
-  background: linear-gradient(95deg, #f08c56, #ecd5f2);
+  background: linear-gradient(95deg, #6fb3a0, #9bc1b5);
   clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
   transition: filter 0.25s ease, transform 0.3s cubic-bezier(0.2, 0.7, 0.3, 1.2);
 }
@@ -545,11 +635,11 @@ details[open] .acc-body {
 
 .em-neon {
   font-style: normal;
-  background: linear-gradient(95deg, #f08c56, #ecd5f2);
+  background: linear-gradient(95deg, #6fb3a0, #9bc1b5);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 0 18px rgba(240, 140, 86, 0.35));
+  filter: drop-shadow(0 0 18px rgba(111, 179, 160, 0.35));
 }
 
 .glitch-suave { position: relative; display: inline-block; }
@@ -564,12 +654,12 @@ details[open] .acc-body {
 @media (prefers-reduced-motion: no-preference) {
   .glitch-suave.glitching::before {
     opacity: 0.85;
-    color: #f08c56;
+    color: #6fb3a0;
     animation: glitch-prod-a 0.32s steps(2) both;
   }
   .glitch-suave.glitching::after {
     opacity: 0.85;
-    color: #ecd5f2;
+    color: #9bc1b5;
     animation: glitch-prod-b 0.32s steps(2) both;
   }
   @keyframes glitch-prod-a {
@@ -610,7 +700,7 @@ details[open] .acc-body {
   content: '';
   position: absolute;
   inset: 0;
-  border: 1px solid #f08c56;
+  border: 1px solid #6fb3a0;
   clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
   pointer-events: none;
 }
@@ -618,7 +708,7 @@ details[open] .acc-body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(95deg, #f08c56, #ecd5f2);
+  background: linear-gradient(95deg, #6fb3a0, #9bc1b5);
   transform: translateX(-101%);
   transition: transform 0.35s cubic-bezier(0.6, 0, 0.2, 1);
   z-index: -1;
@@ -642,17 +732,17 @@ details[open] .acc-body {
    degradado naranja→lila cyberpunk. La landing no usa estas clases, así que
    no se ve afectada. El modo oscuro conserva el degradado original. */
 [data-theme='light'] .btn-neon {
-  background: #16243f;
-  color: #ffffff;
+  background: var(--accent);
+  color: #fbfaf6;
 }
 [data-theme='light'] .btn-neon-borde {
-  color: #16243f;
+  color: var(--accent);
 }
 [data-theme='light'] .btn-neon-borde::before {
-  border-color: #16243f;
+  border-color: var(--accent);
 }
 [data-theme='light'] .btn-neon-borde::after {
-  background: #16243f;
+  background: var(--accent);
 }
 @media (hover: hover) {
   [data-theme='light'] .btn-neon-borde:hover { color: #ffffff; }
@@ -661,14 +751,14 @@ details[open] .acc-body {
 /* Acento de titular (.em-neon) y glitch del login en claro: azul→marino en
    vez de naranja→lila. Solo el producto usa estas clases. */
 [data-theme='light'] .em-neon {
-  background: linear-gradient(95deg, #2563eb, #1e3a64);
+  background: linear-gradient(95deg, #2e4e48, #5e8b7e);
   -webkit-background-clip: text;
   background-clip: text;
-  filter: drop-shadow(0 0 14px rgba(37, 99, 235, 0.22));
+  filter: drop-shadow(0 0 14px rgba(46, 78, 72, 0.22));
 }
 @media (prefers-reduced-motion: no-preference) {
-  [data-theme='light'] .glitch-suave.glitching::before { color: #2563eb; }
-  [data-theme='light'] .glitch-suave.glitching::after { color: #1e3a64; }
+  [data-theme='light'] .glitch-suave.glitching::before { color: #2e4e48; }
+  [data-theme='light'] .glitch-suave.glitching::after { color: #5e8b7e; }
 }
 
 /* ——— Shell del producto: fundido corto al mostrar una sección ——— */
@@ -679,4 +769,24 @@ details[open] .acc-body {
 .seccion-panel { animation: seccionFade 0.26s cubic-bezier(0.22, 1, 0.36, 1) both; }
 @media (prefers-reduced-motion: reduce) {
   .seccion-panel { animation: none; }
+}
+
+/* ————— Más contraste en las 3 pantallas de «Decide stock» (StockEngine) —————
+   Reposición · Lanzamiento · Plan de compra. Sobre el fondo blanco las tarjetas
+   se veían planas; aquí reforzamos bordes, líneas divisorias y sombra de tarjeta
+   para que destaquen. Token-scoped a .decide-stock → solo afecta a estas 3. */
+[data-theme='light'] .decide-stock {
+  --line: #cfc8ba;
+  --line-soft: #ded8cb;
+  --line-hover: #b8b0a0;
+  --hairline: rgba(28, 27, 23, 0.16);
+  --hairline-soft: rgba(28, 27, 23, 0.10);
+  --card-shadow: 0 1px 2px rgba(28, 27, 23, 0.10), 0 16px 36px rgba(28, 27, 23, 0.14);
+}
+[data-theme='dark'] .decide-stock {
+  --line: #383838;
+  --line-soft: #2a2a2a;
+  --line-hover: #484848;
+  --hairline: rgba(255, 255, 255, 0.14);
+  --hairline-soft: rgba(255, 255, 255, 0.08);
 }

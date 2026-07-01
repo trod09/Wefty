@@ -1,5 +1,5 @@
 import './globals.css';
-import { Fraunces, Inter, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
+import { Fraunces, Figtree, JetBrains_Mono, Space_Grotesk } from 'next/font/google';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -9,7 +9,10 @@ const fraunces = Fraunces({
   display: 'swap',
 });
 
-const inter = Inter({
+// Figtree es la sans del PRODUCTO (sustituye a Inter). Mantengo el nombre de la
+// variable CSS (--font-inter) a propósito: así Tailwind, el body y el resto del
+// CSS reciben Figtree sin tener que tocar nada más.
+const figtree = Figtree({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
@@ -42,7 +45,7 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="es"
-      className={`${inter.variable} ${fraunces.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
+      className={`${figtree.variable} ${fraunces.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
     >
       <head>
         {/* Fija el tema del producto ANTES de pintar (sin parpadeo). Por
@@ -50,7 +53,7 @@ export default function RootLayout({ children }) {
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var t=localStorage.getItem('wefty-tema');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){document.documentElement.setAttribute('data-theme','light');}})();",
+              "(function(){try{var t=localStorage.getItem('wefty-tema');document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');var l=localStorage.getItem('wefty-tema-landing');if(l==='claro'){document.documentElement.classList.add('lz-claro');}}catch(e){document.documentElement.setAttribute('data-theme','light');}})();",
           }}
         />
       </head>

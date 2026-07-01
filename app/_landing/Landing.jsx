@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import CtaLink from "./CtaLink";
+import TemaLanding from "./TemaLanding";
 import { initLanding } from "./effects";
 import "./landing.css";
 
@@ -40,6 +41,7 @@ export default function Landing() {
             <a href="#problema">El problema</a>
             <a href="#como-funciona">Cómo funciona</a>
             <a href="#la-red">La red</a>
+            <TemaLanding />
             <CtaLink className="btn btn-ghost">Probar Wefty</CtaLink>
           </nav>
         </div>

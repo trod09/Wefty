@@ -15,25 +15,65 @@ html:has(.wefty-root) { scroll-behavior: smooth; }
 
 /* ── Wefty v3 · cyberpunk ──────────────────────────────────── */
 .wefty-root {
-  --bg: #05060a;
-  --bg-2: #090b12;
-  --panel: #0b0e17;
-  --ink: oklch(0.94 0.01 220);
-  --ink-60: oklch(0.94 0.01 220 / 0.6);
-  --ink-40: oklch(0.94 0.01 220 / 0.4);
-  --line: oklch(0.94 0.01 220 / 0.13);
-  --line-soft: oklch(0.94 0.01 220 / 0.07);
-  --neon-a: oklch(0.74 0.16 42);
-  --neon-b: oklch(0.89 0.07 320);
+  /* Paleta NAVY (nueva): el MISMO cyberpunk, en azul marino + azul. Solo
+     cambian los VALORES de color; los nombres y el resto del CSS quedan igual,
+     así que los 56 colores que derivan de --neon-a/--neon-b se adaptan solos. */
+  --bg: #0a0f1c;
+  --bg-2: #0e1626;
+  --panel: #121a2e;
+  --ink: oklch(0.95 0.01 255);
+  --ink-60: oklch(0.95 0.01 255 / 0.6);
+  --ink-40: oklch(0.95 0.01 255 / 0.4);
+  --line: oklch(0.95 0.01 255 / 0.13);
+  --line-soft: oklch(0.95 0.01 255 / 0.07);
+  --neon-a: oklch(0.62 0.19 258);
+  --neon-b: oklch(0.81 0.09 255);
   --neon-a-dim: oklch(from var(--neon-a) l c h / 0.14);
   --neon-b-dim: oklch(from var(--neon-b) l c h / 0.14);
   --grad: linear-gradient(95deg, var(--neon-a), var(--neon-b));
-  --ok: oklch(0.8 0.2 150);
+  --ok: oklch(0.80 0.16 162);
   --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   --chamfer: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
   --max: 1240px;
 }
+/* ── Modo CLARO de la landing (opcional, vía interruptor) ────────────────────
+   La landing abre en OSCURO (las variables de arriba). Al pulsar el interruptor
+   se añade .lz-claro al <html> y aquí redefinimos SOLO los valores de color a la
+   paleta clara. Es independiente del tema del producto. */
+html.lz-claro .wefty-root {
+  --bg: #d6dfee;
+  --bg-2: #eaf0f9;
+  --panel: #ffffff;
+  --ink: oklch(0.28 0.05 264);
+  --ink-60: oklch(0.28 0.05 264 / 0.62);
+  --ink-40: oklch(0.28 0.05 264 / 0.42);
+  --line: oklch(0.28 0.05 264 / 0.14);
+  --line-soft: oklch(0.28 0.05 264 / 0.08);
+  --neon-a: oklch(0.53 0.21 264);
+  --neon-b: oklch(0.42 0.17 264);
+  --ok: oklch(0.55 0.13 155);
+}
+
+/* Interruptor de tema en el menú de la landing */
+.wefty-root .tema-landing-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--ink-60);
+  background: transparent;
+  border: 1px solid var(--line);
+  clip-path: var(--chamfer);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.wefty-root .tema-landing-btn:hover {
+  color: var(--neon-a);
+  border-color: var(--neon-a);
+}
+
 .wefty-root, .wefty-root * { margin: 0; padding: 0; box-sizing: border-box; }
 @media (prefers-reduced-motion: reduce) {
 }
@@ -1025,13 +1065,13 @@ html:has(.wefty-root) { scroll-behavior: smooth; }
 /* ── Wefty v3 · capa de pulido ─────────────────────────────── */
 /* ── scrollbar ── */
 html:has(.wefty-root)::-webkit-scrollbar { width: 10px; }
-html:has(.wefty-root)::-webkit-scrollbar-track { background: var(--bg, #05060a); }
+html:has(.wefty-root)::-webkit-scrollbar-track { background: var(--bg, #0a0f1c); }
 html:has(.wefty-root)::-webkit-scrollbar-thumb {
   background: oklch(1 0 0 / 0.12);
-  border: 3px solid var(--bg, #05060a);
+  border: 3px solid var(--bg, #0a0f1c);
   border-radius: 6px;
 }
-html:has(.wefty-root)::-webkit-scrollbar-thumb:hover { background: var(--neon-a, oklch(0.74 0.16 42)); }
+html:has(.wefty-root)::-webkit-scrollbar-thumb:hover { background: var(--neon-a, oklch(0.62 0.19 258)); }
 /* ── foco accesible ── */
 .wefty-root :focus-visible { outline: 1px solid var(--neon-a); outline-offset: 3px; }
 /* ── titulares: glow cálido tipo referencia ── */
@@ -1151,7 +1191,7 @@ html:has(.wefty-root)::-webkit-scrollbar-thumb:hover { background: var(--neon-a,
 .wefty-root .red-step {
   border-top: none;
   position: relative;
-  background: oklch(0.05 0.01 60 / 0.66);
+  background: oklch(0.05 0.012 258 / 0.66);
 }
 .wefty-root .red-step::after {
   content: "";
@@ -1173,9 +1213,9 @@ html:has(.wefty-root)::-webkit-scrollbar-thumb:hover { background: var(--neon-a,
   filter: drop-shadow(0 -8px 60px oklch(from var(--neon-a) l c h / 0.14));
 }
 /* ── toast más fino ── */
-.wefty-root .toast { border-width: 1px; background: oklch(0.07 0.01 60 / 0.92); backdrop-filter: blur(8px); }
+.wefty-root .toast { border-width: 1px; background: oklch(0.07 0.012 258 / 0.92); backdrop-filter: blur(8px); }
 /* ── selección de texto cálida ── */
-.wefty-root ::selection { background: var(--neon-a); color: oklch(0.12 0.02 50); }
+.wefty-root ::selection { background: var(--neon-a); color: oklch(0.16 0.03 262); }
 
 /* ── cadena de montaje (cómo funciona): el CSV cae y enciende los 3 pasos ──
    Estados ocultos SOLO bajo .flujo-armado (lo añade JS sin reduced-motion):
